@@ -1,0 +1,25 @@
+site_name: Android Dev Handbook
+site_description: Structured Android development handbook
+site_url: https://khodorkin-dmitrii.github.io/android-dev-handbook/
+
+theme:
+  name: material
+  language: ru
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Android: android/index.md
+  - Kotlin: kotlin/index.md
+  - Java: java/index.md
+  - Jetpack Compose: compose/index.md
+  - Coroutines & Flow: coroutines-flow/index.md
+  - Architecture: architecture/index.md
