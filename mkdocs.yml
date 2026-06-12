@@ -18,7 +18,14 @@ plugins:
 nav:
   - Home: index.md
   - Android: android/index.md
-  - Kotlin: kotlin/index.md
+  - Kotlin:
+      - Overview: kotlin/index.md
+      - Basics: kotlin/basics.md
+      - Kotlin vs Java: kotlin/kotlin-vs-java.md
+      - Classes & Types: kotlin/classes-and-types.md
+      - Collections: kotlin/collections.md
+      - Functions: kotlin/functions.md
+      - Generics: kotlin/generics.md
   - Java: java/index.md
   - Jetpack Compose: compose/index.md
   - Coroutines & Flow: coroutines-flow/index.md
