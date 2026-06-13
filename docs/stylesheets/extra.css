@@ -1,0 +1,107 @@
+.md-typeset {
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+/* Paragraph spacing.
+ *
+ * margin: top right bottom left
+ * We only reduce the bottom margin to make text blocks more compact.
+ *
+ * Typical range:
+ * 0.2em - very compact knowledge base style
+ * 0.5em - compact
+ * 0.7em - balanced (recommended)
+ * 1.0-1.2em - default "airy" documentation style
+ */
+.md-typeset p {        
+    margin: 0 0 0.2em;
+}
+
+/* Vertical spacing around unordered and ordered lists.
+ *
+ * margin: vertical horizontal
+ *
+ * Typical range:
+ * 0.2em - very compact
+ * 0.4em - compact (recommended)
+ * 0.6-0.8em - balanced
+ * 1.0em+ - spacious/default style
+ */
+.md-typeset ul,
+.md-typeset ol {
+    margin: 0.2em 0;
+}
+
+/* Spacing between individual list items.
+ *
+ * Typical range:
+ * 0em - tightly packed lists
+ * 0.1-0.2em - compact (recommended)
+ * 0.3-0.4em - balanced
+ * 0.5em+ - spacious
+ */
+.md-typeset li {
+    margin-bottom: 0.2em;
+}
+
+/* Table cell padding.
+ *
+ * padding: vertical horizontal
+ *
+ * Typical range:
+ * Vertical:
+ *   0.3rem - compact
+ *   0.45rem - balanced (recommended)
+ *   0.6rem+ - spacious
+ *
+ * Horizontal:
+ *   0.5rem - compact
+ *   0.7rem - balanced (recommended)
+ *   1rem+ - spacious
+ */
+.md-typeset table td,
+.md-typeset table th {
+    padding: 0.3rem 0.5rem;
+}
+
+/* H2 heading spacing.
+ *
+ * margin: top right bottom left
+ *
+ * Controls how much visual separation major sections have.
+ *
+ * Typical range:
+ * Top:
+ *   1.0rem - compact
+ *   1.5rem - balanced (recommended)
+ *   2.0rem+ - spacious
+ *
+ * Bottom:
+ *   0.4rem - compact
+ *   0.7rem - balanced (recommended)
+ *   1.0rem+ - spacious
+ */
+.md-typeset h2 {
+    margin: 1.5rem 0 0.7rem;
+}
+
+/* H3 heading spacing.
+ *
+ * Controls spacing for subsection titles.
+ * Usually slightly tighter than H2.
+ *
+ * Typical range:
+ * Top:
+ *   0.7rem - compact
+ *   1.0rem - balanced (recommended)
+ *   1.5rem+ - spacious
+ *
+ * Bottom:
+ *   0.2rem - very compact
+ *   0.4rem - balanced (recommended)
+ *   0.6rem+ - spacious
+ */
+.md-typeset h3 {
+    margin: 1rem 0 0.4rem;
+}
