@@ -1,5 +1,13 @@
 # Android
 
-Раздел про основы Android-платформы, жизненный цикл компонентов, ресурсы, навигацию, хранение данных и взаимодействие с системой.
+Раздел про основы Android-платформы: компоненты приложения, lifecycle, View System, `Context`, ресурсы, background work, storage, performance и память.
 
-Здесь появятся материалы, которые помогают понимать Android не только как набор API, но и как среду выполнения приложений.
+## Структура раздела
+
+- [Android Components](components.md)
+- [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
+- [View System / XML UI](view-system-xml-ui.md)
+- [Context & Resources](context-resources.md)
+- [Background Work & System Behavior](background-work-system-behavior.md)
+- [Storage](storage.md)
+- [Performance & Memory](performance-memory.md)

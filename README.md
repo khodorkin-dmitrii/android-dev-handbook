@@ -1,5 +1,7 @@
 # Android Dev Handbook
 
+https://khodorkin-dmitrii.github.io/android-dev-handbook/compose/
+
 A public, structured Android development handbook.
 
 Main content language: Russian (for now).

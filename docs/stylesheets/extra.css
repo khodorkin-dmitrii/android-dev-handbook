@@ -16,6 +16,7 @@
  */
 .md-typeset p {        
     margin: 0 0 0.2em;
+    text-indent: 0.5em;
 }
 
 /* Vertical spacing around unordered and ordered lists.
@@ -104,4 +105,5 @@
  */
 .md-typeset h3 {
     margin: 1rem 0 0.4rem;
+    text-indent: 0.4em;
 }

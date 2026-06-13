@@ -1,5 +1,11 @@
 # Architecture
 
-Раздел про архитектуру Android-приложений: слои, зависимости, состояние UI, ViewModel, репозитории и тестируемость.
+Раздел про архитектуру Android-приложений: слои, UI state, MV* patterns, multi-module projects, legacy-код и incremental refactoring.
 
-Позже здесь будут описаны подходы к проектированию устойчивых и понятных кодовых баз.
+## Структура раздела
+
+- [Architecture Basics](basics.md)
+- [UI State Architecture](ui-state.md)
+- [MV* Patterns](mv-patterns.md)
+- [Multi-module Architecture](multi-module.md)
+- [Legacy & Refactoring](legacy-refactoring.md)

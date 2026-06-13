@@ -36,8 +36,22 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Android: android/index.md
-  - Compose: compose/index.md
+  - Android:
+      - Overview: android/index.md
+      - Android Components: android/components.md
+      - Activity, Fragment & Lifecycle: android/activity-fragment-lifecycle.md
+      - View System / XML UI: android/view-system-xml-ui.md
+      - Context & Resources: android/context-resources.md
+      - Background Work & System Behavior: android/background-work-system-behavior.md
+      - Storage: android/storage.md
+      - Performance & Memory: android/performance-memory.md
+  - Compose:
+      - Overview: compose/index.md
+      - Compose Basics: compose/basics.md
+      - State & Recomposition: compose/state-recomposition.md
+      - Side Effects: compose/side-effects.md
+      - Compose Performance: compose/performance.md
+      - Compose Testing: compose/testing.md
   - Kotlin:
       - Overview: kotlin/index.md
       - Basics: kotlin/basics.md
@@ -46,14 +60,27 @@ nav:
       - Collections: kotlin/collections.md
       - Functions: kotlin/functions.md
       - Generics: kotlin/generics.md
+  - Coroutines & Flow:
+      - Overview: coroutines-flow/index.md
+      - Coroutines Basics: coroutines-flow/basics.md
+      - Coroutine Scopes & Cancellation: coroutines-flow/scopes-cancellation.md
+      - Flow Basics: coroutines-flow/flow-basics.md
+      - Flow Operators: coroutines-flow/flow-operators.md
+      - StateFlow & SharedFlow: coroutines-flow/stateflow-sharedflow.md
+      - Lifecycle-aware Collection: coroutines-flow/lifecycle-aware-collection.md
+  - Architecture:
+      - Overview: architecture/index.md
+      - Architecture Basics: architecture/basics.md
+      - UI State Architecture: architecture/ui-state.md
+      - MV* Patterns: architecture/mv-patterns.md
+      - Multi-module Architecture: architecture/multi-module.md
+      - Legacy & Refactoring: architecture/legacy-refactoring.md
   - Java:
       - Overview: java/index.md
       - Java Core: java/core.md
       - Java Concurrency: java/concurrency.md
       - Java Exceptions: java/exceptions.md
       - JVM / Android Runtime: java/jvm-android-runtime.md
-  - Coroutines & Flow: coroutines-flow/index.md
-  - Architecture: architecture/index.md
   - Fundamentals:
       - Overview: fundamentals/index.md
       - OOP: fundamentals/oop.md

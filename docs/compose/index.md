@@ -1,5 +1,11 @@
 # Jetpack Compose
 
-Раздел про Jetpack Compose: декларативный UI, состояние, композицию, модификаторы, навигацию и архитектуру экранов.
+Раздел про Jetpack Compose: declarative UI, composable-функции, state, recomposition, side effects, performance и UI testing.
 
-Здесь появятся короткие объяснения и примеры для создания современных Android-интерфейсов.
+## Структура раздела
+
+- [Compose Basics](basics.md)
+- [State & Recomposition](state-recomposition.md)
+- [Side Effects](side-effects.md)
+- [Compose Performance](performance.md)
+- [Compose Testing](testing.md)
