@@ -1,16 +1,42 @@
-# Android Dev Handbook
+# 📘 Android Dev Handbook
 
-https://khodorkin-dmitrii.github.io/android-dev-handbook/compose/
+A public, structured Android development handbook built with **MkDocs Material**.
 
-A public, structured Android development handbook.
+🌐 Website:
+https://khodorkin-dmitrii.github.io/android-dev-handbook/
 
-Main content language: Russian (for now).
+## 📌 About
 
-The handbook covers Android development, Kotlin, Java, Jetpack Compose, Coroutines & Flow, architecture, testing.
+Android Dev Handbook is a compact knowledge base for Android development.
 
-## Local development
+It covers:
 
-Install dependencies:
+* Android fundamentals
+* Kotlin
+* Java
+* Jetpack Compose
+* Coroutines & Flow
+* Architecture
+* Testing
+* Networking
+* Performance
+* Core engineering concepts
 
-```bash
-pip install -r requirements.txt
+Main content language (for now): **Russian**.
+
+## 🛠 Tech stack
+
+* Markdown
+* MkDocs
+* MkDocs Material
+* GitHub Actions
+* GitHub Pages
+
+## 📚 Resources
+
+* MkDocs Material: https://squidfunk.github.io/mkdocs-material/
+* GitHub Pages: https://pages.github.com/
+
+## 📄 License
+
+This project is licensed under the MIT License.

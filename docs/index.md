@@ -1,5 +1,5 @@
 # Android Dev Handbook
 
-Android Dev Handbook — это структурированный справочник по Android-разработке для Kotlin, Java, Jetpack Compose, Coroutines, архитектуры, тестирования и подготовки к собеседованиям.
+Android Dev Handbook — это структурированный справочник по Android-разработке для Kotlin, Java, Jetpack Compose, Coroutines, архитектуры, тестирования и другое.
 
 Проект будет постепенно наполняться практическими заметками, объяснениями концепций и проверенными подходами к разработке Android-приложений.
