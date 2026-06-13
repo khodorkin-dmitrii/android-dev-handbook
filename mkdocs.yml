@@ -88,3 +88,21 @@ nav:
       - Design Patterns: fundamentals/design-patterns.md
       - Algorithms & Complexity: fundamentals/algorithms-complexity.md
       - Memory & Runtime Basics: fundamentals/memory-runtime-basics.md
+  - DI:
+      - Overview: di/index.md
+      - DI Basics: di/basics.md
+      - Dagger / Hilt: di/dagger-hilt.md
+      - Legacy DI: di/legacy-di.md
+  - Networking:
+      - Overview: networking/index.md
+      - HTTP / REST: networking/http-rest.md
+      - Retrofit / OkHttp: networking/retrofit-okhttp.md
+      - GraphQL: networking/graphql.md
+      - gRPC / Protobuf: networking/grpc-protobuf.md
+  - Testing:
+      - Overview: testing/index.md
+      - Testing Strategy: testing/strategy.md
+      - ViewModel Testing: testing/viewmodel-testing.md
+      - Coroutines & Flow Testing: testing/coroutines-flow-testing.md
+      - Android UI Testing: testing/android-ui-testing.md
+  - Legacy: legacy/index.md
