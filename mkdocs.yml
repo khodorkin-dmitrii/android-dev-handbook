@@ -37,6 +37,7 @@ extra_css:
 nav:
   - Home: index.md
   - Android: android/index.md
+  - Compose: compose/index.md
   - Kotlin:
       - Overview: kotlin/index.md
       - Basics: kotlin/basics.md
@@ -45,7 +46,18 @@ nav:
       - Collections: kotlin/collections.md
       - Functions: kotlin/functions.md
       - Generics: kotlin/generics.md
-  - Java: java/index.md
-  - Jetpack Compose: compose/index.md
+  - Java:
+      - Overview: java/index.md
+      - Java Core: java/core.md
+      - Java Concurrency: java/concurrency.md
+      - Java Exceptions: java/exceptions.md
+      - JVM / Android Runtime: java/jvm-android-runtime.md
   - Coroutines & Flow: coroutines-flow/index.md
   - Architecture: architecture/index.md
+  - Fundamentals:
+      - Overview: fundamentals/index.md
+      - OOP: fundamentals/oop.md
+      - SOLID: fundamentals/solid.md
+      - Design Patterns: fundamentals/design-patterns.md
+      - Algorithms & Complexity: fundamentals/algorithms-complexity.md
+      - Memory & Runtime Basics: fundamentals/memory-runtime-basics.md
