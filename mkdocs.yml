@@ -45,13 +45,6 @@ nav:
       - Background Work & System Behavior: android/background-work-system-behavior.md
       - Storage: android/storage.md
       - Performance & Memory: android/performance-memory.md
-  - Compose:
-      - Overview: compose/index.md
-      - Compose Basics: compose/basics.md
-      - State & Recomposition: compose/state-recomposition.md
-      - Side Effects: compose/side-effects.md
-      - Compose Performance: compose/performance.md
-      - Compose Testing: compose/testing.md
   - Kotlin:
       - Overview: kotlin/index.md
       - Basics: kotlin/basics.md
@@ -60,6 +53,13 @@ nav:
       - Collections: kotlin/collections.md
       - Functions: kotlin/functions.md
       - Generics: kotlin/generics.md
+  - Compose:
+      - Overview: compose/index.md
+      - Compose Basics: compose/basics.md
+      - State & Recomposition: compose/state-recomposition.md
+      - Side Effects: compose/side-effects.md
+      - Compose Performance: compose/performance.md
+      - Compose Testing: compose/testing.md
   - Coroutines & Flow:
       - Overview: coroutines-flow/index.md
       - Coroutines Basics: coroutines-flow/basics.md
@@ -81,13 +81,6 @@ nav:
       - Java Concurrency: java/concurrency.md
       - Java Exceptions: java/exceptions.md
       - JVM / Android Runtime: java/jvm-android-runtime.md
-  - Fundamentals:
-      - Overview: fundamentals/index.md
-      - OOP: fundamentals/oop.md
-      - SOLID: fundamentals/solid.md
-      - Design Patterns: fundamentals/design-patterns.md
-      - Algorithms & Complexity: fundamentals/algorithms-complexity.md
-      - Memory & Runtime Basics: fundamentals/memory-runtime-basics.md
   - DI:
       - Overview: di/index.md
       - DI Basics: di/basics.md
@@ -105,4 +98,11 @@ nav:
       - ViewModel Testing: testing/viewmodel-testing.md
       - Coroutines & Flow Testing: testing/coroutines-flow-testing.md
       - Android UI Testing: testing/android-ui-testing.md
+  - Fundamentals:
+      - Overview: fundamentals/index.md
+      - OOP: fundamentals/oop.md
+      - SOLID: fundamentals/solid.md
+      - Design Patterns: fundamentals/design-patterns.md
+      - Algorithms & Complexity: fundamentals/algorithms-complexity.md
+      - Memory & Runtime Basics: fundamentals/memory-runtime-basics.md        
   - Legacy: legacy/index.md
