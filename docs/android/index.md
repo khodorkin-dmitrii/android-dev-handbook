@@ -1,6 +1,6 @@
 # Android
 
-Раздел про основы Android-платформы: компоненты приложения, lifecycle, View System, `Context`, ресурсы, background work, storage, performance и память.
+Раздел про основы Android-платформы: компоненты приложения, lifecycle, View System, `Context`, ресурсы, background work, storage, performance, память и rendering.
 
 ## Структура раздела
 
@@ -11,3 +11,8 @@
 - [Background Work & System Behavior](background-work-system-behavior.md)
 - [Storage](storage.md)
 - [Performance & Memory](performance-memory.md)
+- [Android Canvas](canvas.md)
+- [OpenGL ES](opengl-es.md)
+- [Vulkan](vulkan.md)
+- [Google Filament](google-filament.md)
+- [2D and 3D Rendering](2d-3d-rendering.md)

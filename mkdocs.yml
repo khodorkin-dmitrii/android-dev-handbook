@@ -45,6 +45,11 @@ nav:
       - Background Work & System Behavior: android/background-work-system-behavior.md
       - Storage: android/storage.md
       - Performance & Memory: android/performance-memory.md
+      - Android Canvas: android/canvas.md
+      - OpenGL ES: android/opengl-es.md
+      - Vulkan: android/vulkan.md
+      - Google Filament: android/google-filament.md
+      - 2D and 3D Rendering: android/2d-3d-rendering.md
   - Kotlin:
       - Overview: kotlin/index.md
       - Basics: kotlin/basics.md
@@ -105,4 +110,6 @@ nav:
       - Design Patterns: fundamentals/design-patterns.md
       - Algorithms & Complexity: fundamentals/algorithms-complexity.md
       - Memory & Runtime Basics: fundamentals/memory-runtime-basics.md        
-  - Legacy: legacy/index.md
+  - Legacy:
+      - Overview: legacy/index.md
+      - RxJava: legacy/rxjava.md

@@ -6,17 +6,17 @@ Android Dev Handbook - это структурированный справоч�
 
 ## Разделы
 
-* [Android](android/) - Android SDK, components, lifecycle, View system, storage, background work, performance и platform behavior.
-* [Kotlin](kotlin/) - Kotlin basics, Kotlin vs Java, classes and types, collections, functions, generics и idiomatic Kotlin.  
-* [Jetpack Compose](compose/) - declarative UI, state, recomposition, side effects, performance и Compose UI testing.
-* [Coroutines & Flow](coroutines-flow/) - coroutines, structured concurrency, cancellation, Flow operators, StateFlow, SharedFlow и lifecycle-aware collection.
-* [Architecture](architecture/) - modern Android architecture, Clean Architecture, MVVM, MVI, UI state, modularization и legacy refactoring.
-* [Java](java/) - Java core, collections, exceptions, concurrency, JVM и Android runtime specifics.
-* [Dependency Injection](di/) - DI basics, Hilt, Dagger, scopes, modules и dependency graph.
-* [Networking & API](networking/) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC и Protocol Buffers.
-* [Testing](testing/) - testing strategy, unit tests, ViewModel tests, Coroutines & Flow testing, Espresso и Compose UI tests.
-* [Fundamentals](fundamentals/) - базовые инженерные темы: OOP, SOLID, design patterns, algorithms, complexity, memory и runtime concepts.
-* [Legacy](legacy/) - legacy stack.
+* [Android](android/index.md) - Android SDK, компоненты приложения, lifecycle, View System, storage, background work, performance, platform behavior и rendering.
+* [Kotlin](kotlin/index.md) - основы Kotlin, Kotlin vs Java, классы и типы, collections, functions, generics и idiomatic Kotlin.
+* [Jetpack Compose](compose/index.md) - declarative UI, state, recomposition, side effects, performance и Compose UI testing.
+* [Coroutines & Flow](coroutines-flow/index.md) - coroutines, structured concurrency, cancellation, Flow operators, `StateFlow`, `SharedFlow` и lifecycle-aware collection.
+* [Architecture](architecture/index.md) - modern Android architecture, Clean Architecture, MVVM, MVI, UI state, modularization и legacy refactoring.
+* [Java](java/index.md) - Java core, collections, exceptions, concurrency, JVM и особенности Android Runtime.
+* [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules и dependency graph.
+* [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC и Protocol Buffers.
+* [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso и Compose UI tests.
+* [Fundamentals](fundamentals/index.md) - базовые инженерные темы: OOP, SOLID, design patterns, algorithms, complexity, memory и runtime concepts.
+* [Legacy](legacy/index.md) - старые, но всё ещё встречающиеся подходы и библиотеки Android/Java/Kotlin: RxJava, RxAndroid, legacy patterns и миграция к современному stack.
 
 ## Как читать
 
