@@ -15,7 +15,7 @@ Android Dev Handbook - это структурированный справоч�
 * [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules и dependency graph.
 * [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC и Protocol Buffers.
 * [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso и Compose UI tests.
-* [Fundamentals](fundamentals/index.md) - базовые инженерные темы: OOP, SOLID, design patterns, algorithms, complexity, memory и runtime concepts.
+* [Engineering](engineering/index.md) - базовые инженерные темы: OOP, SOLID, design patterns, algorithms, complexity, memory и runtime concepts.
 * [Legacy](legacy/index.md) - старые, но всё ещё встречающиеся подходы и библиотеки Android/Java/Kotlin: RxJava, RxAndroid, legacy patterns и миграция к современному stack.
 
 ## Как читать

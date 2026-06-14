@@ -1,6 +1,6 @@
 # Memory & Runtime Basics
 
-![Stack vs Heap](../assets/images/fundamentals/stack-vs-heap.png)
+![Stack vs Heap](../assets/images/engineering/stack-vs-heap.png)
 
 Core memory and runtime concepts help explain memory leaks, object lifetime, GC behavior and Java/Kotlin code behavior on Android.
 

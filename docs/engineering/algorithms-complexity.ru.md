@@ -1,6 +1,6 @@
 # Algorithms & Complexity
 
-![Big O chart](../assets/images/fundamentals/big-o-chart.png)
+![Big O chart](../assets/images/engineering/big-o-chart.png)
 
 Алгоритмическая сложность помогает оценивать, как код будет масштабироваться при росте входных данных. Это важно не только для алгоритмических задач, но и для обычных коллекций, поиска, сортировки и обработки списков в приложении.
 

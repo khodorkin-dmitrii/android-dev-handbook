@@ -46,7 +46,6 @@ plugins:
           link: /ru/
           site_description: Структурированный справочник по Android-разработке
           nav_translations:
-            Home: Главная
             Overview: Обзор
             Android Components: Компоненты Android
             Activity, Fragment & Lifecycle: Activity, Fragment & Lifecycle
@@ -179,13 +178,13 @@ nav:
       - ViewModel Testing: testing/viewmodel-testing.md
       - Coroutines & Flow Testing: testing/coroutines-flow-testing.md
       - Android UI Testing: testing/android-ui-testing.md
-  - Fundamentals:
-      - Overview: fundamentals/index.md
-      - OOP: fundamentals/oop.md
-      - SOLID: fundamentals/solid.md
-      - Design Patterns: fundamentals/design-patterns.md
-      - Algorithms & Complexity: fundamentals/algorithms-complexity.md
-      - Memory & Runtime Basics: fundamentals/memory-runtime-basics.md        
+  - Engineering:
+      - Overview: engineering/index.md
+      - OOP: engineering/oop.md
+      - SOLID: engineering/solid.md
+      - Design Patterns: engineering/design-patterns.md
+      - Algorithms & Complexity: engineering/algorithms-complexity.md
+      - Memory & Runtime Basics: engineering/memory-runtime-basics.md        
   - Legacy:
       - Overview: legacy/index.md
       - RxJava: legacy/rxjava.md

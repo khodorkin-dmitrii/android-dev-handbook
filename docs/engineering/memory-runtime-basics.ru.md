@@ -1,6 +1,6 @@
 # Memory & Runtime Basics
 
-![Stack vs Heap](../assets/images/fundamentals/stack-vs-heap.png)
+![Stack vs Heap](../assets/images/engineering/stack-vs-heap.png)
 
 Базовые понятия памяти и runtime помогают понимать утечки памяти, жизненный цикл объектов, работу GC и поведение Java/Kotlin-кода на Android.
 

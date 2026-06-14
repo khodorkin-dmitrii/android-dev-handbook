@@ -1,6 +1,6 @@
 # Algorithms & Complexity
 
-![Big O chart](../assets/images/fundamentals/big-o-chart.png)
+![Big O chart](../assets/images/engineering/big-o-chart.png)
 
 Algorithmic complexity helps estimate how code scales as input data grows. This matters not only for algorithm tasks, but also for regular collections, search, sorting and list processing in an application.
 

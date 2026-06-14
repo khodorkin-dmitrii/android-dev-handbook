@@ -15,7 +15,7 @@ The goal of the project is to collect practical explanations, compact notes, imp
 * [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules and dependency graph.
 * [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC and Protocol Buffers.
 * [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso and Compose UI tests.
-* [Fundamentals](fundamentals/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory and runtime concepts.
+* [Engineering](engineering/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory and runtime concepts.
 * [Legacy](legacy/index.md) - older but still common Android/Java/Kotlin approaches and libraries: RxJava, RxAndroid, legacy patterns and migration to a modern stack.
 
 ## How to read

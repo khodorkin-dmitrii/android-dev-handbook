@@ -1,4 +1,4 @@
-# Fundamentals
+# Engineering
 
 Базовые Computer Science concepts, которые часто лежат под Android/Kotlin/Java-разработкой: OOP, SOLID, design patterns, сложность алгоритмов, память и runtime.
 

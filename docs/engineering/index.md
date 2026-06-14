@@ -1,4 +1,4 @@
-# Fundamentals
+# Engineering
 
 Core Computer Science concepts that often sit underneath Android/Kotlin/Java development: OOP, SOLID, design patterns, algorithm complexity, memory and runtime.
 
