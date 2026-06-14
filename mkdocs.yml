@@ -1,6 +1,8 @@
 site_name: Android Dev Handbook
 site_description: Structured Android development handbook
 site_url: https://khodorkin-dmitrii.github.io/android-dev-handbook/
+exclude_docs: |
+  includes/
 
 theme:
   name: material
@@ -180,6 +182,8 @@ nav:
       - Android UI Testing: testing/android-ui-testing.md
   - Engineering:
       - Overview: engineering/index.md
+      - Code Quality: engineering/code-quality.md
+      - Code Review: engineering/code-review.md
       - OOP: engineering/oop.md
       - SOLID: engineering/solid.md
       - Design Patterns: engineering/design-patterns.md

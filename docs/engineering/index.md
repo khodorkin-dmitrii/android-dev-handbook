@@ -4,6 +4,8 @@ Core Computer Science concepts that often sit underneath Android/Kotlin/Java dev
 
 ## Section structure
 
+- [Code Quality](code-quality.md)
+- [Code Review](code-review.md)
 - [OOP](oop.md)
 - [SOLID](solid.md)
 - [Design Patterns](design-patterns.md)

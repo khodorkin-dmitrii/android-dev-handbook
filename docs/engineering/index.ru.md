@@ -4,6 +4,8 @@
 
 ## Структура раздела
 
+- [Code Quality](code-quality.md)
+- [Code Review](code-review.md)
 - [OOP](oop.md)
 - [SOLID](solid.md)
 - [Design Patterns](design-patterns.md)

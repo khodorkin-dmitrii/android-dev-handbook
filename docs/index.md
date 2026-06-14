@@ -21,3 +21,15 @@ The goal of the project is to collect practical explanations, compact notes, imp
 ## How to read
 
 The materials are written as a compact knowledge base. Use the search field in the top bar for quick lookup. Use the left menu to navigate inside a section, and the right table of contents to jump between headings on the current page.
+
+<!-- BEGIN GENERATED HANDBOOK STATS -->
+## Handbook stats
+
+| Metric | English | Russian |
+|---|---:|---:|
+| Domains | 11 | 11 |
+| Pages | 69 | 69 |
+| Sections | 114 | 114 |
+| Topics | 292 | 292 |
+| Words | 38547 | 34210 |
+<!-- END GENERATED HANDBOOK STATS -->
