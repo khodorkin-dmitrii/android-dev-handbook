@@ -1,75 +1,75 @@
 # 2D and 3D Rendering
 
-Rendering в Android можно делать на разных уровнях: обычный UI через View/Compose, custom 2D через Canvas, low-level GPU через OpenGL ES/Vulkan или high-level 3D через Filament.
+Rendering in Android can be done at different levels: regular UI through View/Compose, custom 2D through Canvas, low-level GPU through OpenGL ES/Vulkan or high-level 3D through Filament.
 
 ## Rendering choices
 
 ### CPU rendering vs GPU rendering
 
-CPU rendering означает, что основная работа по подготовке изображения выполняется на CPU: расчёты layout, geometry, bitmap generation, text shaping, paths и другие операции.
+CPU rendering means that the main work of preparing an image is performed on the CPU: layout calculations, geometry, bitmap generation, text shaping, paths and other operations.
 
-GPU rendering означает, что большая часть drawing work выполняется GPU: rasterization, shaders, textures, blending, 3D transforms, lighting и post-processing.
+GPU rendering means that most drawing work is performed by the GPU: rasterization, shaders, textures, blending, 3D transforms, lighting and post-processing.
 
-В реальном Android UI почти всегда есть оба участника: CPU подготавливает commands/data, GPU рисует pixels. Вопрос в том, где находится bottleneck.
+In real Android UI, both are almost always involved: CPU prepares commands/data, GPU draws pixels. The question is where the bottleneck is.
 
-CPU bottleneck часто выглядит как долгие layout/calculation/bind operations на main thread. GPU bottleneck часто связан с overdraw, сложными shaders, большими textures, большим количеством fragments или тяжёлыми 3D effects.
+CPU bottleneck often looks like long layout/calculation/bind operations on the main thread. GPU bottleneck is often related to overdraw, complex shaders, large textures, a large number of fragments or heavy 3D effects.
 
-**Коротко:** CPU готовит данные и команды, GPU эффективно рисует pixels; performance зависит от того, какая часть pipeline перегружена.
+**In short:** CPU prepares data and commands, GPU draws pixels efficiently; performance depends on which part of the pipeline is overloaded.
 
-### Когда использовать Canvas
+### When to use Canvas
 
-Canvas стоит использовать, когда нужна custom 2D-графика внутри Android UI:
+Canvas is worth using when custom 2D graphics are needed inside Android UI:
 
-- charts и simple graphs;
+- charts and simple graphs;
 - custom progress indicators;
 - drawing/signature view;
 - waveform/audio visualization;
 - simple game-like 2D;
 - custom badges, shapes, paths;
-- лёгкие декоративные элементы.
+- lightweight decorative elements.
 
-Canvas хорошо интегрируется с View System и проще, чем OpenGL ES. Он подходит, когда сцена небольшая, rendering 2D, а контроль над каждым pixel не требует complex GPU pipeline.
+Canvas integrates well with View System and is simpler than OpenGL ES. It fits when the scene is small, rendering is 2D and per-pixel control does not require a complex GPU pipeline.
 
-Если рисование происходит часто, важно следить за `onDraw()` performance: не делать allocations, не декодировать bitmap, не запускать heavy calculations и не вызывать лишний `requestLayout()`.
+If drawing happens often, watch `onDraw()` performance: do not allocate, do not decode bitmap, do not run heavy calculations and do not call unnecessary `requestLayout()`.
 
-**Коротко:** Canvas - хороший выбор для custom 2D drawing, когда нужна интеграция с обычным Android UI и не нужен полноценный 3D engine.
+**In short:** Canvas is a good choice for custom 2D drawing when integration with regular Android UI is needed and a full 3D engine is not.
 
-### Когда использовать OpenGL
+### When to use OpenGL
 
-OpenGL ES стоит использовать, когда нужен прямой GPU rendering и возможностей Canvas уже недостаточно.
+OpenGL ES is worth using when direct GPU rendering is needed and Canvas capabilities are no longer enough.
 
-Типичные случаи:
+Typical cases:
 
 - custom 2D/3D engine;
 - camera filters;
 - video effects;
 - particle systems;
 - high-frequency animated graphics;
-- rendering большого числа объектов;
+- rendering a large number of objects;
 - custom shaders;
-- простая 3D-графика без тяжёлого engine.
+- simple 3D graphics without a heavy engine.
 
-OpenGL ES требует понимания buffers, shaders, textures, matrices, lifecycle surface и GPU state. Он даёт больше контроля, но резко повышает сложность кода.
+OpenGL ES requires understanding buffers, shaders, textures, matrices, surface lifecycle and GPU state. It gives more control, but sharply increases code complexity.
 
-Если цель - production-quality 3D scene с materials, lights, cameras и glTF assets, часто разумнее использовать engine вроде Filament, а не писать всё на raw OpenGL ES.
+If the goal is a production-quality 3D scene with materials, lights, cameras and glTF assets, it is often more reasonable to use an engine like Filament instead of writing everything in raw OpenGL ES.
 
-**Коротко:** OpenGL ES используют, когда нужен lower-level GPU control, shaders и rendering pipeline, но команда готова управлять graphics details вручную.
+**In short:** OpenGL ES is used when lower-level GPU control, shaders and rendering pipeline are needed, and the team is ready to manage graphics details manually.
 
-### Когда использовать Filament
+### When to use Filament
 
-Filament стоит использовать, когда нужна качественная 3D-сцена, а не просто low-level доступ к GPU.
+Filament is worth using when a high-quality 3D scene is needed, not just low-level GPU access.
 
-Типичные случаи:
+Typical cases:
 
 - 3D product viewer;
 - object configurator;
 - glTF model rendering;
 - AR preview;
-- сцены с materials и lighting;
+- scenes with materials and lighting;
 - interactive 3D visualizations.
 
-Filament даёт готовые abstractions: scene, camera, materials, lights, renderables и backend поверх OpenGL/Vulkan. Это быстрее и безопаснее, чем писать собственный 3D renderer с нуля.
+Filament provides ready-made abstractions: scene, camera, materials, lights, renderables and a backend on top of OpenGL/Vulkan. This is faster and safer than writing a custom 3D renderer from scratch.
 
-Но Filament избыточен для простого UI, 2D charts, небольшого custom drawing или обычной анимации. Там Canvas, Compose или View System будут проще.
+But Filament is excessive for simple UI, 2D charts, small custom drawing or regular animation. Canvas, Compose or View System will be simpler there.
 
-**Коротко:** Filament выбирают для real-time 3D с материалами, камерами, сценой и освещением, когда raw OpenGL слишком низкоуровневый.
+**In short:** Filament is chosen for real-time 3D with materials, cameras, scene and lighting when raw OpenGL is too low-level.

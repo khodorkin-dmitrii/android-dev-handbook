@@ -1,8 +1,8 @@
 # Android
 
-This section covers Android platform fundamentals: app components, lifecycle, View System, `Context`, resources, background work, storage, performance, memory and rendering.
+Раздел про основы Android-платформы: компоненты приложения, lifecycle, View System, `Context`, ресурсы, background work, storage, performance, память и rendering.
 
-## Section structure
+## Структура раздела
 
 - [Android Components](components.md)
 - [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)

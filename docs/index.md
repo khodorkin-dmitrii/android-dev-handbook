@@ -1,23 +1,23 @@
 # Android Dev Handbook
 
-Android Dev Handbook - это структурированный справочник по Android-разработке: Kotlin, Java, Jetpack Compose, Coroutines & Flow, архитектура, тестирование, networking, storage, performance и базовые инженерные концепции.
+Android Dev Handbook is a structured Android development reference covering Kotlin, Java, Jetpack Compose, Coroutines & Flow, architecture, testing, networking, storage, performance and core engineering concepts.
 
-Цель проекта - собрать практичные объяснения, короткие заметки, важные нюансы и примеры, которые помогают быстро освежить знания по Android development.
+The goal of the project is to collect practical explanations, compact notes, important nuances and examples that help refresh Android development knowledge quickly.
 
-## Разделы
+## Sections
 
-* [Android](android/index.md) - Android SDK, компоненты приложения, lifecycle, View System, storage, background work, performance, platform behavior и rendering.
-* [Kotlin](kotlin/index.md) - основы Kotlin, Kotlin vs Java, классы и типы, collections, functions, generics и idiomatic Kotlin.
-* [Jetpack Compose](compose/index.md) - declarative UI, state, recomposition, side effects, performance и Compose UI testing.
-* [Coroutines & Flow](coroutines-flow/index.md) - coroutines, structured concurrency, cancellation, Flow operators, `StateFlow`, `SharedFlow` и lifecycle-aware collection.
-* [Architecture](architecture/index.md) - modern Android architecture, Clean Architecture, MVVM, MVI, UI state, modularization и legacy refactoring.
-* [Java](java/index.md) - Java core, collections, exceptions, concurrency, JVM и особенности Android Runtime.
-* [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules и dependency graph.
-* [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC и Protocol Buffers.
-* [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso и Compose UI tests.
-* [Fundamentals](fundamentals/index.md) - базовые инженерные темы: OOP, SOLID, design patterns, algorithms, complexity, memory и runtime concepts.
-* [Legacy](legacy/index.md) - старые, но всё ещё встречающиеся подходы и библиотеки Android/Java/Kotlin: RxJava, RxAndroid, legacy patterns и миграция к современному stack.
+* [Android](android/index.md) - Android SDK, app components, lifecycle, View System, storage, background work, performance, platform behavior and rendering.
+* [Kotlin](kotlin/index.md) - Kotlin basics, Kotlin vs Java, classes and types, collections, functions, generics and idiomatic Kotlin.
+* [Jetpack Compose](compose/index.md) - declarative UI, state, recomposition, side effects, performance and Compose UI testing.
+* [Coroutines & Flow](coroutines-flow/index.md) - coroutines, structured concurrency, cancellation, Flow operators, `StateFlow`, `SharedFlow` and lifecycle-aware collection.
+* [Architecture](architecture/index.md) - modern Android architecture, Clean Architecture, MVVM, MVI, UI state, modularization and legacy refactoring.
+* [Java](java/index.md) - Java core, collections, exceptions, concurrency, JVM and Android Runtime specifics.
+* [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules and dependency graph.
+* [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC and Protocol Buffers.
+* [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso and Compose UI tests.
+* [Fundamentals](fundamentals/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory and runtime concepts.
+* [Legacy](legacy/index.md) - older but still common Android/Java/Kotlin approaches and libraries: RxJava, RxAndroid, legacy patterns and migration to a modern stack.
 
-## Как читать
+## How to read
 
-Материалы написаны в формате компактной базы знаний. Для быстрого поиска используй строку поиска в верхней панели. Для навигации внутри раздела - левое меню, а для перехода по заголовкам текущей страницы - правое содержание.
+The materials are written as a compact knowledge base. Use the search field in the top bar for quick lookup. Use the left menu to navigate inside a section, and the right table of contents to jump between headings on the current page.

@@ -1,56 +1,56 @@
 # Android Components
 
-Android-приложение строится вокруг компонентов, через которые система или пользователь могут войти в приложение.
+An Android app is built around components through which the system or the user can enter the app.
 
-## Основные компоненты
+## Core components
 
-### Компоненты Android приложения
+### Android app components
 
-Четыре основных app components: `Activity`, `Service`, `BroadcastReceiver` и `ContentProvider`. Они объявляются в `AndroidManifest.xml` и имеют разные жизненные циклы.
+The four core app components are `Activity`, `Service`, `BroadcastReceiver` and `ContentProvider`. They are declared in `AndroidManifest.xml` and have different lifecycles.
 
-`Activity` отвечает за экран и взаимодействие с пользователем. `Service` выполняет фоновые или bound-задачи без UI. `BroadcastReceiver` принимает события. `ContentProvider` управляет доступом к данным через общий контракт.
+`Activity` represents a screen and user interaction. `Service` performs background or bound work without UI. `BroadcastReceiver` receives events. `ContentProvider` manages access to data through a shared contract.
 
-Эти компоненты могут быть entry points приложения: процесс не всегда создаётся из-за запуска `Activity`. Например, он может быть создан из-за `BroadcastReceiver`, `Service` или `ContentProvider`.
+These components can be app entry points: a process is not always created because an `Activity` was launched. For example, it can be created because of a `BroadcastReceiver`, `Service` or `ContentProvider`.
 
 ### Activity
 
-`Activity` - компонент, представляющий экран с UI и основной entry point для взаимодействия пользователя с приложением.
+`Activity` - a component that represents a screen with UI and the main entry point for user interaction with the app.
 
-Одна `Activity` обычно отвечает за один user-facing flow или служит host для нескольких экранов, fragments или Compose navigation. В современных приложениях часто встречается Single Activity approach, где одна `Activity` содержит `NavHost`, а конкретные экраны реализованы как fragments или composables.
+One `Activity` usually owns one user-facing flow or acts as a host for several screens, fragments or Compose navigation. Modern apps often use the Single Activity approach, where one `Activity` contains a `NavHost`, and individual screens are implemented as fragments or composables.
 
-`Activity` объявляется в `AndroidManifest.xml` и управляется системой через lifecycle callbacks.
+`Activity` is declared in `AndroidManifest.xml` and managed by the system through lifecycle callbacks.
 
 ### Service
 
-`Service` - компонент без собственного UI, предназначенный для работы в фоне или предоставления API другим компонентам через binding.
+`Service` - a component without its own UI, intended for background work or for exposing an API to other components through binding.
 
-**Важно:** `Service` не означает отдельный thread. Код service по умолчанию выполняется на main thread, поэтому тяжёлую работу нужно переносить в coroutine, worker или thread pool.
+**Important:** `Service` does not mean a separate thread. Service code runs on the main thread by default, so heavy work must be moved to a coroutine, worker or thread pool.
 
-Основные варианты: started service запускается для выполнения задачи; bound service живёт, пока к нему привязан клиент; foreground service показывает persistent notification и используется для задач, о которых пользователь должен знать.
+Main variants: a started service is launched to perform a task; a bound service lives while a client is bound to it; a foreground service shows a persistent notification and is used for work the user should be aware of.
 
-В современном Android для отложенной и гарантированной фоновой работы часто предпочтительнее `WorkManager`, а не ручной background `Service`.
+In modern Android, `WorkManager` is often preferable to a manual background `Service` for deferred and reliable background work.
 
 ### BroadcastReceiver
 
-`BroadcastReceiver` получает broadcast events от системы или других приложений. Это entry point, через который приложение может отреагировать на событие вне обычного user flow.
+`BroadcastReceiver` receives broadcast events from the system or other apps. It is an entry point through which an app can react to an event outside the normal user flow.
 
-`BroadcastReceiver` должен выполнять короткую работу. Для длительной операции лучше делегировать задачу в `WorkManager`, `JobScheduler` или foreground service, если сценарий действительно требует foreground execution.
+`BroadcastReceiver` should do short work. For a long-running operation, delegate the task to `WorkManager`, `JobScheduler` or a foreground service if the scenario truly requires foreground execution.
 
-Broadcast может быть system-wide или app-specific. При регистрации receiver важно учитывать security: exported/non-exported, permissions и ограничения implicit broadcasts в новых версиях Android.
+A broadcast can be system-wide or app-specific. When registering a receiver, security matters: exported/non-exported state, permissions and implicit broadcast restrictions in newer Android versions.
 
 ### ContentProvider
 
-`ContentProvider` управляет доступом к структурированным данным приложения и может предоставлять эти данные другим приложениям через URI-based API.
+`ContentProvider` manages access to structured app data and can expose that data to other apps through a URI-based API.
 
-Типичные примеры: `ContactsProvider`, `MediaStore`, `FileProvider`. Provider может хранить данные в SQLite, файлах, сети или другом storage, но наружу отдаёт единый контракт через `ContentResolver`.
+Typical examples are `ContactsProvider`, `MediaStore` and `FileProvider`. A provider may store data in SQLite, files, the network or another storage layer, but externally it exposes a unified contract through `ContentResolver`.
 
-`ContentProvider` является одним из entry points приложения и может быть создан системой очень рано, иногда до `Application.onCreate()`. Поэтому в provider-коде нужно осторожно относиться к тяжёлой инициализации.
+`ContentProvider` is one of the app entry points and can be created by the system very early, sometimes before `Application.onCreate()`. For that reason, provider code should be careful with heavy initialization.
 
-## Передача данных
+## Passing data
 
 ### Intent: explicit vs implicit
 
-Explicit Intent явно указывает компонент, который нужно запустить. Обычно используется для навигации внутри приложения.
+An explicit `Intent` directly specifies the component to launch. It is usually used for navigation inside the app.
 
 ```kotlin
 val intent = Intent(this, DetailsActivity::class.java)
@@ -58,7 +58,7 @@ intent.putExtra("item_id", itemId)
 startActivity(intent)
 ```
 
-Implicit Intent описывает действие, а не конкретный компонент. Система выбирает подходящее приложение или компонент через intent filters.
+An implicit `Intent` describes an action, not a specific component. The system chooses a suitable app or component through intent filters.
 
 ```kotlin
 val intent = Intent(Intent.ACTION_SEND)
@@ -67,24 +67,24 @@ intent.putExtra(Intent.EXTRA_TEXT, "Hello, world!")
 startActivity(Intent.createChooser(intent, "Share"))
 ```
 
-**Коротко:** explicit intent targets a specific component, implicit intent describes an action and lets Android resolve who can handle it.
+**In short:** explicit intent targets a specific component; implicit intent describes an action and lets Android resolve who can handle it.
 
 ### Bundle
 
-`Bundle` - контейнер key-value данных, который часто используется для передачи параметров между Android-компонентами и сохранения небольшого состояния.
+`Bundle` - a key-value data container often used to pass parameters between Android components and save small pieces of state.
 
-`Bundle` может хранить primitives, `String`, `Parcelable`, `Serializable` и некоторые массивы/коллекции поддерживаемых типов.
+`Bundle` can store primitives, `String`, `Parcelable`, `Serializable` and some arrays/collections of supported types.
 
-Типичные места использования: Intent extras, Fragment arguments, `onSaveInstanceState()`, `SavedStateHandle` interop.
+Common usage points are Intent extras, Fragment arguments, `onSaveInstanceState()` and `SavedStateHandle` interop.
 
-**Важно:** `Bundle` не предназначен для больших данных. Для больших объектов лучше передавать id и загружать данные из repository, database или cache.
+**Important:** `Bundle` is not designed for large data. For large objects, pass an id and load the data from a repository, database or cache.
 
 ### Serializable vs Parcelable
 
-`Serializable` - стандартный Java-механизм сериализации. Он простой в использовании, но часто медленнее и создаёт больше runtime overhead, потому что работает через reflection и промежуточные объекты.
+`Serializable` - the standard Java serialization mechanism. It is simple to use, but often slower and creates more runtime overhead because it works through reflection and intermediate objects.
 
-`Parcelable` - Android-ориентированный механизм передачи объектов между компонентами, например через `Intent` или `Bundle`. Он обычно быстрее и лучше подходит для Android IPC/Bundle-сценариев, но требует явного описания того, как объект записывается и читается.
+`Parcelable` - an Android-oriented mechanism for passing objects between components, for example through `Intent` or `Bundle`. It is usually faster and better suited for Android IPC/Bundle scenarios, but requires explicitly describing how the object is written and read.
 
-В Kotlin чаще используют `@Parcelize`, чтобы не писать boilerplate `Parcelable` вручную.
+In Kotlin, `@Parcelize` is commonly used to avoid writing `Parcelable` boilerplate by hand.
 
-**Коротко:** `Serializable` проще, `Parcelable` быстрее и является предпочтительным вариантом для Android component communication.
+**In short:** `Serializable` is simpler, while `Parcelable` is faster and is the preferred option for Android component communication.

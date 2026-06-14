@@ -1,49 +1,49 @@
 # Background Work & System Behavior
 
-Android ограничивает фоновую работу, чтобы экономить батарею, защищать пользователя и сохранять предсказуемость системы.
+Android restricts background work to save battery, protect the user and keep system behavior predictable.
 
 ## Background work
 
 ### Doze Mode
 
-Doze Mode - режим энергосбережения Android, который ограничивает background activity, когда устройство долго не используется, лежит неподвижно и экран выключен.
+Doze Mode - an Android power-saving mode that restricts background activity when the device has been unused for a long time, is stationary and the screen is off.
 
-В Doze система откладывает обычные background jobs, network access, sync и alarms. Периодически открываются maintenance windows, где приложения могут выполнить часть отложенной работы.
+In Doze, the system delays normal background jobs, network access, sync and alarms. Periodically, maintenance windows open where apps can perform part of the deferred work.
 
-Для задач, которые должны выполниться надёжно, лучше использовать `WorkManager` / `JobScheduler`, а не raw background thread. Для точного времени существуют alarms, но с ограничениями и осторожным использованием.
+For tasks that must run reliably, prefer `WorkManager` / `JobScheduler` over a raw background thread. For exact timing, alarms exist, but they come with restrictions and should be used carefully.
 
-**Коротко:** Doze protects battery by batching and delaying background work, so apps should use system-aware APIs instead of assuming background execution is always available.
+**In short:** Doze protects battery by batching and delaying background work, so apps should use system-aware APIs instead of assuming background execution is always available.
 
 ### WorkManager
 
-`WorkManager` - Jetpack API для deferrable background work, который должен выполниться гарантированно при соблюдении constraints.
+`WorkManager` - a Jetpack API for deferrable background work that should run reliably once constraints are met.
 
-Он подходит для задач вроде upload logs, sync data, cleanup, retryable network work. Можно задавать constraints: network, charging, battery not low, storage not low.
+It fits tasks such as uploading logs, syncing data, cleanup and retryable network work. You can define constraints: network, charging, battery not low, storage not low.
 
-`WorkManager` поддерживает one-time и periodic work, chaining, retries, backoff policy и сохранение задач после перезапуска процесса или устройства.
+`WorkManager` supports one-time and periodic work, chaining, retries, backoff policy and persistence after process or device restart.
 
-**Важно:** `WorkManager` не предназначен для точных задач "выполнить ровно в 12:00" и не заменяет foreground service для немедленной user-visible работы.
+**Important:** `WorkManager` is not intended for exact tasks like "run exactly at 12:00" and does not replace a foreground service for immediate user-visible work.
 
-**Коротко:** `WorkManager` is the recommended API for reliable deferrable background work with constraints and retry support.
+**In short:** `WorkManager` is the recommended API for reliable deferrable background work with constraints and retry support.
 
 ### Foreground Service
 
-Foreground Service - это `Service` для работы, о которой пользователь должен знать прямо сейчас. Он обязан показывать persistent notification.
+Foreground Service - a `Service` for work the user should know about right now. It must show a persistent notification.
 
-Типичные сценарии: navigation, media playback, active location tracking, ongoing call, connected device operation, long-running user-initiated task.
+Typical scenarios: navigation, media playback, active location tracking, ongoing call, connected device operation and long-running user-initiated task.
 
-Foreground Service не означает отдельный thread: тяжёлую работу всё равно нужно выполнять вне main thread.
+Foreground Service does not mean a separate thread: heavy work still needs to run outside the main thread.
 
-В новых версиях Android есть дополнительные ограничения: нужно объявлять foreground service type, запрашивать соответствующие permissions и учитывать ограничения запуска foreground service из background.
+Newer Android versions add extra restrictions: you must declare a foreground service type, request the corresponding permissions and account for restrictions on starting a foreground service from the background.
 
-**Коротко:** foreground service is for immediate user-visible ongoing work, while `WorkManager` is better for deferrable reliable background tasks.
+**In short:** foreground service is for immediate user-visible ongoing work, while `WorkManager` is better for deferrable reliable background tasks.
 
 ### Background restrictions
 
-Android постепенно усиливал background restrictions, чтобы экономить батарею и защищать пользователя от скрытой фоновой активности.
+Android has gradually strengthened background restrictions to save battery and protect the user from hidden background activity.
 
-Ограничения касаются background services, implicit broadcasts, background location, exact alarms, foreground service launch, jobs, network access и battery optimizations.
+Restrictions affect background services, implicit broadcasts, background location, exact alarms, foreground service launch, jobs, network access and battery optimizations.
 
-Практический подход: выбирать API по типу задачи. Для отложенной гарантированной работы - `WorkManager`. Для точных alarms - `AlarmManager` с учётом permissions/ограничений. Для активной видимой пользователю работы - foreground service. Для push-triggered событий - FCM, но тоже с ограничениями.
+A practical approach is to choose the API by task type. For deferred reliable work - `WorkManager`. For exact alarms - `AlarmManager`, accounting for permissions/restrictions. For active user-visible work - foreground service. For push-triggered events - FCM, also with restrictions.
 
-Нельзя проектировать Android-приложение так, будто оно может бесконечно работать в фоне. Система может остановить процесс, отложить работу или ограничить доступ к ресурсам.
+Do not design an Android app as if it can run in the background indefinitely. The system may stop the process, defer work or restrict access to resources.

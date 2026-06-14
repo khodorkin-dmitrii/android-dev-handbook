@@ -4,7 +4,7 @@ site_url: https://khodorkin-dmitrii.github.io/android-dev-handbook/
 
 theme:
   name: material
-  language: ru
+  language: en
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -30,6 +30,82 @@ theme:
 
 plugins:
   - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+          link: /en/
+        - locale: ru
+          name: Русский
+          build: true
+          link: /ru/
+          site_description: Структурированный справочник по Android-разработке
+          nav_translations:
+            Home: Главная
+            Overview: Обзор
+            Android Components: Компоненты Android
+            Activity, Fragment & Lifecycle: Activity, Fragment & Lifecycle
+            View System / XML UI: View System / XML UI
+            Context & Resources: Context & Resources
+            Background Work & System Behavior: Background Work & System Behavior
+            Storage: Storage
+            Performance & Memory: Performance & Memory
+            Android Canvas: Android Canvas
+            OpenGL ES: OpenGL ES
+            Vulkan: Vulkan
+            Google Filament: Google Filament
+            2D and 3D Rendering: 2D и 3D Rendering
+            Basics: Основы
+            Kotlin vs Java: Kotlin vs Java
+            Classes & Types: Классы и типы
+            Collections: Collections
+            Functions: Functions
+            Generics: Generics
+            Compose Basics: Основы Compose
+            State & Recomposition: State & Recomposition
+            Side Effects: Side Effects
+            Compose Performance: Performance Compose
+            Compose Testing: Testing Compose
+            Coroutines Basics: Основы Coroutines
+            Coroutine Scopes & Cancellation: Coroutine Scopes & Cancellation
+            Flow Basics: Основы Flow
+            Flow Operators: Flow Operators
+            StateFlow & SharedFlow: StateFlow & SharedFlow
+            Lifecycle-aware Collection: Lifecycle-aware Collection
+            Architecture Basics: Основы архитектуры
+            UI State Architecture: UI State Architecture
+            MV* Patterns: MV* Patterns
+            Multi-module Architecture: Multi-module Architecture
+            Legacy & Refactoring: Legacy & Refactoring
+            Java Core: Java Core
+            Java Concurrency: Java Concurrency
+            Java Exceptions: Java Exceptions
+            JVM / Android Runtime: JVM / Android Runtime
+            DI Basics: Основы DI
+            Dagger / Hilt: Dagger / Hilt
+            Legacy DI: Legacy DI
+            HTTP / REST: HTTP / REST
+            Retrofit / OkHttp: Retrofit / OkHttp
+            GraphQL: GraphQL
+            gRPC / Protobuf: gRPC / Protobuf
+            Testing Strategy: Стратегия тестирования
+            ViewModel Testing: ViewModel Testing
+            Coroutines & Flow Testing: Coroutines & Flow Testing
+            Android UI Testing: Android UI Testing
+            OOP: OOP
+            SOLID: SOLID
+            Design Patterns: Design Patterns
+            Algorithms & Complexity: Algorithms & Complexity
+            Memory & Runtime Basics: Memory & Runtime Basics
+            RxJava: RxJava
+
+hooks:
+  - hooks/i18n_url_structure.py
 
 extra_css:
   - stylesheets/extra.css

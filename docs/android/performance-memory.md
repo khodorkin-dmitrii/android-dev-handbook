@@ -1,93 +1,93 @@
 # Performance & Memory
 
-Performance и memory topics помогают понимать отзывчивость UI, rendering, leaks, profiling и ограничения Android runtime.
+Performance and memory topics help understand UI responsiveness, rendering, leaks, profiling and Android runtime constraints.
 
-## Responsiveness и rendering
+## Responsiveness and rendering
 
 ### ANR
 
-ANR (Application Not Responding) - состояние, когда Android считает приложение зависшим, потому что main thread слишком долго не отвечает на события.
+ANR (Application Not Responding) - a state where Android considers the app frozen because the main thread has not responded to events for too long.
 
-Типичные причины: тяжёлая работа на main thread, синхронный I/O, долгие database/network операции, deadlock, блокировка main thread через `wait()` / `join()` / `sleep()` или слишком тяжёлый `BroadcastReceiver`.
+Typical causes: heavy work on the main thread, synchronous I/O, long database/network operations, deadlock, blocking the main thread with `wait()` / `join()` / `sleep()` or an overly heavy `BroadcastReceiver`.
 
-Для `Activity` ANR обычно возникает, если приложение не отвечает на input events около 5 секунд. Для `BroadcastReceiver` лимиты зависят от типа receiver и версии Android, поэтому лучше держать работу receiver короткой и делегировать длительные задачи в `WorkManager` / foreground service.
+For `Activity`, ANR usually occurs if the app does not respond to input events for about 5 seconds. For `BroadcastReceiver`, limits depend on receiver type and Android version, so receiver work should be short and long-running tasks should be delegated to `WorkManager` / foreground service.
 
-Профилактика: не блокировать main thread, переносить I/O и CPU-heavy work на подходящие dispatchers/thread pools, следить за locks, использовать `StrictMode`, traces и Android Studio Profiler.
+Prevention: do not block the main thread, move I/O and CPU-heavy work to appropriate dispatchers/thread pools, watch locks, use `StrictMode`, traces and Android Studio Profiler.
 
-**Коротко:** ANR happens when the main thread is blocked long enough that the system cannot process input or lifecycle messages.
+**In short:** ANR happens when the main thread is blocked long enough that the system cannot process input or lifecycle messages.
 
 ### Jank
 
-Jank - заметные рывки UI, когда кадры не успевают отрисоваться вовремя.
+Jank - visible UI stutter when frames are not rendered on time.
 
-При 60 Hz у приложения примерно 16.6 ms на кадр, при 120 Hz - около 8.3 ms. Если main thread или render thread заняты слишком долго, кадр пропускается и пользователь видит лаг.
+At 60 Hz, an app has roughly 16.6 ms per frame; at 120 Hz, about 8.3 ms. If the main thread or render thread is busy for too long, a frame is missed and the user sees lag.
 
-Причины jank: тяжёлый layout/draw, глубокая hierarchy, синхронная работа на main thread, частые allocations и GC, сложный `RecyclerView` bind, большие images, неправильная работа с animations.
+Causes of jank: heavy layout/draw, deep hierarchy, synchronous work on the main thread, frequent allocations and GC, complex `RecyclerView` bind, large images and incorrect animation handling.
 
-Инструменты: Layout Inspector, Android Profiler, System Trace/Perfetto, Profile GPU Rendering, Macrobenchmark/JankStats.
+Tools: Layout Inspector, Android Profiler, System Trace/Perfetto, Profile GPU Rendering, Macrobenchmark/JankStats.
 
-**Коротко:** jank is missed frame deadlines; fix it by reducing main-thread work, layout/draw cost, allocations and expensive binds.
+**In short:** jank is missed frame deadlines; fix it by reducing main-thread work, layout/draw cost, allocations and expensive binds.
 
 ### Overdraw
 
-Overdraw - ситуация, когда один и тот же pixel рисуется несколько раз за один frame.
+Overdraw - a situation where the same pixel is drawn several times in one frame.
 
-Например, если `Activity` background, root layout background и Card background перекрывают друг друга, GPU делает лишнюю работу.
+For example, if `Activity` background, root layout background and Card background overlap, the GPU does unnecessary work.
 
-Overdraw не всегда критичен, но сильный overdraw может ухудшать rendering performance, особенно на слабых устройствах или сложных экранах.
+Overdraw is not always critical, but heavy overdraw can hurt rendering performance, especially on weaker devices or complex screens.
 
-Оптимизация: убрать лишние backgrounds, flatten hierarchy, не рисовать невидимые слои, аккуратно использовать alpha/shadows, проверять UI через debugging tools и profiler.
+Optimization: remove unnecessary backgrounds, flatten hierarchy, avoid drawing invisible layers, use alpha/shadows carefully and inspect UI with debugging tools and profiler.
 
-**Коротко:** overdraw is drawing the same pixels multiple times; reduce redundant backgrounds and unnecessary overlapping layers.
+**In short:** overdraw is drawing the same pixels multiple times; reduce redundant backgrounds and unnecessary overlapping layers.
 
-## Memory и tooling
+## Memory and tooling
 
 ### Memory leaks in Android
 
-Memory leak в Android возникает, когда объект уже не нужен, но всё ещё удерживается через strong reference и не может быть собран GC.
+Memory leak in Android happens when an object is no longer needed, but is still held by a strong reference and cannot be collected by GC.
 
-Классические причины: хранение `Activity` / `Fragment` / `View Context` в singleton, static references на `View`, callback/listener без отписки, долгоживущая coroutine с reference на UI, `Handler` / `Runnable`, `ViewBinding` после `onDestroyView()`.
+Classic causes: storing `Activity` / `Fragment` / `View Context` in a singleton, static references to `View`, callback/listener without unsubscribe, long-lived coroutine with a UI reference, `Handler` / `Runnable`, `ViewBinding` after `onDestroyView()`.
 
-Особенно важно помнить Fragment view lifecycle: `Fragment` может жить дольше своей `View`, поэтому binding нужно очищать в `onDestroyView()`, а UI observers привязывать к `viewLifecycleOwner`.
+It is especially important to remember Fragment view lifecycle: a `Fragment` can live longer than its `View`, so binding must be cleared in `onDestroyView()`, and UI observers should be tied to `viewLifecycleOwner`.
 
-Профилактика: использовать `applicationContext` для долгоживущих объектов, lifecycle-aware collection, weak references только когда это действительно подходит, clear callbacks/listeners, не хранить `View` в `ViewModel`.
+Prevention: use `applicationContext` for long-lived objects, lifecycle-aware collection, weak references only when truly appropriate, clear callbacks/listeners and do not store `View` in `ViewModel`.
 
-**Коротко:** leaks happen when obsolete Android components remain reachable from GC roots, often through singletons, callbacks, static references or wrong lifecycle scope.
+**In short:** leaks happen when obsolete Android components remain reachable from GC roots, often through singletons, callbacks, static references or wrong lifecycle scope.
 
 ### Android Profiler
 
-Android Profiler - инструмент Android Studio для анализа CPU, memory, network, energy и поведения приложения во время выполнения.
+Android Profiler - an Android Studio tool for analyzing CPU, memory, network, energy and app behavior at runtime.
 
-CPU profiler помогает искать долгие методы, hot paths, main-thread блокировки и expensive frames. Memory profiler показывает allocations, heap usage, GC activity и помогает найти удерживаемые объекты.
+CPU profiler helps find long methods, hot paths, main-thread blocking and expensive frames. Memory profiler shows allocations, heap usage, GC activity and helps find retained objects.
 
-Network profiler полезен для оценки запросов, payload size и timing, хотя для OkHttp/Retrofit часто также используют logging/interceptors и backend tracing.
+Network profiler is useful for evaluating requests, payload size and timing, although OkHttp/Retrofit setups often also use logging/interceptors and backend tracing.
 
-Profiler лучше использовать вместе с реальными сценариями: slow startup, scrolling, opening heavy screen, loading data, animation.
+Profiler is best used with real scenarios: slow startup, scrolling, opening a heavy screen, loading data and animation.
 
-**Коротко:** Android Profiler helps verify performance hypotheses instead of guessing; it shows CPU, memory, network and energy behavior under real app usage.
+**In short:** Android Profiler helps verify performance hypotheses instead of guessing; it shows CPU, memory, network and energy behavior under real app usage.
 
 ### LeakCanary
 
-LeakCanary - библиотека для автоматического обнаружения memory leaks в Android debug builds.
+LeakCanary - a library for automatic memory leak detection in Android debug builds.
 
-Она отслеживает уничтоженные `Activity`, `Fragment`, `View` и другие объекты, которые должны быть garbage collected, но остаются reachable.
+It watches destroyed `Activity`, `Fragment`, `View` and other objects that should be garbage collected, but remain reachable.
 
-Если объект не собирается, LeakCanary анализирует heap dump и показывает reference chain от GC root до leaked object.
+If an object is not collected, LeakCanary analyzes the heap dump and shows the reference chain from a GC root to the leaked object.
 
-Типичные находки: Fragment view binding leak, listener/callback leak, retained `Activity` context, adapter/view reference, coroutine или lambda, удерживающая UI.
+Typical findings: Fragment view binding leak, listener/callback leak, retained `Activity` context, adapter/view reference, coroutine or lambda holding UI.
 
-LeakCanary не чинит leak автоматически, но быстро показывает цепочку ссылок и помогает найти владельца лишней reference.
+LeakCanary does not fix leaks automatically, but it quickly shows the reference chain and helps find the owner of the unnecessary reference.
 
-**Коротко:** LeakCanary detects retained objects and shows the reference path that keeps them alive.
+**In short:** LeakCanary detects retained objects and shows the reference path that keeps them alive.
 
 ### dex / multidex
 
-DEX (Dalvik Executable) - формат bytecode, который выполняет Android Runtime. Java/Kotlin code компилируется в JVM bytecode, а затем Android build tools преобразуют его в DEX.
+DEX (Dalvik Executable) - the bytecode format executed by Android Runtime. Java/Kotlin code is compiled to JVM bytecode, and then Android build tools transform it into DEX.
 
-У DEX есть историческое ограничение около 65K method references на один dex-файл. Если приложение превышает этот лимит, нужен multidex: приложение разбивается на несколько dex-файлов.
+DEX has a historical limit of about 65K method references per dex file. If an app exceeds this limit, multidex is needed: the app is split into several dex files.
 
-На Android 5.0+ ART поддерживает loading multiple dex files нативно. На более старых версиях требовалась support library multidex и специальная инициализация.
+On Android 5.0+, ART supports loading multiple dex files natively. On older versions, the multidex support library and special initialization were required.
 
-Причины роста method count: большие libraries, Google Play Services целиком, DI/generated code, legacy dependencies. Решения: удалить лишние зависимости, использовать более узкие artifacts, R8 shrinking, minification, proguard rules и modularization.
+Reasons for method count growth: large libraries, full Google Play Services, DI/generated code and legacy dependencies. Solutions: remove unnecessary dependencies, use narrower artifacts, R8 shrinking, minification, proguard rules and modularization.
 
-**Коротко:** multidex is a solution for the 64K DEX method reference limit, but first you should reduce method count with dependency cleanup and shrinking.
+**In short:** multidex is a solution for the 64K DEX method reference limit, but first you should reduce method count with dependency cleanup and shrinking.

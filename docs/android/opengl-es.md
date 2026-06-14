@@ -1,28 +1,28 @@
 # OpenGL ES
 
-OpenGL ES - низкоуровневый graphics API для GPU rendering на embedded/mobile устройствах. В Android он используется для 2D/3D rendering, игр, visual effects, camera filters и custom graphics engines.
+OpenGL ES - a low-level graphics API for GPU rendering on embedded/mobile devices. On Android, it is used for 2D/3D rendering, games, visual effects, camera filters and custom graphics engines.
 
-## Основы OpenGL ES
+## OpenGL ES basics
 
-### Базовая архитектура
+### Basic architecture
 
-OpenGL ES работает как state machine: приложение на CPU настраивает graphics state, buffers, shaders, textures и draw calls, а GPU выполняет rendering.
+OpenGL ES works as a state machine: the app on the CPU configures graphics state, buffers, shaders, textures and draw calls, while the GPU performs rendering.
 
-В Android OpenGL ES обычно используют через `GLSurfaceView`, `TextureView`, `SurfaceView` или собственную работу с EGL. `GLSurfaceView.Renderer` даёт callbacks вроде `onSurfaceCreated()`, `onSurfaceChanged()` и `onDrawFrame()`.
+On Android, OpenGL ES is usually used through `GLSurfaceView`, `TextureView`, `SurfaceView` or custom EGL handling. `GLSurfaceView.Renderer` provides callbacks such as `onSurfaceCreated()`, `onSurfaceChanged()` and `onDrawFrame()`.
 
-Минимальный rendering loop обычно делает три вещи: создаёт GPU resources, обновляет state сцены и вызывает draw calls каждый frame.
+A minimal rendering loop usually does three things: creates GPU resources, updates scene state and calls draw calls every frame.
 
-**Важно:** OpenGL ES даёт много контроля, но требует вручную управлять buffers, shaders, textures, matrices, lifecycle surface и ошибками GPU state.
+**Important:** OpenGL ES gives a lot of control, but requires manual management of buffers, shaders, textures, matrices, surface lifecycle and GPU state errors.
 
-**Коротко:** OpenGL ES - API для прямой работы с GPU pipeline, где приложение само описывает geometry, shaders, textures и draw calls.
+**In short:** OpenGL ES is an API for direct work with the GPU pipeline, where the app describes geometry, shaders, textures and draw calls itself.
 
 ### Vertex Buffer
 
-Vertex Buffer - область GPU memory, где хранятся vertex data: позиции, texture coordinates, normals, colors и другие attributes.
+Vertex Buffer - an area of GPU memory where vertex data is stored: positions, texture coordinates, normals, colors and other attributes.
 
-Вместо того чтобы отправлять vertices на GPU каждый frame из CPU memory, данные загружают в buffer и переиспользуют в draw calls.
+Instead of sending vertices to the GPU from CPU memory every frame, data is uploaded to a buffer and reused in draw calls.
 
-Пример данных для простого треугольника:
+Example data for a simple triangle:
 
 ```kotlin
 val vertices = floatArrayOf(
@@ -32,22 +32,22 @@ val vertices = floatArrayOf(
 )
 ```
 
-В реальном OpenGL ES коде эти данные кладут в `FloatBuffer`, создают buffer object через `glGenBuffers()`, загружают через `glBufferData()` и описывают layout attributes через `glVertexAttribPointer()`.
+In real OpenGL ES code, this data is placed into a `FloatBuffer`, a buffer object is created with `glGenBuffers()`, data is uploaded through `glBufferData()`, and layout attributes are described with `glVertexAttribPointer()`.
 
-**Коротко:** Vertex Buffer хранит geometry data на GPU и позволяет эффективно переиспользовать vertices при rendering.
+**In short:** Vertex Buffer stores geometry data on the GPU and allows vertices to be reused efficiently during rendering.
 
 ### Vertex Shader
 
-Vertex Shader - программа, которая выполняется для каждого vertex. Обычно она преобразует координаты из model space в clip space и передаёт данные дальше в pipeline.
+Vertex Shader - a program that runs for each vertex. Usually, it transforms coordinates from model space to clip space and passes data further through the pipeline.
 
-Типичные задачи vertex shader:
+Typical vertex shader tasks:
 
-- применить model/view/projection matrices;
-- передать texture coordinates во fragment shader;
-- подготовить normals или colors;
-- выполнить простые vertex transformations.
+- apply model/view/projection matrices;
+- pass texture coordinates to the fragment shader;
+- prepare normals or colors;
+- perform simple vertex transformations.
 
-Пример упрощённого shader:
+Example of a simplified shader:
 
 ```glsl
 attribute vec4 aPosition;
@@ -58,15 +58,15 @@ void main() {
 }
 ```
 
-**Коротко:** Vertex Shader отвечает за обработку vertices и их позицию в graphics pipeline.
+**In short:** Vertex Shader is responsible for processing vertices and their position in the graphics pipeline.
 
 ### Fragment Shader
 
-Fragment Shader - программа, которая вычисляет цвет каждого fragment, который потенциально станет pixel на экране.
+Fragment Shader - a program that calculates the color of each fragment that may become a pixel on the screen.
 
-Он может использовать constant color, texture sampling, lighting calculations, alpha, fog, post-processing и другие effects.
+It can use constant color, texture sampling, lighting calculations, alpha, fog, post-processing and other effects.
 
-Пример:
+Example:
 
 ```glsl
 precision mediump float;
@@ -77,59 +77,59 @@ void main() {
 }
 ```
 
-Fragment shader часто является дорогой частью pipeline, потому что выполняется для большого количества fragments. Сложные lighting/effects, texture lookups и overdraw могут заметно влиять на performance.
+Fragment shader is often an expensive part of the pipeline because it runs for a large number of fragments. Complex lighting/effects, texture lookups and overdraw can significantly affect performance.
 
-**Коротко:** Fragment Shader вычисляет итоговый цвет fragments и часто определяет визуальный стиль объекта.
+**In short:** Fragment Shader calculates the final color of fragments and often defines the visual style of an object.
 
 ### Texture
 
-Texture - изображение или набор данных, загруженный в GPU memory и доступный shader-ам для sampling.
+Texture - an image or data set loaded into GPU memory and available to shaders for sampling.
 
-Textures используют для изображений на поверхностях, material maps, sprites, fonts, UI atlases, camera frames, normal maps и post-processing.
+Textures are used for images on surfaces, material maps, sprites, fonts, UI atlases, camera frames, normal maps and post-processing.
 
-В Android важно учитывать размеры texture, format, mipmaps, filtering и lifecycle. Слишком большие textures расходуют GPU memory, а частая загрузка textures может вызывать stutter.
+On Android, texture size, format, mipmaps, filtering and lifecycle matter. Textures that are too large consume GPU memory, and frequent texture uploads can cause stutter.
 
-Типичные настройки:
+Typical settings:
 
-- min/mag filtering: nearest или linear;
-- wrap mode: clamp или repeat;
-- mipmaps для уменьшения aliasing на удалённых объектах.
+- min/mag filtering: nearest or linear;
+- wrap mode: clamp or repeat;
+- mipmaps to reduce aliasing on distant objects.
 
-**Коротко:** Texture - GPU resource с изображением или данными, которые shader может читать при rendering.
+**In short:** Texture is a GPU resource with an image or data that a shader can read during rendering.
 
 ### Coordinate Systems
 
-В graphics pipeline обычно есть несколько coordinate systems:
+The graphics pipeline usually has several coordinate systems:
 
-- model/local space - координаты внутри объекта;
-- world space - координаты объекта в сцене;
-- view/camera space - координаты относительно камеры;
-- clip space - результат projection transform;
-- normalized device coordinates - координаты после perspective divide;
-- screen/window space - координаты пикселей на экране.
+- model/local space - coordinates inside the object;
+- world space - object coordinates in the scene;
+- view/camera space - coordinates relative to the camera;
+- clip space - the result of the projection transform;
+- normalized device coordinates - coordinates after perspective divide;
+- screen/window space - pixel coordinates on the screen.
 
-Переходы между ними обычно задаются matrices: model, view и projection. Вместе их часто называют MVP matrix.
+Transitions between them are usually defined by matrices: model, view and projection. Together they are often called the MVP matrix.
 
 ```text
 model coordinates -> world -> view -> clip -> screen
 ```
 
-На Android дополнительно нужно помнить про разные системы координат для touch input, bitmap, texture coordinates и screen orientation.
+On Android, additionally remember different coordinate systems for touch input, bitmap, texture coordinates and screen orientation.
 
-**Коротко:** coordinate systems помогают отделить geometry объекта, положение в мире, камеру и финальное положение на экране.
+**In short:** coordinate systems help separate object geometry, world position, camera and final screen position.
 
 ### Rendering Pipeline
 
-Упрощённый OpenGL ES pipeline:
+Simplified OpenGL ES pipeline:
 
-1. CPU подготавливает data, state и draw call.
-2. Vertex Shader обрабатывает vertices.
-3. Primitive assembly собирает triangles/lines/points.
-4. Rasterization превращает primitives во fragments.
-5. Fragment Shader вычисляет цвет fragments.
-6. Depth/stencil/blending tests решают, попадёт ли fragment в framebuffer.
-7. Framebuffer выводится на экран.
+1. CPU prepares data, state and draw call.
+2. Vertex Shader processes vertices.
+3. Primitive assembly builds triangles/lines/points.
+4. Rasterization turns primitives into fragments.
+5. Fragment Shader calculates fragment color.
+6. Depth/stencil/blending tests decide whether the fragment reaches the framebuffer.
+7. Framebuffer is presented on the screen.
 
-Performance зависит от количества draw calls, vertices, fragment cost, overdraw, texture bandwidth, state changes и синхронизации CPU/GPU.
+Performance depends on draw call count, vertices, fragment cost, overdraw, texture bandwidth, state changes and CPU/GPU synchronization.
 
-**Коротко:** OpenGL ES pipeline превращает vertex data и shader programs в pixels на экране через последовательность GPU stages.
+**In short:** OpenGL ES pipeline turns vertex data and shader programs into pixels on the screen through a sequence of GPU stages.

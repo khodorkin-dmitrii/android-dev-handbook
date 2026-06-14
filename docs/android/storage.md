@@ -1,103 +1,103 @@
 # Storage
 
-Storage в Android включает низкоуровневый SQLite, Room как modern abstraction, DataStore для настроек и legacy `SharedPreferences`.
+Storage in Android includes low-level SQLite, Room as a modern abstraction, DataStore for settings and legacy `SharedPreferences`.
 
-## SQLite и Room
+## SQLite and Room
 
 ### SQLiteOpenHelper
 
 ![SQLite cheat sheet](../assets/images/android/sql_cheat_sheet.png)
 
-`SQLiteOpenHelper` - базовый Android helper для создания, открытия и миграции SQLite database вручную.
+`SQLiteOpenHelper` - a basic Android helper for manually creating, opening and migrating a SQLite database.
 
-Он используется, когда приложение напрямую работает с `SQLiteDatabase` и SQL-запросами: создаёт таблицы, выполняет query/insert/update/delete и управляет версиями схемы.
+It is used when an app works directly with `SQLiteDatabase` and SQL queries: creates tables, runs query/insert/update/delete operations and manages schema versions.
 
-Класс-наследник обычно задаёт database name и version, а также реализует `onCreate()` и `onUpgrade()`.
+A subclass usually defines the database name and version, and implements `onCreate()` and `onUpgrade()`.
 
-**Важно:** сам объект helper создаётся быстро, но база реально открывается только при вызове `getReadableDatabase()` или `getWritableDatabase()`.
+**Important:** the helper object itself is created quickly, but the database is actually opened only when `getReadableDatabase()` or `getWritableDatabase()` is called.
 
-В modern Android чаще предпочитают Room, потому что он даёт compile-time проверку SQL, DAO, migrations и меньше boilerplate.
+In modern Android, Room is usually preferred because it provides compile-time SQL validation, DAO, migrations and less boilerplate.
 
-**Коротко:** `SQLiteOpenHelper` is a low-level helper for managing SQLite database creation and migrations; Room is usually preferred for new production code.
+**In short:** `SQLiteOpenHelper` is a low-level helper for managing SQLite database creation and migrations; Room is usually preferred for new production code.
 
 ### `onCreate()` / `onUpgrade()`
 
-`onCreate()` вызывается, когда database создаётся впервые. Обычно здесь создают tables, indexes, triggers и при необходимости добавляют начальные данные.
+`onCreate()` is called when the database is created for the first time. This is usually where tables, indexes, triggers and, when needed, initial data are created.
 
-`onUpgrade()` вызывается, когда version базы в коде стала больше, чем версия уже существующей базы на устройстве.
+`onUpgrade()` is called when the database version in code becomes higher than the version of the existing database on the device.
 
-Главная задача `onUpgrade()` - аккуратно мигрировать схему и сохранить пользовательские данные. Простой `DROP TABLE` + `CREATE TABLE` допустим только для cache/test data или когда потеря данных осознанно разрешена.
+The main task of `onUpgrade()` is to carefully migrate the schema and preserve user data. A simple `DROP TABLE` + `CREATE TABLE` is acceptable only for cache/test data or when data loss is intentionally allowed.
 
-Миграции должны учитывать все старые версии: пользователь может обновиться с версии 1 сразу на версию 5.
+Migrations must account for all old versions: a user may update from version 1 directly to version 5.
 
-**Важно:** после релиза нельзя просто "переписать" уже опубликованный migration step и ожидать, что он повторно выполнится на устройствах, где уже был применён.
+**Important:** after release, you cannot simply "rewrite" an already published migration step and expect it to run again on devices where it has already been applied.
 
-**Коротко:** `onCreate()` creates the initial schema, `onUpgrade()` migrates an existing database between versions and must be written carefully to avoid data loss.
+**In short:** `onCreate()` creates the initial schema, `onUpgrade()` migrates an existing database between versions and must be written carefully to avoid data loss.
 
 ### `getReadableDatabase()` / `getWritableDatabase()`
 
-`getReadableDatabase()` и `getWritableDatabase()` возвращают `SQLiteDatabase`, но отличаются намерением открытия.
+`getReadableDatabase()` and `getWritableDatabase()` return `SQLiteDatabase`, but differ by opening intent.
 
-`getWritableDatabase()` открывает базу для чтения и записи. При первом открытии может вызвать `onCreate()`, `onUpgrade()` и `onOpen()`.
+`getWritableDatabase()` opens the database for reading and writing. On first open, it may call `onCreate()`, `onUpgrade()` and `onOpen()`.
 
-`getReadableDatabase()` обычно возвращает тот же read/write database object, если это возможно. Но если есть проблема, например full disk, он может вернуть read-only database.
+`getReadableDatabase()` usually returns the same read/write database object when possible. But if there is a problem, for example full disk, it may return a read-only database.
 
-Оба метода могут занять много времени, особенно при создании или миграции базы, поэтому их не стоит вызывать на main thread.
+Both methods may take a long time, especially when creating or migrating the database, so they should not be called on the main thread.
 
-После успешного открытия database object кэшируется helper-ом. Обычно не нужно открывать/закрывать базу на каждую маленькую операцию, но нужно закрывать helper/database, когда они больше не нужны.
+After successful opening, the database object is cached by the helper. Usually, you do not need to open/close the database for every small operation, but you should close the helper/database when they are no longer needed.
 
-Для нескольких связанных операций стоит использовать transaction, чтобы сохранить consistency и улучшить performance.
+For several related operations, use a transaction to preserve consistency and improve performance.
 
-**Коротко:** `getWritableDatabase()` opens a read/write database, `getReadableDatabase()` may return read-only in fallback cases, and both can block during open or migration.
+**In short:** `getWritableDatabase()` opens a read/write database, `getReadableDatabase()` may return read-only in fallback cases, and both can block during open or migration.
 
 ### Room
 
-Room - Jetpack persistence library поверх SQLite, которая даёт более удобный и безопасный API для локальной базы данных.
+Room - a Jetpack persistence library on top of SQLite that provides a more convenient and safer API for a local database.
 
-Основные части Room: `@Entity` описывает таблицу, `@Dao` описывает queries/insert/update/delete, `@Database` связывает entities и DAO в database class.
+Main parts of Room: `@Entity` describes a table, `@Dao` describes queries/insert/update/delete operations, and `@Database` connects entities and DAO in a database class.
 
-Room проверяет SQL на этапе компиляции, уменьшает boilerplate и хорошо интегрируется с Kotlin Coroutines и `Flow`.
+Room validates SQL at compile time, reduces boilerplate and integrates well with Kotlin Coroutines and `Flow`.
 
-Room подходит для structured relational data: cache, offline-first data, user-generated content, history, relational entities.
+Room fits structured relational data: cache, offline-first data, user-generated content, history and relational entities.
 
-**Важно:** Room всё равно использует SQLite под капотом, поэтому нужно понимать schema design, indexes, transactions и migrations.
+**Important:** Room still uses SQLite under the hood, so schema design, indexes, transactions and migrations still matter.
 
-По умолчанию Room не позволяет выполнять database operations на main thread, и это хорошо: запросы должны идти через suspend functions, `Flow` или background dispatcher.
+By default, Room does not allow database operations on the main thread, and that is good: queries should go through suspend functions, `Flow` or a background dispatcher.
 
-**Коротко:** Room is the recommended higher-level abstraction over SQLite for structured local data, with DAO, entities, compile-time SQL checks and migration support.
+**In short:** Room is the recommended higher-level abstraction over SQLite for structured local data, with DAO, entities, compile-time SQL checks and migration support.
 
 ## Preferences
 
 ### DataStore
 
-DataStore - Jetpack API для хранения небольших persistent данных асинхронно и безопаснее, чем `SharedPreferences`.
+DataStore - a Jetpack API for storing small persistent data asynchronously and more safely than `SharedPreferences`.
 
-Есть два основных варианта: Preferences DataStore для key-value данных без заранее заданной схемы и Proto DataStore для typed objects через Protocol Buffers.
+There are two main variants: Preferences DataStore for key-value data without a predefined schema, and Proto DataStore for typed objects through Protocol Buffers.
 
-DataStore использует coroutines и `Flow`, поэтому чтение обычно выглядит как `Flow` настроек, а запись выполняется через suspend `updateData()` / `edit()`.
+DataStore uses coroutines and `Flow`, so reads usually look like a `Flow` of settings, while writes are performed through suspend `updateData()` / `edit()`.
 
-Он хорошо подходит для user settings, feature flags, onboarding flags, last selected option и других небольших preferences.
+It works well for user settings, feature flags, onboarding flags, last selected option and other small preferences.
 
-DataStore не предназначен для больших relational данных, partial updates сложных структур или referential integrity. Для этого лучше Room.
+DataStore is not intended for large relational data, partial updates of complex structures or referential integrity. Room is better for that.
 
-**Важно:** для одного файла DataStore должен существовать один instance в процессе, обычно через delegate или DI singleton.
+**Important:** for one DataStore file, there should be one instance in the process, usually through a delegate or DI singleton.
 
-**Коротко:** DataStore is a modern asynchronous replacement for `SharedPreferences` for small key-value or typed settings, while Room is better for complex structured data.
+**In short:** DataStore is a modern asynchronous replacement for `SharedPreferences` for small key-value or typed settings, while Room is better for complex structured data.
 
 ### SharedPreferences
 
-`SharedPreferences` - старый Android API для хранения небольшого набора key-value данных в XML-файле.
+`SharedPreferences` - an old Android API for storing a small set of key-value data in an XML file.
 
-Он подходит для простых primitives и `String`: flags, небольшие настройки, selected mode, first launch marker.
+It fits simple primitives and `String`: flags, small settings, selected mode and first launch marker.
 
-Для записи есть `apply()` и `commit()`. `apply()` пишет изменения асинхронно и не возвращает результат, `commit()` пишет синхронно и возвращает boolean success.
+For writing, there are `apply()` and `commit()`. `apply()` writes changes asynchronously and does not return a result; `commit()` writes synchronously and returns boolean success.
 
-`commit()` может блокировать вызывающий thread, поэтому его не стоит использовать на main thread без необходимости.
+`commit()` can block the calling thread, so it should not be used on the main thread unless necessary.
 
-`SharedPreferences` не предназначен для больших данных, списков сложных объектов, relational data или частых конкурентных записей.
+`SharedPreferences` is not intended for large data, lists of complex objects, relational data or frequent concurrent writes.
 
-`SharedPreferences` не шифрует данные сам по себе. Для чувствительных данных нужен отдельный secure storage подход, а не обычный preferences file.
+`SharedPreferences` does not encrypt data by itself. Sensitive data needs a separate secure storage approach, not a regular preferences file.
 
-В modern Android для новых настроек чаще выбирают DataStore, но `SharedPreferences` всё ещё часто встречается в legacy-коде.
+In modern Android, DataStore is usually chosen for new settings, but `SharedPreferences` is still common in legacy code.
 
-**Коротко:** `SharedPreferences` is a simple legacy key-value storage API; use it for small preferences, prefer DataStore for modern asynchronous settings storage.
+**In short:** `SharedPreferences` is a simple legacy key-value storage API; use it for small preferences, prefer DataStore for modern asynchronous settings storage.

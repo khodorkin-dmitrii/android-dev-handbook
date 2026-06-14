@@ -1,22 +1,22 @@
 # Activity, Fragment & Lifecycle
 
-Lifecycle в Android описывает, как компоненты создаются, становятся видимыми, уходят в фон, уничтожаются и восстанавливают состояние.
+Lifecycle in Android describes how components are created, become visible, move to the background, are destroyed and restore state.
 
-## Activity и Fragment
+## Activity and Fragment
 
 ### Activity lifecycle
 
 ![Activity lifecycle](../assets/images/android/activity-lifecycle.png)
 
-`Activity` lifecycle описывает, как экран проходит состояния создания, видимости, взаимодействия с пользователем, ухода в фон и уничтожения.
+`Activity` lifecycle describes how a screen moves through creation, visibility, user interaction, backgrounding and destruction.
 
-Базовая последовательность callbacks: `onCreate()` -> `onStart()` -> `onResume()` -> `onPause()` -> `onStop()` -> `onDestroy()`. Между `onStop()` и `onStart()` при возврате может быть вызван `onRestart()`.
+The basic callback sequence is `onCreate()` -> `onStart()` -> `onResume()` -> `onPause()` -> `onStop()` -> `onDestroy()`. When returning between `onStop()` and `onStart()`, `onRestart()` may be called.
 
-`onCreate()` вызывается при первом создании `Activity`: здесь обычно настраивают UI, dependency entry points, `ViewModel` и стартовую инициализацию. `onStart()` означает, что `Activity` становится видимой. `onResume()` означает, что `Activity` находится на переднем плане и пользователь может с ней взаимодействовать.
+`onCreate()` is called when the `Activity` is first created: this is where UI, dependency entry points, `ViewModel` and initial setup are usually configured. `onStart()` means the `Activity` becomes visible. `onResume()` means the `Activity` is in the foreground and the user can interact with it.
 
-`onPause()` вызывается, когда `Activity` теряет фокус, но может оставаться частично видимой. `onStop()` вызывается, когда `Activity` больше не видна. `onDestroy()` вызывается перед финальным уничтожением `Activity`, но не должен быть единственным местом для сохранения важных данных.
+`onPause()` is called when the `Activity` loses focus, but may still be partially visible. `onStop()` is called when the `Activity` is no longer visible. `onDestroy()` is called before final `Activity` destruction, but it must not be the only place where important data is saved.
 
-При configuration change старая `Activity` уничтожается и создаётся новая. Поэтому UI state нужно хранить в `ViewModel`, `savedInstanceState` / `SavedStateHandle` или persistent storage в зависимости от типа данных.
+On a configuration change, the old `Activity` is destroyed and a new one is created. Therefore, UI state should be stored in `ViewModel`, `savedInstanceState` / `SavedStateHandle` or persistent storage depending on the data type.
 
 ### Fragment lifecycle
 
@@ -24,84 +24,84 @@ Lifecycle в Android описывает, как компоненты созда�
 
 ![Fragment and view lifecycle](../assets/images/android/fragment_lifecycle_2.png)
 
-`Fragment` имеет собственный lifecycle и отдельно lifecycle своей `View`. Это важно: `Fragment` object может ещё существовать, но его `View` уже может быть уничтожена.
+`Fragment` has its own lifecycle and a separate lifecycle for its `View`. This matters: the `Fragment` object may still exist while its `View` has already been destroyed.
 
-Типичная последовательность callbacks: `onAttach()` -> `onCreate()` -> `onCreateView()` -> `onViewCreated()` -> `onStart()` -> `onResume()` -> `onPause()` -> `onStop()` -> `onDestroyView()` -> `onDestroy()` -> `onDetach()`.
+A typical callback sequence is `onAttach()` -> `onCreate()` -> `onCreateView()` -> `onViewCreated()` -> `onStart()` -> `onResume()` -> `onPause()` -> `onStop()` -> `onDestroyView()` -> `onDestroy()` -> `onDetach()`.
 
-Главное правило: подписки и работа с UI, которые завязаны на `View`, должны жить от `viewLifecycleOwner`, а не от самого `Fragment`. Иначе легко получить memory leak или callback в уничтоженную `View`.
+The main rule: subscriptions and UI work tied to the `View` should live from `viewLifecycleOwner`, not from the `Fragment` itself. Otherwise it is easy to get a memory leak or a callback into a destroyed `View`.
 
-`onDestroyView()` - место, где очищают `ViewBinding` и UI references. `onDestroy()` относится к `Fragment` как объекту, а не обязательно к его `View`.
+`onDestroyView()` is where `ViewBinding` and UI references are cleared. `onDestroy()` belongs to the `Fragment` as an object, not necessarily to its `View`.
 
 ### Application lifecycle
 
-`Application` создаётся один раз на процесс приложения и обычно используется для инициализации глобальных зависимостей, DI, logging, analytics или AndroidX Startup-related инфраструктуры.
+`Application` is created once per app process and is usually used to initialize global dependencies, DI, logging, analytics or AndroidX Startup-related infrastructure.
 
-Основные callbacks: `onCreate()`, `onConfigurationChanged()`, `onLowMemory()`, `onTrimMemory()`. Метод `onTerminate()` почти не используется в реальном Android runtime и вызывается в основном в эмуляторе или тестовой среде.
+Main callbacks: `onCreate()`, `onConfigurationChanged()`, `onLowMemory()`, `onTrimMemory()`. `onTerminate()` is almost never used in the real Android runtime and is mostly called in an emulator or test environment.
 
-`onCreate()` вызывается при старте процесса до запуска первых `Activity` / `Service` / `Receiver`, но `ContentProvider` может быть создан очень рано, ещё до `Application.onCreate()`. Поэтому часть библиотек исторически использовала provider-based auto init.
+`onCreate()` is called at process startup before the first `Activity` / `Service` / `Receiver` is launched, but a `ContentProvider` may be created very early, even before `Application.onCreate()`. This is why some libraries historically used provider-based auto init.
 
-`onTrimMemory(level)` сообщает приложению, что системе нужно освободить память. Например, `TRIM_MEMORY_UI_HIDDEN` означает, что UI ушёл в фон и можно освободить UI-related ресурсы.
+`onTrimMemory(level)` tells the app that the system needs to free memory. For example, `TRIM_MEMORY_UI_HIDDEN` means the UI has moved to the background and UI-related resources can be released.
 
-### Что из `onStop()` или `onDestroy()` может не вызваться?
+### Which of `onStop()` or `onDestroy()` may not be called?
 
-Если процесс приложения убит системой в фоне, `Activity` может не получить обычный полный набор финальных callbacks. В частности, `onDestroy()` не гарантирован как место для сохранения критически важных данных.
+If the app process is killed by the system in the background, an `Activity` may not receive the normal full set of final callbacks. In particular, `onDestroy()` is not guaranteed as a place to save critical data.
 
-Надёжная логика сохранения должна происходить раньше: в lifecycle-aware state holder, repository, database/cache или через `onSaveInstanceState()` для небольшого transient UI state.
+Reliable save logic should happen earlier: in a lifecycle-aware state holder, repository, database/cache or through `onSaveInstanceState()` for small transient UI state.
 
-`onStop()` обычно вызывается, когда `Activity` полностью перестаёт быть видимой, но при жёстком завершении процесса нельзя строить архитектуру так, будто любой callback обязательно успеет выполниться.
+`onStop()` is usually called when the `Activity` fully stops being visible, but under hard process termination, architecture must not assume that any callback will definitely have time to run.
 
-**Главная мысль:** lifecycle callbacks помогают освобождать ресурсы и синхронизировать UI, но process death - отдельный сценарий, поэтому критические данные нельзя сохранять только в `onDestroy()`.
+**Key idea:** lifecycle callbacks help release resources and synchronize UI, but process death is a separate scenario, so critical data must not be saved only in `onDestroy()`.
 
 ## Configuration changes
 
-### Поворот экрана. Screen rotation
+### Screen rotation
 
-Screen rotation обычно приводит к configuration change: текущая `Activity` уничтожается и создаётся заново под новую конфигурацию.
+Screen rotation usually causes a configuration change: the current `Activity` is destroyed and recreated for the new configuration.
 
-Типичная последовательность для старой `Activity`: `onPause()` -> `onStop()` -> `onSaveInstanceState()` -> `onDestroy()`. Затем создаётся новая `Activity`: `onCreate()` -> `onStart()` -> `onRestoreInstanceState()` -> `onResume()`.
+A typical sequence for the old `Activity`: `onPause()` -> `onStop()` -> `onSaveInstanceState()` -> `onDestroy()`. Then a new `Activity` is created: `onCreate()` -> `onStart()` -> `onRestoreInstanceState()` -> `onResume()`.
 
-`ViewModel` переживает обычный configuration change, потому что привязан к `ViewModelStoreOwner`, а не к конкретному instance `Activity`. Но `ViewModel` не переживает process death: для восстановления после убийства процесса нужны `savedInstanceState`, `SavedStateHandle`, database/cache или другой persistent storage.
+`ViewModel` survives a normal configuration change because it is tied to `ViewModelStoreOwner`, not to a specific `Activity` instance. But `ViewModel` does not survive process death: recovery after process death requires `savedInstanceState`, `SavedStateHandle`, database/cache or another persistent storage.
 
-`onSaveInstanceState()` подходит для небольшого UI state, например selected tab, scroll position или text input. Не стоит складывать туда большие объекты, bitmap или данные, которые можно заново загрузить.
+`onSaveInstanceState()` is suitable for small UI state, such as selected tab, scroll position or text input. Do not put large objects, bitmaps or data that can be loaded again into it.
 
-`android:configChanges` может запретить пересоздание `Activity` для выбранных изменений конфигурации, но тогда ответственность за ручную обработку изменений переходит на приложение. Это инструмент для специальных случаев, а не универсальный способ "починить" rotation.
+`android:configChanges` can prevent `Activity` recreation for selected configuration changes, but then responsibility for handling those changes manually moves to the app. It is a tool for special cases, not a universal way to "fix" rotation.
 
-### Как `ViewModel` переживает поворот экрана?
+### How does `ViewModel` survive screen rotation?
 
-`ViewModel` переживает поворот экрана, потому что она хранится не внутри конкретного instance `Activity` / `Fragment`, а во `ViewModelStore`, связанном с `ViewModelStoreOwner`.
+`ViewModel` survives screen rotation because it is stored not inside a specific `Activity` / `Fragment` instance, but in a `ViewModelStore` associated with a `ViewModelStoreOwner`.
 
-При rotation старая `Activity` уничтожается, создаётся новая, но если это обычный configuration change, система сохраняет `ViewModelStore` и новая `Activity` получает тот же instance `ViewModel` через `ViewModelProvider`.
+During rotation, the old `Activity` is destroyed and a new one is created, but if this is a normal configuration change, the system keeps the `ViewModelStore` and the new `Activity` receives the same `ViewModel` instance through `ViewModelProvider`.
 
-`ViewModel` подходит для screen state, загруженных данных и ongoing UI logic, которые не нужно терять при пересоздании UI. Но `ViewModel` не является persistent storage и не переживает process death.
+`ViewModel` is suitable for screen state, loaded data and ongoing UI logic that should not be lost when UI is recreated. But `ViewModel` is not persistent storage and does not survive process death.
 
-Для восстановления после process death нужны `SavedStateHandle`, `onSaveInstanceState()`, database, `DataStore`, cache или повторная загрузка данных из repository.
+Recovery after process death requires `SavedStateHandle`, `onSaveInstanceState()`, database, `DataStore`, cache or reloading data from a repository.
 
-**Коротко:** `ViewModel` survives configuration changes because it is scoped to `ViewModelStoreOwner`, not to a single `Activity` instance, but it does not survive process death.
+**In short:** `ViewModel` survives configuration changes because it is scoped to `ViewModelStoreOwner`, not to a single `Activity` instance, but it does not survive process death.
 
 ## Activity launch
 
 ### Launch Modes for Activity
 
-Launch mode определяет, как `Activity` создаётся и переиспользуется в task/back stack. Обычно он указывается в `AndroidManifest.xml` через `android:launchMode`.
+Launch mode defines how an `Activity` is created and reused in a task/back stack. It is usually specified in `AndroidManifest.xml` with `android:launchMode`.
 
-`standard` - default mode: каждый запуск создаёт новый instance `Activity` и кладёт его в back stack. В одном task может быть несколько instance одной `Activity`.
+`standard` - the default mode: every launch creates a new `Activity` instance and puts it on the back stack. One task can contain several instances of the same `Activity`.
 
-`singleTop` - если `Activity` уже находится на вершине back stack, новый instance не создаётся, а существующий получает `onNewIntent()`. Если она не на вершине, создаётся новый instance.
+`singleTop` - if the `Activity` is already at the top of the back stack, a new instance is not created and the existing one receives `onNewIntent()`. If it is not at the top, a new instance is created.
 
-`singleTask` - `Activity` существует как единственный instance в своём task. Если такой instance уже есть, система доставляет `Intent` в него через `onNewIntent()` и очищает `Activity` выше него.
+`singleTask` - the `Activity` exists as a single instance in its task. If such an instance already exists, the system delivers the `Intent` to it through `onNewIntent()` and clears the activities above it.
 
-`singleInstance` - более строгий вариант `singleTask`: `Activity` находится в отдельном task и другие `Activity` не добавляются в этот task. В modern Android встречается редко.
+`singleInstance` - a stricter version of `singleTask`: the `Activity` is placed in a separate task, and other activities are not added to that task. It is rare in modern Android.
 
-На практике launch modes используют осторожно: они сильно влияют на back stack, deep links, notifications и UX кнопки Back. Для большинства экранов подходит `standard`, а `singleTop` часто полезен для экранов, которые могут получить новый `Intent` сверху.
+In practice, launch modes should be used carefully: they strongly affect the back stack, deep links, notifications and Back button UX. `standard` works for most screens, while `singleTop` is often useful for screens that can receive a new `Intent` while already on top.
 
-### Intent flags для запуска Activity
+### Intent flags for launching Activity
 
-`FLAG_ACTIVITY_NEW_TASK`, `FLAG_ACTIVITY_SINGLE_TOP` и `FLAG_ACTIVITY_CLEAR_TOP` - intent flags, которые управляют запуском `Activity` и back stack на уровне конкретного `Intent`.
+`FLAG_ACTIVITY_NEW_TASK`, `FLAG_ACTIVITY_SINGLE_TOP` and `FLAG_ACTIVITY_CLEAR_TOP` - intent flags that control `Activity` launch and the back stack at the level of a specific `Intent`.
 
-`FLAG_ACTIVITY_NEW_TASK` запускает `Activity` в новом task или переиспользует существующий task, если он подходит по affinity. Часто нужен при запуске `Activity` из non-Activity `Context`.
+`FLAG_ACTIVITY_NEW_TASK` launches an `Activity` in a new task or reuses an existing task if it matches by affinity. It is often needed when launching an `Activity` from a non-Activity `Context`.
 
-`FLAG_ACTIVITY_SINGLE_TOP` не создаёт новый instance, если нужная `Activity` уже находится на top текущего task. Вместо этого существующий instance получает новый `Intent` через `onNewIntent()`.
+`FLAG_ACTIVITY_SINGLE_TOP` does not create a new instance if the target `Activity` is already at the top of the current task. Instead, the existing instance receives the new `Intent` through `onNewIntent()`.
 
-`FLAG_ACTIVITY_CLEAR_TOP` ищет существующий instance `Activity` в текущем task. Если он найден, все `Activity` выше него удаляются, а `Intent` доставляется найденной `Activity`. В зависимости от `launchMode` и flags существующий instance может получить `onNewIntent()` или быть пересоздан.
+`FLAG_ACTIVITY_CLEAR_TOP` looks for an existing `Activity` instance in the current task. If found, all activities above it are removed, and the `Intent` is delivered to that `Activity`. Depending on `launchMode` and flags, the existing instance may receive `onNewIntent()` or be recreated.
 
-**Коротко:** `launchMode` задаёт default-поведение в manifest, а intent flags позволяют переопределить запуск для конкретного `Intent`.
+**In short:** `launchMode` defines default behavior in the manifest, while intent flags let you override launch behavior for a specific `Intent`.

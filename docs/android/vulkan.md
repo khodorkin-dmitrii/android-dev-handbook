@@ -1,73 +1,73 @@
 # Vulkan
 
-Vulkan - низкоуровневый graphics и compute API, созданный как более explicit и modern альтернатива OpenGL ES для прямого контроля над GPU.
+Vulkan - a low-level graphics and compute API created as a more explicit and modern alternative to OpenGL ES for direct GPU control.
 
 ## Vulkan basics
 
-### Зачем появился
+### Why it appeared
 
-Vulkan появился, чтобы дать приложениям больше контроля над GPU work, memory management, synchronization и multi-threaded command recording.
+Vulkan appeared to give apps more control over GPU work, memory management, synchronization and multi-threaded command recording.
 
-OpenGL ES исторически проще в использовании, но большая часть работы скрыта внутри driver: validation, state tracking, resource management и implicit synchronization. Это удобно, но может давать непредсказуемый overhead.
+OpenGL ES is historically easier to use, but much of the work is hidden inside the driver: validation, state tracking, resource management and implicit synchronization. This is convenient, but can create unpredictable overhead.
 
-Vulkan переносит больше ответственности на приложение: разработчик явно создаёт resources, command buffers, pipelines, synchronization primitives и управляет memory.
+Vulkan moves more responsibility to the app: the developer explicitly creates resources, command buffers, pipelines, synchronization primitives and manages memory.
 
-**Коротко:** Vulkan появился для более явного, предсказуемого и эффективного управления GPU, особенно в сложных rendering engines.
+**In short:** Vulkan appeared for more explicit, predictable and efficient GPU management, especially in complex rendering engines.
 
-### Отличия от OpenGL ES
+### Differences from OpenGL ES
 
-OpenGL ES - state-machine API с большим количеством implicit behavior. Vulkan - explicit API, где почти всё задаётся заранее и явно.
+OpenGL ES is a state-machine API with a lot of implicit behavior. Vulkan is an explicit API where almost everything is defined upfront and explicitly.
 
-Ключевые отличия:
+Key differences:
 
-- Vulkan требует явного memory management;
-- synchronization задаётся вручную через fences, semaphores, barriers;
-- pipelines заранее описывают rendering state;
-- command buffers можно записывать заранее и из разных threads;
-- driver делает меньше hidden work во время draw.
+- Vulkan requires explicit memory management;
+- synchronization is defined manually through fences, semaphores and barriers;
+- pipelines describe rendering state upfront;
+- command buffers can be recorded ahead of time and from different threads;
+- the driver does less hidden work during draw.
 
-OpenGL ES проще начать использовать и часто достаточно для custom effects, camera filters и умеренного rendering. Vulkan сложнее, но лучше масштабируется для больших engines, сложных сцен и multi-threaded rendering.
+OpenGL ES is easier to start with and is often enough for custom effects, camera filters and moderate rendering. Vulkan is more complex, but scales better for large engines, complex scenes and multi-threaded rendering.
 
-**Коротко:** OpenGL ES проще и более implicit, Vulkan сложнее и explicit, но даёт больше контроля над performance.
+**In short:** OpenGL ES is simpler and more implicit; Vulkan is more complex and explicit, but gives more control over performance.
 
-### Преимущества и недостатки
+### Pros and cons
 
-Преимущества Vulkan:
+Vulkan advantages:
 
-- ниже driver overhead в сложных сценах;
-- более предсказуемая performance model;
-- better multi-threading для подготовки command buffers;
-- явный control над memory и synchronization;
-- единая modern API-модель для graphics и compute.
+- lower driver overhead in complex scenes;
+- more predictable performance model;
+- better multi-threading for preparing command buffers;
+- explicit control over memory and synchronization;
+- unified modern API model for graphics and compute.
 
-Недостатки:
+Disadvantages:
 
-- высокий порог входа;
-- намного больше boilerplate;
-- сложнее debugging;
-- легко получить bugs в synchronization или memory lifetime;
-- не всегда даёт выигрыш для простых UI/2D задач.
+- high entry barrier;
+- much more boilerplate;
+- harder debugging;
+- easy to introduce bugs in synchronization or memory lifetime;
+- does not always provide benefits for simple UI/2D tasks.
 
-Для большинства обычных Android-приложений Vulkan напрямую не нужен. Часто его используют через game engine или rendering engine, а не пишут raw Vulkan вручную.
+Most regular Android apps do not need Vulkan directly. It is often used through a game engine or rendering engine rather than written as raw Vulkan by hand.
 
-**Коротко:** Vulkan мощный, но дорогой по сложности; он оправдан там, где нужен engine-level контроль над GPU.
+**In short:** Vulkan is powerful, but expensive in complexity; it is justified where engine-level GPU control is needed.
 
-### Насколько часто используется в Android приложениях
+### How often it is used in Android apps
 
-В обычных Android-приложениях Vulkan используется редко напрямую. Большинство экранов строятся через View System, Compose, Canvas или media/camera APIs.
+In regular Android apps, Vulkan is rarely used directly. Most screens are built through View System, Compose, Canvas or media/camera APIs.
 
-Vulkan чаще встречается в:
+Vulkan is more common in:
 
-- играх;
+- games;
 - 3D engines;
 - AR/VR;
 - heavy visualization;
 - CAD/product viewers;
 - custom rendering engines;
-- некоторых camera/video/image processing pipelines.
+- some camera/video/image processing pipelines.
 
-Во многих production-приложениях Vulkan может присутствовать косвенно: через Unity, Unreal, Filament, Sceneform-like wrappers, maps/visualization engines или vendor SDK.
+In many production apps, Vulkan may be present indirectly: through Unity, Unreal, Filament, Sceneform-like wrappers, maps/visualization engines or vendor SDKs.
 
-Если задача - обычный business UI, chart или custom 2D component, Vulkan почти всегда избыточен.
+If the task is a regular business UI, chart or custom 2D component, Vulkan is almost always excessive.
 
-**Коротко:** raw Vulkan в Android app code встречается редко; чаще его используют engines и SDK, которым нужен сложный GPU rendering.
+**In short:** raw Vulkan in Android app code is rare; it is more often used by engines and SDKs that need complex GPU rendering.
