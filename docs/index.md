@@ -22,8 +22,17 @@ The goal of the project is to collect practical explanations, compact notes, imp
 
 The materials are written as a compact knowledge base. Use the search field in the top bar for quick lookup. Use the left menu to navigate inside a section, and the right table of contents to jump between headings on the current page.
 
+## Created and maintained by Dmitrii Khodorkin
+
+A personal Android development handbook focused on practical engineering notes, interview preparation, and concise explanations of Android, Kotlin, Jetpack Compose, Coroutines, architecture, testing, and related topics.
+
+* GitHub: [github.com/khodorkin-dmitrii](https://github.com/khodorkin-dmitrii)
+* LinkedIn: [linkedin.com/in/khodorkin-dmitrii](https://www.linkedin.com/in/dmitrii-khodorkin-33268585)
+
 <!-- BEGIN GENERATED HANDBOOK STATS -->
 ## Handbook stats
+
+_Last updated: {{LAST_UPDATED}}_
 
 | Metric | English | Russian |
 |---|---:|---:|

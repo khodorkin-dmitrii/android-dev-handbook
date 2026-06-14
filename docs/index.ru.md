@@ -22,8 +22,18 @@ Android Dev Handbook - это структурированный справоч�
 
 Материалы написаны в формате компактной базы знаний. Для быстрого поиска используй строку поиска в верхней панели. Для навигации внутри раздела - левое меню, а для перехода по заголовкам текущей страницы - правое содержание.
 
+## Создано и поддерживается Dmitrii Khodorkin
+
+Личный Android development handbook для практических инженерных заметок, подготовки к интервью и коротких объяснений по Android, Kotlin, Jetpack Compose, Coroutines, архитектуре, тестированию и связанным темам.
+
+* GitHub: [github.com/khodorkin-dmitrii](https://github.com/khodorkin-dmitrii)
+* LinkedIn: [linkedin.com/in/khodorkin-dmitrii](https://www.linkedin.com/in/dmitrii-khodorkin-33268585)
+
+
 <!-- BEGIN GENERATED HANDBOOK STATS -->
 ## Handbook stats
+
+_Последнее обновление: {{LAST_UPDATED}}_
 
 | Metric | English | Russian |
 |---|---:|---:|
