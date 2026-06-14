@@ -120,6 +120,7 @@ nav:
       - View System / XML UI: android/view-system-xml-ui.md
       - Context & Resources: android/context-resources.md
       - Background Work & System Behavior: android/background-work-system-behavior.md
+      - Gradle & Build System: android/gradle-build-system.md
       - Storage: android/storage.md
       - Performance & Memory: android/performance-memory.md
       - Android Canvas: android/canvas.md

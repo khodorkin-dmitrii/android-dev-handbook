@@ -28,8 +28,8 @@ The materials are written as a compact knowledge base. Use the search field in t
 | Metric | English | Russian |
 |---|---:|---:|
 | Domains | 11 | 11 |
-| Pages | 69 | 69 |
-| Sections | 114 | 114 |
+| Pages | 70 | 70 |
+| Sections | 126 | 126 |
 | Topics | 292 | 292 |
-| Words | 38547 | 34210 |
+| Words | 39682 | 35258 |
 <!-- END GENERATED HANDBOOK STATS -->
