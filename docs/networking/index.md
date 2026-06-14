@@ -1,8 +1,8 @@
 # Networking
 
-Раздел про Networking & API в Android: HTTP, REST, Retrofit, OkHttp, GraphQL, gRPC, Protocol Buffers, error handling и mapping сетевых моделей.
+This section covers Networking & API in Android: HTTP, REST, Retrofit, OkHttp, GraphQL, gRPC, Protocol Buffers, error handling and mapping network models.
 
-## Структура раздела
+## Section structure
 
 - [HTTP / REST](http-rest.md)
 - [Retrofit / OkHttp](retrofit-okhttp.md)

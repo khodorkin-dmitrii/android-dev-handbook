@@ -1,85 +1,85 @@
 # Coroutines Basics
 
-Coroutines помогают писать асинхронный и конкурентный код в последовательном стиле, без callback hell и ручного управления большим количеством threads.
+Coroutines help write asynchronous and concurrent code in a sequential style, without callback hell and manual management of many threads.
 
-## Основы coroutines
+## Coroutines basics
 
-### Что такое coroutine?
+### What is a coroutine?
 
-Coroutine - это легковесная suspendable computation для асинхронного и конкурентного кода.
+Coroutine - a lightweight suspendable computation for asynchronous and concurrent code.
 
-Coroutine не равна `Thread`: она выполняется поверх thread/thread pool через `CoroutineDispatcher` и может suspend-иться, освобождая поток для другой работы.
+A coroutine is not the same as `Thread`: it runs on top of a thread/thread pool through `CoroutineDispatcher` and can suspend, freeing the thread for other work.
 
-В Android coroutines обычно используют для network/database операций, параллельной загрузки независимых данных, таймеров, обработки user actions и построения Flow-based state.
+In Android, coroutines are usually used for network/database operations, parallel loading of independent data, timers, handling user actions and building Flow-based state.
 
-**Коротко:** coroutine is a lightweight suspendable unit of work; it can suspend without blocking the underlying thread.
+**In short:** coroutine is a lightweight suspendable unit of work; it can suspend without blocking the underlying thread.
 
 ### Coroutine vs Thread
 
-`Thread` - системный поток выполнения, которым управляет OS. У него есть собственный stack, context switching дорогой, и большое количество threads быстро расходует память.
+`Thread` - a system execution thread managed by the OS. It has its own stack, context switching is expensive, and a large number of threads quickly consumes memory.
 
-Coroutine намного легче: многие coroutines могут работать поверх небольшого thread pool. Когда coroutine достигает suspension point, она может приостановиться без блокировки thread, а thread продолжит выполнять другую работу.
+Coroutine is much lighter: many coroutines can run on top of a small thread pool. When a coroutine reaches a suspension point, it can pause without blocking the thread, and the thread can continue doing other work.
 
-**Важно:** coroutines не делают код автоматически parallel. Parallel execution зависит от dispatcher, доступных threads и того, есть ли реально независимая работа.
+**Important:** coroutines do not make code automatically parallel. Parallel execution depends on dispatcher, available threads and whether there is actually independent work.
 
-**Коротко:** threads are OS resources, coroutines are lightweight tasks scheduled on threads; suspension frees the thread, blocking does not.
+**In short:** threads are OS resources, coroutines are lightweight tasks scheduled on threads; suspension frees the thread, blocking does not.
 
-### Что делает `suspend`?
+### What does `suspend` do?
 
-`suspend` означает, что функция может приостановить выполнение coroutine и продолжить позже, не блокируя thread.
+`suspend` means that a function can pause coroutine execution and resume later without blocking the thread.
 
-`suspend` сам по себе не создаёт новый thread, не переключает dispatcher и не делает функцию background. Если вызвать suspend-функцию на Main dispatcher и внутри будет CPU-heavy работа без suspension, она всё равно может заблокировать UI.
+`suspend` by itself does not create a new thread, does not switch dispatcher and does not make a function background. If a suspend function is called on Main dispatcher and contains CPU-heavy work without suspension, it can still block UI.
 
-Suspend-функцию можно вызвать только из другой suspend-функции или из coroutine. Типичные suspension points: `delay()`, network call, Room query, `withContext()`, `await()`.
+A suspend function can be called only from another suspend function or from a coroutine. Typical suspension points: `delay()`, network call, Room query, `withContext()`, `await()`.
 
-**Коротко:** `suspend` marks a function that can suspend and resume a coroutine; it is not the same as "run on background thread".
+**In short:** `suspend` marks a function that can suspend and resume a coroutine; it is not the same as "run on background thread".
 
 ### `launch` vs `async`
 
-`launch` запускает coroutine без возвращаемого результата и возвращает `Job`. Его используют для fire-and-forget задач внутри scope: обновить state, отправить analytics, запустить collection или выполнить действие, результат которого не нужен вызывающему коду.
+`launch` starts a coroutine without a returned result and returns `Job`. It is used for fire-and-forget tasks inside a scope: update state, send analytics, start collection or perform an action whose result is not needed by the caller.
 
-`async` запускает coroutine с результатом и возвращает `Deferred<T>`. Результат получают через `await()`, который suspend-ится до готовности значения.
+`async` starts a coroutine with a result and returns `Deferred<T>`. The result is obtained through `await()`, which suspends until the value is ready.
 
-`async` стоит использовать, когда действительно нужен result или параллельное выполнение независимых задач. Если вызвать `async` и никогда не вызвать `await()`, это smell: ошибки и результат могут быть обработаны неявно или потеряны.
+Use `async` when a result or parallel execution of independent tasks is actually needed. Calling `async` and never calling `await()` is a smell: errors and result may be handled implicitly or lost.
 
-**Коротко:** `launch` returns `Job` for work without result; `async` returns `Deferred` for concurrent computation with result via `await()`.
+**In short:** `launch` returns `Job` for work without result; `async` returns `Deferred` for concurrent computation with result via `await()`.
 
 ### Coroutine builders
 
-Coroutine builder - функция, которая создаёт coroutine из suspend lambda и определяет, как мы взаимодействуем с её выполнением.
+Coroutine builder - a function that creates a coroutine from a suspend lambda and defines how we interact with its execution.
 
-Основные builders: `launch`, `async`, `runBlocking`. Также часто рядом обсуждают `coroutineScope`, `supervisorScope` и `withContext`, хотя `withContext` скорее переключает context внутри текущей suspend-функции, чем создаёт независимую child coroutine для fire-and-forget.
+Main builders: `launch`, `async`, `runBlocking`. `coroutineScope`, `supervisorScope` and `withContext` are often discussed nearby, although `withContext` rather switches context inside the current suspend function than creates an independent child coroutine for fire-and-forget work.
 
-Builders должны запускаться внутри `CoroutineScope` или создавать scope сами. Это важно для structured concurrency: coroutine не должна жить хаотично вне управляемого lifecycle.
+Builders should be launched inside `CoroutineScope` or create a scope themselves. This matters for structured concurrency: a coroutine should not live chaotically outside a managed lifecycle.
 
-**Коротко:** builders start coroutines in a scope and return a handle like `Job` or `Deferred` depending on whether result is needed.
+**In short:** builders start coroutines in a scope and return a handle like `Job` or `Deferred` depending on whether result is needed.
 
 ### Dispatchers
 
-`CoroutineDispatcher` определяет, на каком thread или thread pool будет выполняться coroutine.
+`CoroutineDispatcher` defines on which thread or thread pool a coroutine will run.
 
-`Dispatchers.Main` используют для UI work на main thread. `Dispatchers.IO` - для blocking I/O: network, files, database, legacy blocking APIs. `Dispatchers.Default` - для CPU-bound работы: parsing, sorting, calculations. `Unconfined` почти не используют в обычном Android production-коде.
+`Dispatchers.Main` is used for UI work on the main thread. `Dispatchers.IO` - for blocking I/O: network, files, database, legacy blocking APIs. `Dispatchers.Default` - for CPU-bound work: parsing, sorting, calculations. `Unconfined` is almost never used in regular Android production code.
 
-Coroutine наследует dispatcher из parent scope, если явно не указан другой. В Android важно не делать тяжёлую работу на Main dispatcher и не переключаться на IO "на всякий случай", если библиотека уже предоставляет suspend non-blocking API.
+A coroutine inherits dispatcher from the parent scope unless another one is specified explicitly. In Android, avoid heavy work on Main dispatcher and avoid switching to IO "just in case" if a library already provides a suspend non-blocking API.
 
-**Коротко:** scope controls lifecycle, dispatcher controls where coroutine runs.
+**In short:** scope controls lifecycle, dispatcher controls where coroutine runs.
 
 ### `withContext`
 
-`withContext` переключает coroutine context для выполнения блока и suspend-ится до завершения этого блока.
+`withContext` switches coroutine context for a block and suspends until that block completes.
 
-Чаще всего `withContext` используют для смены dispatcher внутри suspend-функции: например, выполнить blocking I/O на `Dispatchers.IO`, затем вернуться в исходный context после блока.
+Most often, `withContext` is used to switch dispatcher inside a suspend function: for example, run blocking I/O on `Dispatchers.IO`, then return to the original context after the block.
 
-`withContext` не предназначен для параллельного запуска нескольких задач. Для параллельных независимых запросов обычно используют `coroutineScope` + `async` / `await`.
+`withContext` is not intended for launching several tasks in parallel. For parallel independent requests, usually use `coroutineScope` + `async` / `await`.
 
-**Коротко:** `withContext` changes context for a block and waits for the result; it is useful for dispatcher switching, not for fire-and-forget work.
+**In short:** `withContext` changes context for a block and waits for the result; it is useful for dispatcher switching, not for fire-and-forget work.
 
 ### `runBlocking`
 
-`runBlocking` создаёт coroutine scope и блокирует текущий thread, пока все coroutines внутри него не завершатся.
+`runBlocking` creates a coroutine scope and blocks the current thread until all coroutines inside it complete.
 
-Он нужен как bridge из blocking мира в suspend world: `main()` в консольных примерах, некоторые tests, legacy API, где нельзя сделать функцию suspend.
+It is needed as a bridge from the blocking world to the suspend world: `main()` in console examples, some tests, legacy APIs where a function cannot be made suspend.
 
-В Android UI-коде `runBlocking` почти всегда ошибка: если вызвать его на main thread, можно заблокировать UI и получить jank или ANR.
+In Android UI code, `runBlocking` is almost always a mistake: if called on the main thread, it can block UI and cause jank or ANR.
 
-**Коротко:** `runBlocking` is a bridge that blocks the current thread; avoid it in Android UI code.
+**In short:** `runBlocking` is a bridge that blocks the current thread; avoid it in Android UI code.

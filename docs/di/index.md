@@ -1,8 +1,8 @@
 # DI
 
-Раздел про Dependency Injection в Android: зависимости, constructor injection, scopes, Hilt/Dagger и legacy DI-подходы.
+This section covers Dependency Injection in Android: dependencies, constructor injection, scopes, Hilt/Dagger and legacy DI approaches.
 
-## Структура раздела
+## Section structure
 
 - [DI Basics](basics.md)
 - [Dagger / Hilt](dagger-hilt.md)

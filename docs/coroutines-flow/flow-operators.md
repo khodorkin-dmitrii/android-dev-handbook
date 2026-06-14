@@ -1,14 +1,14 @@
 # Flow Operators
 
-Flow operators помогают преобразовывать streams, объединять несколько источников, обрабатывать ошибки и управлять retry.
+Flow operators help transform streams, combine several sources, handle errors and manage retry.
 
-## Transform и combine
+## Transform and combine
 
 ### `map` vs `flatMapLatest`
 
-`map` преобразует каждое значение потока один-к-одному: value -> transformed value. Например, `User` -> `UserUiModel`.
+`map` transforms each stream value one-to-one: value -> transformed value. For example, `User` -> `UserUiModel`.
 
-`flatMapLatest` нужен, когда каждое входное значение создаёт новый inner `Flow`, и при новом входном значении старый inner `Flow` должен быть отменён.
+`flatMapLatest` is needed when each input value creates a new inner `Flow`, and when a new input value arrives, the old inner `Flow` should be canceled.
 
 ```kotlin
 selectedUserId
@@ -16,15 +16,15 @@ selectedUserId
     .map { user -> user.toUiModel() }
 ```
 
-Если `selectedUserId` изменился, старая подписка `observeUser(oldId)` отменяется и начинается `observeUser(newId)`.
+If `selectedUserId` changes, the old `observeUser(oldId)` subscription is canceled and `observeUser(newId)` starts.
 
-**Коротко:** `map` transforms values, `flatMapLatest` switches to a new inner `Flow` and cancels the previous one.
+**In short:** `map` transforms values, `flatMapLatest` switches to a new inner `Flow` and cancels the previous one.
 
 ### `combine` vs `zip`
 
-`combine` объединяет несколько `Flow` и emit-ит новое значение, когда любой источник изменился, используя последние значения остальных источников.
+`combine` combines several `Flow`s and emits a new value whenever any source changes, using the latest values from the other sources.
 
-Это часто используют во `ViewModel` для сборки `UiState` из нескольких источников:
+This is often used in `ViewModel` to build `UiState` from several sources:
 
 ```kotlin
 combine(userFlow, balanceFlow, cardsFlow) { user, balance, cards ->
@@ -32,31 +32,31 @@ combine(userFlow, balanceFlow, cardsFlow) { user, balance, cards ->
 }
 ```
 
-`zip` ждёт пару новых emissions: одно значение из первого `Flow` и одно значение из второго `Flow`. Он объединяет значения попарно.
+`zip` waits for a pair of new emissions: one value from the first `Flow` and one value from the second `Flow`. It combines values pairwise.
 
-Для UI state чаще подходит `combine`, потому что экран должен обновляться при изменении любого источника. `zip` полезен реже, когда действительно нужны пары значений.
+For UI state, `combine` is usually a better fit because the screen should update when any source changes. `zip` is useful less often, when paired values are truly needed.
 
-**Коротко:** `combine` reacts to any source using latest values; `zip` waits for paired emissions.
+**In short:** `combine` reacts to any source using latest values; `zip` waits for paired emissions.
 
 ### `merge`
 
-`merge` объединяет несколько `Flow` одного или совместимого типа и просто пропускает emissions из всех источников в один downstream `Flow`.
+`merge` combines several `Flow`s of the same or compatible type and simply passes emissions from all sources into one downstream `Flow`.
 
-Он не комбинирует значения между собой и не ждёт пары. Он просто смешивает события по мере их прихода.
+It does not combine values with each other and does not wait for pairs. It simply mixes events as they arrive.
 
-Пример использования: объединить `refreshClickFlow`, `retryClickFlow` и `pullToRefreshFlow` в один stream refresh events.
+Example use case: combine `refreshClickFlow`, `retryClickFlow` and `pullToRefreshFlow` into one stream of refresh events.
 
-**Важно:** `merge` не сохраняет порядок между разными asynchronous sources в бизнес-смысле; он отдаёт emissions по фактическому приходу.
+**Important:** `merge` does not preserve order between different asynchronous sources in a business sense; it emits values by actual arrival.
 
-**Коротко:** `merge` is for listening to multiple independent streams of the same kind as one stream.
+**In short:** `merge` is for listening to multiple independent streams of the same kind as one stream.
 
 ## Errors
 
 ### `retry` / `retryWhen`
 
-`retry` и `retryWhen` позволяют повторить Flow upstream при ошибке.
+`retry` and `retryWhen` allow repeating Flow upstream on error.
 
-`retry` обычно задаёт количество попыток и predicate. `retryWhen` даёт больше контроля: cause, attempt, delay/backoff и дополнительные условия.
+`retry` usually defines the number of attempts and predicate. `retryWhen` gives more control: cause, attempt, delay/backoff and additional conditions.
 
 ```kotlin
 flow.retryWhen { cause, attempt ->
@@ -64,15 +64,15 @@ flow.retryWhen { cause, attempt ->
 }
 ```
 
-Retry подходит для временных technical errors, например network issue. Не стоит ретраить business errors: invalid credentials, validation error, insufficient permissions.
+Retry fits temporary technical errors, for example network issue. Do not retry business errors: invalid credentials, validation error, insufficient permissions.
 
-Для критичных операций вроде payment/transfer нужна idempotency или проверка статуса, потому что повтор может выполнить действие дважды.
+Critical operations such as payment/transfer need idempotency or status verification, because retry can perform the action twice.
 
-**Коротко:** retry is for transient failures, `retryWhen` gives conditional retry logic; do not blindly retry business or critical operations.
+**In short:** retry is for transient failures, `retryWhen` gives conditional retry logic; do not blindly retry business or critical operations.
 
 ### `catch`
 
-`catch` обрабатывает exceptions из upstream `Flow` и может emit-ить fallback/error state.
+`catch` handles exceptions from upstream `Flow` and can emit fallback/error state.
 
 ```kotlin
 repository.observeData()
@@ -81,8 +81,8 @@ repository.observeData()
     .collect { state -> render(state) }
 ```
 
-**Важно:** `catch` ловит ошибки выше по chain, но не ловит ошибки, которые произошли внутри `collect` после `catch`. Для них нужен `try` / `catch` вокруг `collect` или обработка ниже по цепочке.
+**Important:** `catch` catches errors above it in the chain, but does not catch errors that happen inside `collect` after `catch`. Those need `try` / `catch` around `collect` or handling lower in the chain.
 
-Не нужно проглатывать `CancellationException` как обычную ошибку. Если `catch` получает cancellation, обычно её нужно rethrow или не маппить в user-facing error.
+Do not swallow `CancellationException` as a regular error. If `catch` receives cancellation, usually rethrow it or do not map it to a user-facing error.
 
-**Коротко:** `catch` handles upstream `Flow` exceptions; it should map errors intentionally and must not swallow cancellation.
+**In short:** `catch` handles upstream `Flow` exceptions; it should map errors intentionally and must not swallow cancellation.

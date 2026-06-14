@@ -1,14 +1,14 @@
 # Kotlin Basics
 
-Базовые темы Kotlin, которые важно понимать перед работой с Android-кодом: изменяемость, null-safety, корневые типы, сравнение, приведение типов и правила наследования.
+Core Kotlin topics that are important before working with Android code: mutability, null-safety, root types, comparison, casts and inheritance rules.
 
-## Основы языка
+## Language basics
 
 ### `val` vs `var`
 
-`val` - read-only reference: после инициализации переменную нельзя переназначить. `var` - mutable reference: переменной можно присвоить новое значение.
+`val` - a read-only reference: after initialization, the variable cannot be reassigned. `var` - a mutable reference: a new value can be assigned to the variable.
 
-Важно: `val` не делает сам объект immutable. Например, `val list = mutableListOf(1, 2, 3)` запрещает переназначить `list`, но не запрещает изменить содержимое списка через `list.add(4)`.
+Important: `val` does not make the object itself immutable. For example, `val list = mutableListOf(1, 2, 3)` prevents reassigning `list`, but does not prevent changing the list contents through `list.add(4)`.
 
 ```kotlin
 val names = mutableListOf("Ada", "Linus")
@@ -18,28 +18,28 @@ var count = 1
 count = 2
 ```
 
-В обычном Kotlin-коде лучше начинать с `val` и переходить на `var` только там, где изменение ссылки действительно нужно. Это снижает количество случайных изменений состояния и делает код проще для чтения.
+In regular Kotlin code, prefer starting with `val` and switch to `var` only where changing the reference is actually needed. This reduces accidental state changes and makes code easier to read.
 
 ### Nullable types
 
-Nullable type - это тип, который может хранить `null`. В Kotlin nullability является частью type system: `String` не может быть `null`, а `String?` может.
+Nullable type - a type that can hold `null`. In Kotlin, nullability is part of the type system: `String` cannot be `null`, while `String?` can.
 
-Компилятор заставляет явно обработать nullable value. Обычно для этого используют safe call `?.`, Elvis operator `?:`, проверку на `null` со smart cast или, в редких случаях, not-null assertion `!!`.
+The compiler forces nullable values to be handled explicitly. Usually this is done with safe call `?.`, Elvis operator `?:`, a `null` check with smart cast or, in rare cases, the not-null assertion `!!`.
 
 ```kotlin
 val name: String? = user.name
 val length = name?.length ?: 0
 ```
 
-Главный риск - `!!`. Он отключает защиту компилятора и может привести к `NullPointerException`, поэтому в production-коде его лучше избегать или использовать только там, где invariant действительно гарантирован.
+The main risk is `!!`. It disables compiler protection and can lead to `NullPointerException`, so production code should avoid it or use it only when the invariant is truly guaranteed.
 
 ### `Any` / `Unit` / `Nothing`
 
-`Any` - корневой non-null тип в Kotlin, похожий на Java `Object`. У него есть базовые методы `equals()`, `hashCode()` и `toString()`. Если значение может быть `null`, используется `Any?`.
+`Any` - the root non-null type in Kotlin, similar to Java `Object`. It has basic methods `equals()`, `hashCode()` and `toString()`. If a value can be `null`, `Any?` is used.
 
-`Unit` - тип результата функции, которая не возвращает полезное значение. Это близко к Java `void`, но в Kotlin `Unit` является настоящим типом с единственным значением `Unit`.
+`Unit` - the result type of a function that does not return a useful value. It is close to Java `void`, but in Kotlin `Unit` is a real type with the single value `Unit`.
 
-`Nothing` - тип, у которого нет значений. Он используется для кода, который никогда нормально не возвращается: например, функция всегда выбрасывает exception, вызывает `error()` или содержит бесконечный loop.
+`Nothing` - a type with no values. It is used for code that never returns normally: for example, a function always throws an exception, calls `error()` or contains an infinite loop.
 
 ```kotlin
 fun log(message: String): Unit {
@@ -53,11 +53,11 @@ fun fail(message: String): Nothing {
 
 ### `==` vs `===`
 
-`==` проверяет structural equality - равенство значений через `equals()`. В Kotlin выражение `a == b` примерно раскрывается как `a?.equals(b) ?: (b == null)`.
+`==` checks structural equality - value equality through `equals()`. In Kotlin, `a == b` roughly expands to `a?.equals(b) ?: (b == null)`.
 
-`===` проверяет referential equality - указывают ли две переменные на один и тот же объект в памяти.
+`===` checks referential equality - whether two variables point to the same object in memory.
 
-Для `data class` оператор `==` сравнивает свойства из primary constructor. `===` нужен заметно реже, обычно когда важна identity объекта: singleton, `object`, cache identity или проверка, что две ссылки ведут на один instance.
+For a `data class`, `==` compares properties from the primary constructor. `===` is needed much less often, usually when object identity matters: singleton, `object`, cache identity or checking that two references point to the same instance.
 
 ```kotlin
 data class User(val id: Long)
@@ -71,9 +71,9 @@ println(first === second) // false
 
 ### `as` and `as?`
 
-`as` - unsafe cast. Он приводит объект к указанному типу, но если тип несовместим, будет `ClassCastException`.
+`as` - an unsafe cast. It casts an object to the specified type, but throws `ClassCastException` if the type is incompatible.
 
-`as?` - safe cast. Он возвращает объект нужного типа или `null`, если привести тип невозможно.
+`as?` - a safe cast. It returns the object as the requested type or `null` if the cast is impossible.
 
 ```kotlin
 val value: Any = "Android"
@@ -82,7 +82,7 @@ val text = value as String
 val number = value as? Int
 ```
 
-Часто явный cast вообще не нужен: после проверки через `is` компилятор делает smart cast.
+Often an explicit cast is not needed at all: after an `is` check, the compiler performs a smart cast.
 
 ```kotlin
 if (value is String) {
@@ -92,9 +92,9 @@ if (value is String) {
 
 ### `open` / `final` by default
 
-В Java классы и методы можно наследовать или переопределять по умолчанию, если они не `final`. В Kotlin наоборот: классы и members `final` по умолчанию.
+In Java, classes and methods can be inherited or overridden by default if they are not `final`. Kotlin is the opposite: classes and members are `final` by default.
 
-Чтобы разрешить наследование класса или override метода/свойства, нужно явно написать `open`. При переопределении используется `override`. Если переопределенный member не должен переопределяться дальше, его можно явно пометить как `final override`.
+To allow class inheritance or method/property override, write `open` explicitly. Overrides use `override`. If an overridden member should not be overridden further, it can be explicitly marked as `final override`.
 
 ```kotlin
 open class BaseRepository {
@@ -106,4 +106,4 @@ class UserRepository : BaseRepository() {
 }
 ```
 
-Такой подход заставляет явно проектировать точки расширения и снижает риск случайного переопределения поведения.
+This approach forces extension points to be designed explicitly and reduces the risk of accidentally overriding behavior.

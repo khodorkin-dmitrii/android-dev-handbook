@@ -1,26 +1,26 @@
 # Coroutine Scopes & Cancellation
 
-Coroutine scope задаёт lifecycle асинхронной работы, а cancellation позволяет безопасно остановить работу, когда owner больше не нужен.
+Coroutine scope defines the lifecycle of asynchronous work, and cancellation allows safely stopping work when the owner is no longer needed.
 
 ## Scopes
 
 ### Structured concurrency
 
-Structured concurrency означает, что coroutines запускаются внутри `CoroutineScope` и связаны с его lifecycle. Parent scope знает о child coroutines, ждёт их завершения и может отменить их вместе.
+Structured concurrency means coroutines are launched inside `CoroutineScope` and tied to its lifecycle. Parent scope knows about child coroutines, waits for their completion and can cancel them together.
 
-Идея в том, чтобы async work не "утекала" в никуда: если screen, request или use case завершён, связанные coroutines тоже должны быть завершены или отменены.
+The idea is that async work should not "leak" into nowhere: if a screen, request or use case is finished, related coroutines should also complete or be canceled.
 
-В Android это особенно важно для `ViewModel`, lifecycle-aware UI collection и долгих операций. `GlobalScope` обычно считается smell, потому что coroutine живёт вне понятного owner и её сложнее отменять и тестировать.
+In Android, this is especially important for `ViewModel`, lifecycle-aware UI collection and long-running operations. `GlobalScope` is usually considered a smell because the coroutine lives outside a clear owner and is harder to cancel and test.
 
-**Коротко:** structured concurrency keeps coroutines scoped, cancellable and tied to a clear lifecycle instead of launching unmanaged background work.
+**In short:** structured concurrency keeps coroutines scoped, cancellable and tied to a clear lifecycle instead of launching unmanaged background work.
 
 ### `coroutineScope` vs `supervisorScope`
 
-`coroutineScope` создаёт новый scope внутри suspend-функции и suspend-ится, пока все child coroutines не завершатся. Если один child падает с exception, scope отменяет остальные children и пробрасывает ошибку выше.
+`coroutineScope` creates a new scope inside a suspend function and suspends until all child coroutines complete. If one child fails with an exception, the scope cancels the other children and propagates the error upward.
 
-`supervisorScope` похож, но изолирует ошибки children: падение одной child coroutine не отменяет siblings автоматически. Это полезно, когда задачи независимы и UI может показать частичный результат.
+`supervisorScope` is similar, but isolates child failures: failure of one child coroutine does not automatically cancel siblings. This is useful when tasks are independent and UI can show partial result.
 
-`coroutineScope` подходит, когда нужен all-or-nothing результат. `supervisorScope` подходит, когда блоки экрана или независимые запросы могут завершаться отдельно.
+`coroutineScope` fits when an all-or-nothing result is needed. `supervisorScope` fits when screen blocks or independent requests can complete separately.
 
 ```kotlin
 coroutineScope {
@@ -34,41 +34,41 @@ coroutineScope {
 }
 ```
 
-Если `getUser()` упадёт, `getCards()` будет отменён. Для независимых блоков можно использовать `supervisorScope` и обработать ошибки каждого `async` отдельно.
+If `getUser()` fails, `getCards()` will be canceled. For independent blocks, use `supervisorScope` and handle errors of each `async` separately.
 
-**Коротко:** `coroutineScope` fails fast and cancels siblings, `supervisorScope` lets sibling coroutines fail independently.
+**In short:** `coroutineScope` fails fast and cancels siblings, `supervisorScope` lets sibling coroutines fail independently.
 
 ### `viewModelScope`
 
-`viewModelScope` - это `CoroutineScope`, привязанный к `ViewModel`. Он автоматически отменяется, когда `ViewModel` получает `onCleared()`.
+`viewModelScope` - a `CoroutineScope` tied to `ViewModel`. It is automatically canceled when `ViewModel` receives `onCleared()`.
 
-Его используют для screen-level async работы: загрузка данных, обработка user actions, обновление `StateFlow` / `SharedFlow`, запуск repository calls и orchestration UI state.
+It is used for screen-level async work: loading data, handling user actions, updating `StateFlow` / `SharedFlow`, launching repository calls and orchestrating UI state.
 
-**Важно:** `viewModelScope` не переживает уничтожение `ViewModel` при process death и не подходит для гарантированной фоновой работы. Для deferrable reliable background work лучше `WorkManager`.
+**Important:** `viewModelScope` does not survive `ViewModel` destruction on process death and is not suitable for guaranteed background work. For deferrable reliable background work, prefer `WorkManager`.
 
-Внутри `viewModelScope` по умолчанию используется Main dispatcher, поэтому тяжёлую CPU/I/O работу нужно переносить в repository/use case или переключать dispatcher осознанно.
+Inside `viewModelScope`, Main dispatcher is used by default, so heavy CPU/I/O work should be moved to repository/use case or switch dispatcher intentionally.
 
-**Коротко:** `viewModelScope` is the lifecycle-aware scope for `ViewModel` work; it is cancelled when the `ViewModel` is cleared.
+**In short:** `viewModelScope` is the lifecycle-aware scope for `ViewModel` work; it is cancelled when the `ViewModel` is cleared.
 
 ## Cancellation
 
 ### Cancellation
 
-Cancellation в coroutines кооперативная: coroutine не "убивается" мгновенно в произвольной точке. Она должна дойти до suspension point или сама проверить `isActive` / `ensureActive()`.
+Cancellation in coroutines is cooperative: a coroutine is not "killed" instantly at an arbitrary point. It must reach a suspension point or check `isActive` / `ensureActive()` itself.
 
-Обычные suspend-функции вроде `delay()`, `withContext()`, Flow collection и многие network/database APIs умеют реагировать на cancellation. CPU-heavy loop без suspension points может продолжать работать, пока не проверит cancellation вручную.
+Regular suspend functions like `delay()`, `withContext()`, Flow collection and many network/database APIs can react to cancellation. A CPU-heavy loop without suspension points can keep running until it checks cancellation manually.
 
-Когда parent `Job` отменяется, child coroutines тоже получают cancellation. Это основа structured concurrency и причина, почему важно запускать работу в правильном scope.
+When a parent `Job` is canceled, child coroutines also receive cancellation. This is the basis of structured concurrency and the reason work should be launched in the right scope.
 
-Типичные pitfalls: запускать работу в `GlobalScope`, ловить `Exception` и проглатывать cancellation, не отменять старый `Job` при новом user action, делать бесконечный loop без `isActive`.
+Typical pitfalls: launching work in `GlobalScope`, catching `Exception` and swallowing cancellation, not canceling an old `Job` on a new user action, making an infinite loop without `isActive`.
 
-**Коротко:** coroutine cancellation is cooperative; cancellation propagates through the `Job` hierarchy and works best when code reaches suspension points or checks `isActive`.
+**In short:** coroutine cancellation is cooperative; cancellation propagates through the `Job` hierarchy and works best when code reaches suspension points or checks `isActive`.
 
 ### `CancellationException`
 
-`CancellationException` - специальное исключение, которым coroutines сигнализируют нормальную отмену.
+`CancellationException` - a special exception used by coroutines to signal normal cancellation.
 
-Его не нужно обрабатывать как обычную ошибку и показывать пользователю как failure. Если `catch` ловит `Exception`, важно не проглотить `CancellationException` случайно.
+It should not be handled like a regular error or shown to the user as failure. If `catch` catches `Exception`, avoid accidentally swallowing `CancellationException`.
 
 ```kotlin
 try {
@@ -80,18 +80,18 @@ try {
 }
 ```
 
-Это особенно важно в Flow/coroutines chains: проглоченная cancellation может сломать structured concurrency и оставить работу в некорректном состоянии.
+This is especially important in Flow/coroutines chains: swallowed cancellation can break structured concurrency and leave work in an incorrect state.
 
-**Коротко:** `CancellationException` is a normal control signal for coroutine cancellation and should usually be rethrown, not mapped to a user-facing error.
+**In short:** `CancellationException` is a normal control signal for coroutine cancellation and should usually be rethrown, not mapped to a user-facing error.
 
 ### Timeout
 
-Timeout ограничивает время выполнения coroutine. Основные APIs: `withTimeout()` и `withTimeoutOrNull()`.
+Timeout limits coroutine execution time. Main APIs: `withTimeout()` and `withTimeoutOrNull()`.
 
-`withTimeout()` бросает `TimeoutCancellationException`, который является `CancellationException`. `withTimeoutOrNull()` возвращает `null` вместо exception.
+`withTimeout()` throws `TimeoutCancellationException`, which is a `CancellationException`. `withTimeoutOrNull()` returns `null` instead of an exception.
 
-Timeout полезен для network/database/remote operations, которые не должны висеть бесконечно. Но timeout не заменяет нормальную error handling стратегию и retry policy.
+Timeout is useful for network/database/remote operations that should not hang forever. But timeout does not replace a normal error handling strategy and retry policy.
 
-Важно не ретраить бездумно все операции: retry подходит для временных technical errors, но не для business errors вроде invalid credentials или validation error. Для критичных операций нужна idempotency или проверка статуса.
+Do not blindly retry all operations: retry fits temporary technical errors, but not business errors such as invalid credentials or validation error. Critical operations need idempotency or status verification.
 
-**Коротко:** timeout cancels a coroutine if it takes too long; `withTimeout()` throws, `withTimeoutOrNull()` returns `null`, and timeout should be combined with thoughtful error and retry handling.
+**In short:** timeout cancels a coroutine if it takes too long; `withTimeout()` throws, `withTimeoutOrNull()` returns `null`, and timeout should be combined with thoughtful error and retry handling.

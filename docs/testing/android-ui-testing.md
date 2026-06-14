@@ -1,14 +1,14 @@
 # Android UI Testing
 
-Раздел про Android UI testing: Espresso, Compose UI tests, JUnit и проверку observable behavior пользовательских сценариев.
+This section covers Android UI testing: Espresso, Compose UI tests, JUnit and observable behavior checks for user scenarios.
 
 ## UI testing tools
 
 ### Espresso
 
-Espresso - Android UI testing framework для View System. Он позволяет находить `View`, выполнять user actions и проверять состояние UI.
+Espresso is an Android UI testing framework for the View System. It lets tests find `View`, perform user actions and verify UI state.
 
-Базовый стиль Espresso:
+Basic Espresso style:
 
 ```kotlin
 onView(withId(R.id.emailInput))
@@ -21,25 +21,25 @@ onView(withText("Welcome"))
     .check(matches(isDisplayed()))
 ```
 
-Espresso синхронизируется с main thread и стандартными Android UI operations, поэтому часто не нужно вручную ждать отрисовку. Но для внешней async-работы, custom executors, network или background jobs может понадобиться `IdlingResource` или controlled fake dependency.
+Espresso synchronizes with the main thread and standard Android UI operations, so manual waiting for rendering is often unnecessary. But external async work, custom executors, network or background jobs may require `IdlingResource` or a controlled fake dependency.
 
-Хороший Espresso test проверяет user-visible behavior: текст, enabled/disabled state, navigation result, error message, item in list. Он не должен проверять private implementation details.
+A good Espresso test checks user-visible behavior: text, enabled/disabled state, navigation result, error message, item in list. It should not check private implementation details.
 
-Типичные pitfalls:
+Typical pitfalls:
 
-- реальные network calls в UI tests;
+- real network calls in UI tests;
 - `Thread.sleep`;
-- слишком точные проверки layout details;
-- нестабильные matchers для RecyclerView;
-- tests, которые зависят от порядка запуска или общего state приложения.
+- overly precise layout detail checks;
+- unstable matchers for RecyclerView;
+- tests that depend on run order or shared app state.
 
-**Коротко:** Espresso подходит для XML/View UI tests и проверяет поведение через View hierarchy, actions и matchers.
+**In short:** Espresso fits XML/View UI tests and verifies behavior through View hierarchy, actions and matchers.
 
 ### Compose UI tests
 
-Compose UI tests работают через semantics tree, а не через View hierarchy. Тест ищет nodes по text, content description, role, state, testTag и другим semantics properties.
+Compose UI tests work through the semantics tree, not the View hierarchy. A test finds nodes by text, content description, role, state, testTag and other semantics properties.
 
-Базовый пример:
+Basic example:
 
 ```kotlin
 @get:Rule
@@ -60,7 +60,7 @@ fun saveButtonIsDisplayed() {
 }
 ```
 
-Для элементов, где текст нестабилен из-за локализации или есть несколько одинаковых строк, используют `testTag`:
+For elements where text is unstable because of localization or several identical strings exist, use `testTag`:
 
 ```kotlin
 Button(
@@ -77,27 +77,27 @@ composeRule
     .performClick()
 ```
 
-Compose tests автоматически ждут idle state Compose runtime. Для анимаций можно управлять clock:
+Compose tests automatically wait for the idle state of the Compose runtime. For animations, the clock can be controlled:
 
 ```kotlin
 composeRule.mainClock.autoAdvance = false
 composeRule.mainClock.advanceTimeBy(300)
 ```
 
-**Важно:** `testTag` удобен для тестов, но accessibility всё равно должна описываться смысловыми semantics: text, role, content description, state description.
+**Important:** `testTag` is convenient for tests, but accessibility should still be described through meaningful semantics: text, role, content description, state description.
 
-**Коротко:** Compose UI tests проверяют UI через semantics tree; лучше тестировать user-visible behavior, а не внутреннюю структуру composable.
+**In short:** Compose UI tests verify UI through the semantics tree; test user-visible behavior rather than internal composable structure.
 
 ### JUnit
 
-JUnit - базовый test framework, на котором обычно строятся unit tests и многие Android tests. Он даёт `@Test`, assertions, rules, lifecycle hooks и интеграцию с Gradle/IDE.
+JUnit is the base test framework on which unit tests and many Android tests are usually built. It provides `@Test`, assertions, rules, lifecycle hooks and Gradle/IDE integration.
 
-В Android обычно встречаются два уровня:
+In Android there are usually two levels:
 
-- local unit tests в `src/test`, которые запускаются на JVM без устройства;
-- instrumented tests в `src/androidTest`, которые запускаются на emulator/device и имеют доступ к Android framework.
+- local unit tests in `src/test`, which run on the JVM without a device;
+- instrumented tests in `src/androidTest`, which run on an emulator/device and have access to the Android framework.
 
-Пример простого JUnit test:
+Example of a simple JUnit test:
 
 ```kotlin
 class EmailValidatorTest {
@@ -111,8 +111,8 @@ class EmailValidatorTest {
 }
 ```
 
-JUnit rules полезны для повторяющейся настройки, например подменить `Dispatchers.Main`, создать temporary folder или настроить Compose/Espresso rule.
+JUnit rules are useful for repeated setup, for example replacing `Dispatchers.Main`, creating a temporary folder or configuring a Compose/Espresso rule.
 
-JUnit сам по себе не делает Android UI testing. Для UI нужны Espresso, Compose testing APIs, Robolectric или instrumented test runner, в зависимости от сценария.
+JUnit itself does not perform Android UI testing. UI needs Espresso, Compose testing APIs, Robolectric or an instrumented test runner, depending on the scenario.
 
-**Коротко:** JUnit - foundation для tests; Android-specific поведение добавляют rules, runners и testing libraries поверх него.
+**In short:** JUnit is the foundation for tests; Android-specific behavior is added by rules, runners and testing libraries on top of it.

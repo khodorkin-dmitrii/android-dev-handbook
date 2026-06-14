@@ -1,16 +1,16 @@
 # Flow Basics
 
-`Flow` - coroutine-based stream данных, который позволяет описывать несколько asynchronous значений во времени.
+`Flow` - a coroutine-based data stream that allows describing multiple asynchronous values over time.
 
-## Основы Flow
+## Flow basics
 
-### Что такое Flow?
+### What is Flow?
 
-`Flow` - asynchronous stream данных из Kotlin Coroutines, который может emit-ить несколько значений во времени.
+`Flow` - an asynchronous data stream from Kotlin Coroutines that can emit several values over time.
 
-Обычный `Flow` по умолчанию cold: код внутри `flow { ... }` не запускается, пока его не начнут collect-ить.
+A regular `Flow` is cold by default: code inside `flow { ... }` does not start until it is collected.
 
-`Flow` используют для наблюдения за изменениями: database updates, search input, UI state, realtime updates, polling, websocket-like streams и объединение нескольких источников данных.
+`Flow` is used to observe changes: database updates, search input, UI state, realtime updates, polling, websocket-like streams and combining several data sources.
 
 ```kotlin
 fun observeUser(id: String): Flow<User> = flow {
@@ -18,40 +18,40 @@ fun observeUser(id: String): Flow<User> = flow {
 }
 ```
 
-**Коротко:** `Flow` is a coroutine-based asynchronous stream; by default it is cold and starts when collected.
+**In short:** `Flow` is a coroutine-based asynchronous stream; by default it is cold and starts when collected.
 
 ### Flow vs suspend function
 
-Suspend function обычно возвращает один результат или одну ошибку. Она хорошо подходит для one-shot операций: `login()`, `fetchUser()`, `saveSettings()`, `sendAnalytics()`.
+Suspend function usually returns one result or one error. It fits one-shot operations well: `login()`, `fetchUser()`, `saveSettings()`, `sendAnalytics()`.
 
-`Flow` подходит, когда значений может быть несколько во времени: сначала cached data, потом fresh data, затем database updates или realtime status updates.
+`Flow` fits when there can be several values over time: first cached data, then fresh data, then database updates or realtime status updates.
 
-Если нужен один ответ - чаще проще и понятнее suspend function. Если нужен stream обновлений или reactive chain - `Flow`.
+If one response is needed, suspend function is usually simpler and clearer. If an update stream or reactive chain is needed, use `Flow`.
 
-Типичный pitfall: использовать `Flow` для простого одиночного запроса и усложнить API без реальной пользы.
+Typical pitfall: using `Flow` for a simple single request and complicating the API without real benefit.
 
-**Коротко:** `suspend` is for a single asynchronous result, `Flow` is for multiple values over time.
+**In short:** `suspend` is for a single asynchronous result, `Flow` is for multiple values over time.
 
 ### Cold Flow vs Hot Flow
 
-Cold Flow начинает работу только при collection. Каждый новый collector обычно заново запускает upstream.
+Cold Flow starts work only on collection. Each new collector usually restarts the upstream.
 
-Например, если внутри `flow { api.load() }`, то два collector-а могут запустить два отдельных API call.
+For example, if there is `flow { api.load() }`, two collectors may trigger two separate API calls.
 
-Hot Flow существует независимо от конкретного collector-а и может хранить или emit-ить значения даже без активных подписчиков. `StateFlow` и `SharedFlow` - hot flows.
+Hot Flow exists independently of a specific collector and can store or emit values even without active subscribers. `StateFlow` and `SharedFlow` are hot flows.
 
-В Android часто превращают cold flow из repository в hot `StateFlow` во `ViewModel` через `stateIn(viewModelScope, SharingStarted.WhileSubscribed(...), initialValue)`, чтобы UI получил стабильное состояние и upstream не запускался хаотично.
+In Android, a cold flow from a repository is often converted to hot `StateFlow` in `ViewModel` through `stateIn(viewModelScope, SharingStarted.WhileSubscribed(...), initialValue)`, so UI gets stable state and upstream does not start chaotically.
 
-**Коротко:** cold flows are started by collectors, hot flows live independently of collectors.
+**In short:** cold flows are started by collectors, hot flows live independently of collectors.
 
 ### `collect` vs `collectLatest`
 
-`collect` обрабатывает каждое значение до конца. Если приходит новое значение, оно ждёт, пока предыдущая обработка завершится.
+`collect` processes every value to completion. If a new value arrives, it waits until previous processing is finished.
 
-`collectLatest` отменяет обработку предыдущего значения, если пришло новое. Это полезно, когда старый результат уже не актуален.
+`collectLatest` cancels processing of the previous value when a new one arrives. This is useful when the old result is no longer relevant.
 
-Типичные примеры `collectLatest`: search-as-you-type, быстрые изменения фильтра, обновление UI, где важен только последний input.
+Typical examples of `collectLatest`: search-as-you-type, fast filter changes, UI updates where only the latest input matters.
 
-**Важно:** `collectLatest` отменяет body collection, поэтому его нельзя использовать там, где каждое значение обязательно должно быть обработано, например audit/logging/critical write operation.
+**Important:** `collectLatest` cancels the collection body, so it must not be used where every value must be processed, for example audit/logging/critical write operation.
 
-**Коротко:** `collect` processes every emission, `collectLatest` cancels previous processing when a new value arrives.
+**In short:** `collect` processes every emission, `collectLatest` cancels previous processing when a new value arrives.

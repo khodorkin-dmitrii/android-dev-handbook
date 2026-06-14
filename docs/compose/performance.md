@@ -1,53 +1,53 @@
 # Compose Performance
 
-Compose performance нужно анализировать по фазам: Composition, Layout и Drawing. Проблема может быть не только в recomposition, но и в дорогом layout, draw, allocations или main-thread work.
+Compose performance should be analyzed by phases: Composition, Layout and Drawing. The problem may be not only recomposition, but also expensive layout, draw, allocations or main-thread work.
 
 ## Lazy layouts
 
 ### LazyColumn performance
 
-`LazyColumn`, `LazyRow` и lazy grids эффективно compose-ят только видимые элементы и переиспользуют compositions, но performance всё равно зависит от identity элементов, стоимости item UI и организации state.
+`LazyColumn`, `LazyRow` and lazy grids efficiently compose only visible items and reuse compositions, but performance still depends on item identity, item UI cost and state organization.
 
-Для списков с insert/remove/reorder нужно задавать stable unique keys: `key = { item.id }`. Без keys Compose привязывает item state к позиции, поэтому при перемещении элементов можно потерять `remember` state и получить лишние recompositions.
+For lists with insert/remove/reorder, set stable unique keys: `key = { item.id }`. Without keys, Compose ties item state to position, so moving items can lose `remember` state and cause unnecessary recompositions.
 
-Для списков с разными типами элементов полезен `contentType`. Он помогает Compose переиспользовать compositions только между элементами похожей структуры, а не пытаться переиспользовать item одного типа как item другого типа.
+For lists with different item types, `contentType` is useful. It helps Compose reuse compositions only between items with similar structure, instead of trying to reuse an item of one type as an item of another type.
 
-Item composable должен быть лёгким: не сортировать и не фильтровать большие коллекции внутри item, не делать I/O, не создавать тяжёлые объекты и не выполнять дорогой image/formatting work на каждую recomposition. Для больших или удалённых данных лучше использовать Paging.
+Item composable should be lightweight: do not sort or filter large collections inside an item, do not do I/O, do not create heavy objects and do not perform expensive image/formatting work on every recomposition. For large or remote data, prefer Paging.
 
-**Коротко:** `LazyColumn` is lazy by rendering only visible items, but real performance depends on stable keys, lightweight item content, correct state ownership and avoiding heavy work during composition.
+**In short:** `LazyColumn` is lazy by rendering only visible items, but real performance depends on stable keys, lightweight item content, correct state ownership and avoiding heavy work during composition.
 
 ### Stable keys
 
-Stable keys в lazy layouts - это стабильные уникальные identifiers, которые помогают Compose сохранить identity элемента при изменении dataset.
+Stable keys in lazy layouts are stable unique identifiers that help Compose preserve item identity when the dataset changes.
 
-По умолчанию identity элемента фактически связана с его позицией. Это плохо для списков, где элементы добавляются, удаляются, сортируются или перемещаются: item state может "переехать" не туда, а Compose может сделать больше работы, чем нужно.
+By default, item identity is effectively tied to its position. This is bad for lists where items are added, removed, sorted or moved: item state can "move" to the wrong item, and Compose can do more work than needed.
 
-Правильный key должен быть стабильным для одного и того же logical item: database id, server id, UUID или другой устойчивый identifier. Index использовать опасно, если порядок списка может меняться.
+A correct key should be stable for the same logical item: database id, server id, UUID or another persistent identifier. Using index is dangerous if list order can change.
 
-Если внутри item используется `rememberSaveable`, key должен быть совместим с `Bundle`, например primitive, enum или `Parcelable`, чтобы state мог восстановиться после recreation или после ухода item за пределы viewport.
+If `rememberSaveable` is used inside an item, the key must be compatible with `Bundle`, for example primitive, enum or `Parcelable`, so state can be restored after recreation or after the item leaves the viewport.
 
-**Коротко:** stable keys keep item identity across list changes, preserving item state and helping Compose avoid unnecessary recomposition.
+**In short:** stable keys keep item identity across list changes, preserving item state and helping Compose avoid unnecessary recomposition.
 
 ## Performance pitfalls
 
-### Heavy work inside composable
+### Heavy work inside a composable
 
-Composable body может выполняться много раз, быть skipped или перезапускаться при изменении state. Поэтому тяжёлая работа внутри composable быстро превращается в performance problem.
+Composable body can run many times, be skipped or restart when state changes. Therefore heavy work inside a composable quickly becomes a performance problem.
 
-Типичные ошибки: сортировать/фильтровать большой список прямо в composable, парсить данные, создавать formatter на каждую recomposition, выполнять I/O, синхронно декодировать bitmap, делать сложные вычисления или запускать side effects прямо из body.
+Typical mistakes: sorting/filtering a large list directly in a composable, parsing data, creating a formatter on every recomposition, doing I/O, synchronously decoding bitmap, performing complex calculations or launching side effects directly from the body.
 
-Лучше подготовить данные заранее во `ViewModel` / domain layer и передать в UI готовую UI model. Если локальное вычисление действительно относится к UI и зависит от конкретных inputs, его можно кэшировать через `remember(inputs)`, но `remember` не должен прятать business logic.
+It is better to prepare data ahead of time in `ViewModel` / domain layer and pass a ready UI model to UI. If a local calculation truly belongs to UI and depends on specific inputs, it can be cached with `remember(inputs)`, but `remember` should not hide business logic.
 
-Для suspend work и callback/subscription API нужны controlled side effects: `LaunchedEffect`, `produceState` или `DisposableEffect`, а не прямой запуск работы из composable body.
+Suspend work and callback/subscription APIs need controlled side effects: `LaunchedEffect`, `produceState` or `DisposableEffect`, not direct work launch from the composable body.
 
-**Коротко:** composables should describe UI, not perform heavy work; move expensive work out of composition or cache it with the right keys.
+**In short:** composables should describe UI, not perform heavy work; move expensive work out of composition or cache it with the right keys.
 
 ### Compose UI performance pitfalls
 
-Частые pitfalls: читать часто меняющийся state слишком высоко в дереве, передавать mutable/unstable models, забывать stable keys в lazy lists, делать heavy work в composable, создавать лишние allocations, запускать side effects в body, использовать nested scroll/lazy layouts без ограничений размера, делать backwards writes и обновлять state после того, как он уже был прочитан в composition.
+Common pitfalls: reading frequently changing state too high in the tree, passing mutable/unstable models, forgetting stable keys in lazy lists, doing heavy work in a composable, creating unnecessary allocations, launching side effects in the body, using nested scroll/lazy layouts without size constraints, doing backwards writes and updating state after it has already been read in composition.
 
-`derivedStateOf` полезен, когда input state меняется часто, а UI должен обновляться только при изменении derived result. Но он не нужен для обычных дешёвых вычислений, которые должны обновляться так же часто, как inputs.
+`derivedStateOf` is useful when input state changes often, but UI should update only when the derived result changes. But it is not needed for ordinary cheap calculations that should update as often as inputs.
 
-Оптимизировать нужно после измерений: debug build может искажать картину. Лучше смотреть release/R8 build, Layout Inspector, recomposition highlights/counters, Android Profiler, tracing/Perfetto, Macrobenchmark и реальные user scenarios.
+Optimize after measurement: debug build can distort the picture. Prefer release/R8 build, Layout Inspector, recomposition highlights/counters, Android Profiler, tracing/Perfetto, Macrobenchmark and real user scenarios.
 
-**Коротко:** Compose performance is not about avoiding recomposition blindly; it is about measuring the bottleneck and reducing unnecessary work in composition, layout, drawing and the main thread.
+**In short:** Compose performance is not about avoiding recomposition blindly; it is about measuring the bottleneck and reducing unnecessary work in composition, layout, drawing and the main thread.

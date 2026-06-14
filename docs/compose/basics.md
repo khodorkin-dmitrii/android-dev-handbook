@@ -1,34 +1,34 @@
 # Compose Basics
 
-Jetpack Compose - современный declarative UI toolkit для Android. Вместо ручного изменения View-дерева мы описываем UI как функцию от state, а Compose сам обновляет нужные части интерфейса при изменении данных.
+Jetpack Compose - a modern declarative UI toolkit for Android. Instead of manually changing the View tree, we describe UI as a function of state, and Compose updates the necessary parts of the interface when data changes.
 
-## Основы Compose
+## Compose basics
 
-### Что такое Jetpack Compose?
+### What is Jetpack Compose?
 
-Compose используется для построения экранов на Kotlin без XML и хорошо интегрируется с `ViewModel`, `Flow` / `StateFlow`, Material Design, Navigation и testing APIs.
+Compose is used to build screens in Kotlin without XML and integrates well with `ViewModel`, `Flow` / `StateFlow`, Material Design, Navigation and testing APIs.
 
-Главный mental model: composable должен быть быстрым, idempotent и side-effect free. Нельзя думать, что Compose каждый раз полностью перерисовывает весь экран: он старается пропускать неизменившиеся части.
+The main mental model: a composable should be fast, idempotent and side-effect free. Do not think that Compose fully redraws the whole screen every time: it tries to skip unchanged parts.
 
-**Коротко:** Jetpack Compose lets us build Android UI declaratively: UI is a function of state, and Compose recomposes affected parts when state changes.
+**In short:** Jetpack Compose lets us build Android UI declaratively: UI is a function of state, and Compose recomposes affected parts when state changes.
 
 ### Declarative UI
 
-Declarative UI - подход, где код описывает, как UI должен выглядеть для текущего state, а не какие пошаговые команды нужно выполнить, чтобы вручную изменить экран.
+Declarative UI - an approach where code describes how UI should look for the current state, not which step-by-step commands should be executed to manually change the screen.
 
-В imperative View System мы часто делаем `setText()`, `setVisibility()`, `notifyDataSetChanged()`. В Compose мы передаём новое состояние в composable, и UI пересобирается как результат этого состояния.
+In the imperative View System, we often call `setText()`, `setVisibility()`, `notifyDataSetChanged()`. In Compose, we pass new state into a composable, and UI is rebuilt as a result of that state.
 
-Практический плюс - проще reasoning о loading/content/error, формах, списках и state-driven экранах.
+The practical benefit is simpler reasoning about loading/content/error, forms, lists and state-driven screens.
 
-**Важно:** нельзя выполнять business logic и side effects прямо в body composable, потому что recomposition может происходить часто, быть пропущена или отменена.
+**Important:** do not execute business logic and side effects directly in the composable body, because recomposition can happen often, be skipped or be canceled.
 
-**Коротко:** in declarative UI, the screen is rendered from state; when state changes, we provide new inputs and the framework updates the UI.
+**In short:** in declarative UI, the screen is rendered from state; when state changes, we provide new inputs and the framework updates the UI.
 
 ### Composable function
 
-Composable function - Kotlin-функция, помеченная `@Composable`, которая описывает часть UI и может вызывать другие composable functions.
+Composable function - a Kotlin function marked with `@Composable` that describes part of UI and can call other composable functions.
 
-Composable не возвращает `View`. Он участвует в Composition: Compose вызывает composable functions, строит UI tree и обновляет его при изменении state.
+A composable does not return a `View`. It participates in Composition: Compose calls composable functions, builds a UI tree and updates it when state changes.
 
 ```kotlin
 @Composable
@@ -37,24 +37,24 @@ fun Greeting(name: String) {
 }
 ```
 
-Важные правила: composable может вызываться много раз, в другом порядке, может быть skipped, поэтому он должен быть быстрым и не должен выполнять неожиданные side effects. Для событий используют callbacks, а для controlled side effects - специальные APIs вроде `LaunchedEffect`.
+Important rules: a composable can be called many times, in a different order, or be skipped, so it must be fast and must not perform unexpected side effects. Events use callbacks, and controlled side effects use special APIs such as `LaunchedEffect`.
 
-**Коротко:** a composable function describes UI for given inputs; it should be fast, idempotent and free of uncontrolled side effects.
+**In short:** a composable function describes UI for given inputs; it should be fast, idempotent and free of uncontrolled side effects.
 
-### Стадии отрисовки в Compose / Compose rendering phases
+### Compose rendering phases
 
-В Compose UI обновляется через несколько фаз: Composition, Layout и Drawing.
+In Compose, UI is updated through several phases: Composition, Layout and Drawing.
 
-Composition - фаза, где Compose вызывает composable-функции и строит или обновляет UI tree. Здесь определяется, что должно быть на экране: какие composable нужны, какие параметры они получают и какая структура UI получается из текущего state.
+Composition - the phase where Compose calls composable functions and builds or updates the UI tree. This is where Compose determines what should be on screen: which composables are needed, which parameters they receive and what UI structure comes from the current state.
 
-Layout - фаза измерения и размещения элементов. Здесь Compose определяет размеры UI nodes и их позицию на экране. Эта фаза включает measure и placement: сначала элементы измеряются с учётом constraints, затем размещаются внутри parent.
+Layout - the phase of measuring and placing elements. Here Compose determines the sizes of UI nodes and their positions on screen. This phase includes measure and placement: first elements are measured with constraints, then placed inside the parent.
 
-Drawing - фаза отрисовки. Здесь Compose рисует уже измеренные и размещённые элементы: текст, фон, иконки, canvas drawing, draw modifiers и другие визуальные детали.
+Drawing - the rendering phase. Here Compose draws already measured and placed elements: text, background, icons, canvas drawing, draw modifiers and other visual details.
 
-Важный момент: изменение state не всегда означает полный проход всех фаз. Compose старается перезапустить только те фазы, которые действительно зависят от изменившегося state.
+Important point: a state change does not always mean all phases run again. Compose tries to restart only the phases that actually depend on the changed state.
 
-Если state читается в body composable, изменение может вызвать recomposition, а затем при необходимости layout и drawing. Если state читается только в layout modifier, Compose может пропустить Composition и перейти сразу к Layout. Если state читается только в draw phase, Compose может ограничиться redraw без recomposition и relayout.
+If state is read in the composable body, a change can trigger recomposition, and then layout and drawing if needed. If state is read only in a layout modifier, Compose can skip Composition and go straight to Layout. If state is read only in the draw phase, Compose can limit work to redraw without recomposition and relayout.
 
-Например, если цвет читается внутри `Modifier.drawBehind { drawCircle(color) }`, то при изменении только `color` Compose может выполнить только Drawing phase, потому что структура UI и layout не изменились.
+For example, if color is read inside `Modifier.drawBehind { drawCircle(color) }`, then when only `color` changes, Compose can run only the Drawing phase because UI structure and layout did not change.
 
-**Коротко:** Jetpack Compose rendering pipeline has three main phases: Composition, Layout, and Drawing. A state change may restart one or more phases depending on where that state is read.
+**In short:** Jetpack Compose rendering pipeline has three main phases: Composition, Layout, and Drawing. A state change may restart one or more phases depending on where that state is read.

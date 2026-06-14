@@ -1,29 +1,29 @@
 # JVM / Android Runtime
 
-Раздел про связь Java, JVM bytecode, DEX и Android Runtime. Это помогает понимать, почему Java/Kotlin-код может выглядеть похожим, но выполняться в Android не как обычное desktop/server Java-приложение.
+This section covers the relationship between Java, JVM bytecode, DEX and Android Runtime. It helps explain why Java/Kotlin code can look familiar but run on Android differently from a regular desktop/server Java application.
 
-## Runtime и компиляция
+## Runtime and Compilation
 
-### Почему нельзя запустить обычный Java bytecode на Android напрямую?
+### Why cannot regular Java bytecode run directly on Android?
 
-Android не запускает обычные `.class` файлы напрямую как стандартная JVM. Java/Kotlin-код сначала компилируется в JVM bytecode, а затем Android toolchain преобразует его в DEX (Dalvik Executable).
+Android does not run regular `.class` files directly like a standard JVM. Java/Kotlin code is first compiled to JVM bytecode, then the Android toolchain converts it to DEX (Dalvik Executable).
 
-DEX - формат bytecode для Android Runtime (ART), оптимизированный под мобильную среду и упаковку в APK/AAB. Поэтому Java source code и многие Java libraries можно использовать, если они совместимы с Android API, но raw `.class` bytecode сам по себе не является финальным runtime-форматом Android-приложения.
+DEX is the bytecode format for Android Runtime (ART), optimized for the mobile environment and packaging into APK/AAB. So Java source code and many Java libraries can be used if they are compatible with Android APIs, but raw `.class` bytecode itself is not the final runtime format of an Android application.
 
-**Коротко:** Android использует ART и DEX, а не обычный JVM runtime для `.class` файлов.
+**In short:** Android uses ART and DEX, not a regular JVM runtime for `.class` files.
 
 ### JIT compilation
 
-JIT (Just-In-Time) compilation - это компиляция часто выполняемых участков bytecode в native machine code во время выполнения программы.
+JIT (Just-In-Time) compilation is the compilation of frequently executed bytecode sections into native machine code while the program is running.
 
-Идея в том, что runtime сначала может интерпретировать код, собирать profiling information, а затем оптимизировать hot paths. Это улучшает производительность повторяющегося кода, но добавляет runtime overhead и warm-up cost.
+The idea is that the runtime can first interpret code, collect profiling information, and then optimize hot paths. This improves performance of repeated code but adds runtime overhead and warm-up cost.
 
-**Коротко:** JIT оптимизирует горячий код во время выполнения, в отличие от AOT, где компиляция происходит заранее.
+**In short:** JIT optimizes hot code at runtime, unlike AOT where compilation happens ahead of time.
 
-### AOT / JIT в Android ART
+### AOT / JIT in Android ART
 
-ART (Android Runtime) выполняет Android-приложения из DEX bytecode и использует комбинацию interpretation, JIT и AOT/profile-guided compilation.
+ART (Android Runtime) runs Android applications from DEX bytecode and uses a combination of interpretation, JIT and AOT/profile-guided compilation.
 
-AOT (Ahead-Of-Time) компилирует код заранее, например во время установки или фоновой оптимизации. JIT компилирует hot code во время выполнения на основе профиля реального использования.
+AOT (Ahead-Of-Time) compiles code ahead of time, for example during installation or background optimization. JIT compiles hot code at runtime based on the real usage profile.
 
-Практический смысл: Android старается балансировать startup time, размер скомпилированного кода, расход памяти и runtime performance. Поэтому корректнее говорить, что современный ART использует гибридный подход, а не только AOT или только JIT.
+Practical meaning: Android tries to balance startup time, compiled code size, memory usage and runtime performance. So it is more accurate to say that modern ART uses a hybrid approach, not only AOT or only JIT.

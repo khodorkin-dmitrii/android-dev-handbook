@@ -1,34 +1,34 @@
 # Java Exceptions
 
-Исключения в Java описывают ошибки выполнения и управляемые сбои, которые приложение может обработать или передать выше по стеку вызовов.
+Java exceptions describe runtime errors and controlled failures that an application can handle or pass higher up the call stack.
 
-## Иерархия исключений
+## Exception Hierarchy
 
 ### `Error` vs `Exception`
 
-В Java все throwable-сущности наследуются от `Throwable`. Две основные ветки - `Error` и `Exception`.
+In Java, all throwable entities inherit from `Throwable`. The two main branches are `Error` and `Exception`.
 
-`Error` обычно означает серьёзную проблему уровня JVM/runtime, например `OutOfMemoryError` или `StackOverflowError`. Обычно такие ошибки не пытаются обрабатывать как обычный бизнес-кейс.
+`Error` usually means a serious JVM/runtime-level problem, for example `OutOfMemoryError` or `StackOverflowError`. These errors are usually not handled like regular business cases.
 
-`Exception` - это ошибки, с которыми приложение потенциально может работать. `RuntimeException` - подтип `Exception` для unchecked ошибок, например `NullPointerException`, `IllegalArgumentException` или `IndexOutOfBoundsException`.
+`Exception` represents errors that an application can potentially work with. `RuntimeException` is a subtype of `Exception` for unchecked errors such as `NullPointerException`, `IllegalArgumentException` or `IndexOutOfBoundsException`.
 
 ### Checked vs unchecked exceptions
 
-Checked exceptions - исключения, которые Java заставляет либо обработать через `catch`, либо объявить в сигнатуре метода через `throws`.
+Checked exceptions are exceptions that Java forces code either to handle with `catch` or declare in the method signature with `throws`.
 
-Unchecked exceptions - `RuntimeException` и `Error`. Их можно не объявлять и не ловить, но это не значит, что их нужно игнорировать.
+Unchecked exceptions are `RuntimeException` and `Error`. They do not have to be declared or caught, but that does not mean they should be ignored.
 
-В Kotlin checked exceptions нет на уровне языка: компилятор не заставляет ловить Java checked exception. Поэтому при работе с Java API из Kotlin нужно самому понимать, какие ошибки возможны.
+Kotlin does not have checked exceptions at the language level: the compiler does not force Java checked exceptions to be caught. So when working with Java APIs from Kotlin, you need to understand which errors are possible.
 
-## Обработка исключений
+## Exception Handling
 
 ### `try` / `catch` / `finally` / `throw` / `throws`
 
-`try` оборачивает код, который может выбросить исключение. `catch` перехватывает и обрабатывает конкретный тип исключения.
+`try` wraps code that can throw an exception. `catch` intercepts and handles a specific exception type.
 
-`finally` выполняется после `try` / `catch` и обычно используется для cleanup. Но для closeable ресурсов в Java лучше использовать `try-with-resources`, потому что он безопаснее и короче.
+`finally` runs after `try` / `catch` and is usually used for cleanup. But for closeable resources in Java, `try-with-resources` is better because it is safer and shorter.
 
-`throw` явно выбрасывает исключение. `throws` в сигнатуре метода объявляет, что метод может выбросить checked exception, и переносит ответственность обработки на вызывающий код.
+`throw` explicitly throws an exception. `throws` in a method signature declares that the method can throw a checked exception and shifts handling responsibility to the caller.
 
 ```java
 try {
@@ -40,4 +40,4 @@ try {
 }
 ```
 
-**Практический совет:** не глуши исключение пустым `catch`. Если ошибка не может быть обработана на текущем уровне, её лучше пробросить выше, завернуть в доменное исключение или залогировать с достаточным контекстом.
+**Practical note:** do not swallow an exception with an empty `catch`. If the error cannot be handled at the current level, it is better to pass it higher, wrap it in a domain exception or log it with enough context.

@@ -1,26 +1,26 @@
 # Java Concurrency
 
-Темы Java concurrency, которые помогают понимать legacy Java-код, Android internals и низкоуровневую модель многопоточности: `Thread`, `volatile`, `synchronized`, `wait()` / `notify()`, `Executor`, `Future`, atomic classes и `java.util.concurrent`.
+Java concurrency topics that help with understanding legacy Java code, Android internals and the low-level threading model: `Thread`, `volatile`, `synchronized`, `wait()` / `notify()`, `Executor`, `Future`, atomic classes and `java.util.concurrent`.
 
-## Потоки и синхронизация
+## Threads and Synchronization
 
 ### `Thread`
 
-`Thread` - базовая единица выполнения в Java. Когда вызывается `start()`, JVM создаёт новый поток выполнения и вызывает `run()` внутри этого нового потока.
+`Thread` is the basic unit of execution in Java. When `start()` is called, the JVM creates a new execution thread and calls `run()` inside that new thread.
 
-Поток завершится, когда метод `run()` дойдёт до конца или выбросит необработанное исключение. Останавливать поток через `stop()` нельзя: это unsafe API. Обычно используют cooperative cancellation через `interrupt()`, флаг, `Future` cancellation или higher-level concurrency APIs.
+The thread finishes when `run()` reaches the end or throws an unhandled exception. Do not stop a thread with `stop()`: it is an unsafe API. Usually cooperative cancellation is used through `interrupt()`, a flag, `Future` cancellation or higher-level concurrency APIs.
 
-Чтобы дождаться результата снаружи, можно использовать `join()`, `Future` / `Callable`, `CountDownLatch`, callback или shared state с правильной синхронизацией. В Android для нового Kotlin-кода чаще используют coroutines, но понимать raw `Thread` полезно для legacy-кода.
+To wait for a result from the outside, use `join()`, `Future` / `Callable`, `CountDownLatch`, a callback or shared state with proper synchronization. In Android, new Kotlin code usually uses coroutines, but understanding raw `Thread` is useful for legacy code.
 
 ### `volatile` vs `synchronized`
 
-`volatile` гарантирует visibility: если один thread записал новое значение volatile-поля, другие threads увидят актуальное значение. Также `volatile` задаёт happens-before relationship для чтения/записи этой переменной.
+`volatile` guarantees visibility: if one thread writes a new value to a volatile field, other threads will see the current value. `volatile` also establishes a happens-before relationship for reads/writes of that variable.
 
-Но `volatile` не делает составные операции атомарными. Например, `counter++` всё равно не thread-safe, потому что это чтение, изменение и запись.
+But `volatile` does not make compound operations atomic. For example, `counter++` is still not thread-safe because it consists of read, modify and write.
 
-`synchronized` даёт mutual exclusion: только один thread может выполнять protected block на одном monitor. Также `synchronized` обеспечивает visibility изменений при входе и выходе из monitor. Для простого флага может хватить `volatile`, для критической секции и compound operations нужен `synchronized`, lock или atomic classes.
+`synchronized` provides mutual exclusion: only one thread can execute a protected block on the same monitor. It also ensures visibility of changes when entering and exiting the monitor. `volatile` can be enough for a simple flag; a critical section and compound operations need `synchronized`, a lock or atomic classes.
 
-Пример volatile-флага:
+Example of a volatile flag:
 
 ```java
 class SharedResource {
@@ -36,9 +36,9 @@ class SharedResource {
 }
 ```
 
-Здесь `volatile` подходит для простого флага: один thread меняет значение, другой гарантированно видит актуальное значение. Но если нужно выполнить compound operation, `volatile` уже недостаточно.
+Here `volatile` is suitable for a simple flag: one thread changes the value, another thread is guaranteed to see the current value. But if a compound operation is needed, `volatile` is no longer enough.
 
-Пример synchronized-счётчика:
+Example of a synchronized counter:
 
 ```java
 class SharedCounter {
@@ -54,46 +54,46 @@ class SharedCounter {
 }
 ```
 
-Здесь `synchronized` защищает критическую секцию: `increment()` выполняется атомарно относительно других synchronized-методов на том же объекте, а изменения видны другим threads после выхода из monitor.
+Here `synchronized` protects the critical section: `increment()` executes atomically relative to other synchronized methods on the same object, and changes are visible to other threads after exiting the monitor.
 
 ### `wait()` / `notify()` / `notifyAll()`
 
-`wait()`, `notify()` и `notifyAll()` - низкоуровневые методы `Object` для координации threads через monitor.
+`wait()`, `notify()` and `notifyAll()` are low-level `Object` methods for coordinating threads through a monitor.
 
-Их можно вызывать только внутри `synchronized`-блока или `synchronized`-метода на том же объекте-мониторе. `wait()` освобождает monitor и приостанавливает thread, `notify()` будит один ожидающий thread, `notifyAll()` будит всех ожидающих.
+They can be called only inside a `synchronized` block or `synchronized` method on the same monitor object. `wait()` releases the monitor and suspends the thread, `notify()` wakes one waiting thread, and `notifyAll()` wakes all waiting threads.
 
-На практике `wait()` почти всегда используют в `while`-loop с проверкой условия, потому что возможны spurious wakeups. В современном коде чаще предпочитают `java.util.concurrent`, locks, queues, coroutines или reactive primitives.
+In practice, `wait()` is almost always used in a `while` loop with a condition check because spurious wakeups are possible. Modern code usually prefers `java.util.concurrent`, locks, queues, coroutines or reactive primitives.
 
 ## Higher-level concurrency APIs
 
 ### `Executor`
 
-`Executor` - abstraction для запуска задач без ручного управления `Thread`. Вместо `new Thread(...).start()` код передаёт `Runnable` в `Executor`, а конкретная реализация решает, где и когда его выполнить.
+`Executor` is an abstraction for running tasks without manual `Thread` management. Instead of `new Thread(...).start()`, code passes a `Runnable` to `Executor`, and the concrete implementation decides where and when to execute it.
 
-Чаще всего используют `ExecutorService` и thread pools: fixed thread pool, cached thread pool, single-thread executor. Это позволяет переиспользовать threads, ограничивать параллелизм и управлять `shutdown()`.
+Most often code uses `ExecutorService` and thread pools: fixed thread pool, cached thread pool, single-thread executor. This allows threads to be reused, parallelism to be limited and `shutdown()` to be managed.
 
-**Коротко:** `Executor` отделяет описание задачи от механизма её выполнения. В Android raw `Executor` встречается в legacy/Java-коде, а в Kotlin-коде часто заменяется coroutines и `Dispatchers`.
+**In short:** `Executor` separates task description from the execution mechanism. In Android, raw `Executor` appears in legacy/Java code, while Kotlin code often replaces it with coroutines and `Dispatchers`.
 
 ### `Callable` / `Future`
 
-`Runnable` описывает задачу без результата, а `Callable<T>` описывает задачу, которая возвращает значение или бросает exception.
+`Runnable` describes a task without a result, while `Callable<T>` describes a task that returns a value or throws an exception.
 
-`Future<T>` представляет результат асинхронной операции. Через `get()` можно дождаться результата, но важно помнить: `get()` блокирует текущий thread, поэтому его нельзя вызывать на Android main thread.
+`Future<T>` represents the result of an asynchronous operation. `get()` can wait for the result, but remember: `get()` blocks the current thread, so it must not be called on the Android main thread.
 
-`Future` также позволяет проверить состояние задачи и попытаться отменить её через `cancel()`. В современном Android-коде похожую роль часто играют `suspend` functions, `Deferred` или `Flow`, но `Callable` / `Future` важно знать для Java concurrency и legacy APIs.
+`Future` also allows checking task state and attempting cancellation through `cancel()`. In modern Android code, a similar role is often played by `suspend` functions, `Deferred` or `Flow`, but `Callable` / `Future` are important for Java concurrency and legacy APIs.
 
 ### Atomic
 
-Atomic classes из `java.util.concurrent.atomic` дают lock-free thread-safe операции над отдельными значениями: `AtomicInteger`, `AtomicBoolean`, `AtomicReference` и другие.
+Atomic classes from `java.util.concurrent.atomic` provide lock-free thread-safe operations on individual values: `AtomicInteger`, `AtomicBoolean`, `AtomicReference` and others.
 
-Они полезны для простых counters, flags и compare-and-set логики. Например, `AtomicInteger.incrementAndGet()` атомарен, в отличие от обычного `counter++`.
+They are useful for simple counters, flags and compare-and-set logic. For example, `AtomicInteger.incrementAndGet()` is atomic, unlike regular `counter++`.
 
-Но Atomic не заменяет полноценную синхронизацию для сложного состояния из нескольких полей. Если нужно атомарно менять несколько связанных значений, лучше использовать `synchronized`, `Lock` или другую модель state management.
+But atomic classes do not replace full synchronization for complex state made of several fields. If several related values need to change atomically, use `synchronized`, `Lock` or another state-management model.
 
 ### `java.util.concurrent`
 
-`java.util.concurrent` - пакет Java с high-level инструментами для многопоточности: `ExecutorService`, `Future`, `BlockingQueue`, `CountDownLatch`, `Semaphore`, `ConcurrentHashMap`, locks, atomic classes и др.
+`java.util.concurrent` is a Java package with high-level concurrency tools: `ExecutorService`, `Future`, `BlockingQueue`, `CountDownLatch`, `Semaphore`, `ConcurrentHashMap`, locks, atomic classes and more.
 
-Его цель - дать более безопасные и удобные примитивы, чем ручное управление `Thread`, `wait()` / `notify()` и shared mutable state.
+Its goal is to provide safer and more convenient primitives than manual `Thread` management, `wait()` / `notify()` and shared mutable state.
 
-**Главная мысль:** базу `Thread` / `synchronized` / `wait()` важно понимать, но в production чаще используют более высокоуровневые инструменты из `java.util.concurrent` или, в modern Android Kotlin, coroutines.
+**Key idea:** the basics of `Thread` / `synchronized` / `wait()` are important to understand, but production code usually uses higher-level tools from `java.util.concurrent` or, in modern Android Kotlin, coroutines.

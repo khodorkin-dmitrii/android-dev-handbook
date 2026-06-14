@@ -1,61 +1,61 @@
 # Design Patterns
 
-Design patterns - повторяемые решения типовых задач проектирования. Они не заменяют понимание задачи, но дают общий язык для обсуждения структуры кода.
+Design patterns are reusable solutions for common design problems. They do not replace understanding the task, but they provide a shared language for discussing code structure.
 
-GoF (Gang of Four, Банда четырёх) выделили 23 основных паттерна, которые обычно делят на три группы:
+GoF (Gang of Four) described 23 main patterns, usually split into three groups:
 
-- Creational / порождающие: `Abstract Factory`, `Builder`, `Factory Method`, `Prototype`, `Singleton`.
-- Structural / структурные: `Adapter`, `Bridge`, `Composite`, `Decorator`, `Facade`, `Flyweight`, `Proxy`.
-- Behavioral / поведенческие: `Chain of Responsibility`, `Command`, `Interpreter`, `Iterator`, `Mediator`, `Memento`, `Observer`, `State`, `Strategy`, `Template Method`, `Visitor`.
+- Creational: `Abstract Factory`, `Builder`, `Factory Method`, `Prototype`, `Singleton`.
+- Structural: `Adapter`, `Bridge`, `Composite`, `Decorator`, `Facade`, `Flyweight`, `Proxy`.
+- Behavioral: `Chain of Responsibility`, `Command`, `Interpreter`, `Iterator`, `Mediator`, `Memento`, `Observer`, `State`, `Strategy`, `Template Method`, `Visitor`.
 
-Ниже - основные паттерны, которые часто встречаются на практике или видны в API.
+Below are the main patterns that often appear in practice or are visible in APIs.
 
-## Основные паттерны
+## Main Patterns
 
-### Factory Method и Abstract Factory
+### Factory Method and Abstract Factory
 
-Factory Method - порождающий паттерн, который инкапсулирует создание одного типа объекта, когда клиентскому коду не нужно знать конкретный класс.
+Factory Method is a creational pattern that encapsulates creation of one object type when client code does not need to know the concrete class.
 
-Abstract Factory - порождающий паттерн, который создаёт семейство связанных объектов. Он полезен, когда нужно подменять целый набор реализаций, например разные UI components, parsers или platform-specific dependencies.
+Abstract Factory is a creational pattern that creates a family of related objects. It is useful when a whole set of implementations needs to be replaced, for example different UI components, parsers or platform-specific dependencies.
 
-**Коротко:** Factory Method решает создание одного продукта, Abstract Factory - создание семейства связанных продуктов.
+**In short:** Factory Method solves creation of one product, Abstract Factory solves creation of a family of related products.
 
 ### Singleton
 
-Singleton - порождающий паттерн, который гарантирует один общий instance класса и глобальную точку доступа к нему.
+Singleton is a creational pattern that guarantees one shared instance of a class and a global access point to it.
 
-В Android singleton часто используется для stateless services, repositories, caches или clients, но лучше создавать такие объекты через DI container, а не писать ручной static singleton.
+In Android, singleton is often used for stateless services, repositories, caches or clients, but it is better to create such objects through a DI container instead of writing a manual static singleton.
 
-Главный риск Singleton - скрытые зависимости, global state, сложные тесты и проблемы с lifecycle.
+The main risk of Singleton is hidden dependencies, global state, harder tests and lifecycle problems.
 
 ### Observer
 
-Observer - поведенческий паттерн, где объект-подписчик получает уведомления об изменениях другого объекта.
+Observer is a behavioral pattern where a subscriber object receives notifications about changes in another object.
 
-В Android похожая идея есть в listeners, `LiveData`, `Flow`, callbacks и UI state subscriptions. Один источник данных сообщает нескольким подписчикам о новых значениях.
+In Android, a similar idea appears in listeners, `LiveData`, `Flow`, callbacks and UI state subscriptions. One data source notifies several subscribers about new values.
 
-Важно помнить про lifecycle и отписку, иначе можно получить memory leak или события после уничтожения экрана.
+Remember lifecycle and unsubscription, otherwise memory leak or events after screen destruction are possible.
 
 ### Adapter
 
-Adapter - структурный паттерн-прослойка, который позволяет объектам с несовместимыми interfaces работать вместе.
+Adapter is a structural wrapper pattern that lets objects with incompatible interfaces work together.
 
-В Android это может быть mapper между API model и domain model, wrapper вокруг legacy service или `RecyclerView.Adapter`, который адаптирует данные к UI.
+In Android, this can be a mapper between API model and domain model, a wrapper around a legacy service or `RecyclerView.Adapter`, which adapts data to UI.
 
-Идея: не менять существующий код, а добавить прослойку совместимости.
+The idea is to avoid changing existing code and add a compatibility layer instead.
 
 ### Strategy
 
-Strategy - поведенческий паттерн, который выносит изменяемый алгоритм в отдельный объект за общим interface.
+Strategy is a behavioral pattern that moves a changeable algorithm into a separate object behind a common interface.
 
-Это удобно, когда есть несколько вариантов поведения: разные validators, sorters, formatters, retry policies, pricing rules или navigation strategies.
+This is useful when there are several behavior variants: different validators, sorters, formatters, retry policies, pricing rules or navigation strategies.
 
-Вместо большого `when` можно выбрать нужную strategy и вызвать общий метод.
+Instead of a large `when`, choose the required strategy and call a common method.
 
 ### Decorator
 
-Decorator - структурный паттерн, который добавляет объекту новое поведение, не меняя его класс и не создавая сложную иерархию наследования.
+Decorator is a structural pattern that adds new behavior to an object without changing its class and without creating a complex inheritance hierarchy.
 
-Он оборачивает исходный объект и реализует тот же interface. Например, можно добавить logging, caching, retry или analytics вокруг `Repository` или network client.
+It wraps the original object and implements the same interface. For example, logging, caching, retry or analytics can be added around `Repository` or a network client.
 
-**Коротко:** Decorator расширяет поведение через composition, а не inheritance.
+**In short:** Decorator extends behavior through composition, not inheritance.

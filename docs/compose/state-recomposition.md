@@ -1,77 +1,77 @@
 # State & Recomposition
 
-State и recomposition - основа mental model Compose: UI описывается как функция от состояния, а Compose обновляет затронутые части при изменении state.
+State and recomposition are the foundation of the Compose mental model: UI is described as a function of state, and Compose updates affected parts when state changes.
 
 ## State
 
-### Что такое recomposition?
+### What is recomposition?
 
-Recomposition - это повторный вызов composable-функций, когда изменился state, прочитанный во время Composition. Compose старается обновлять только затронутую часть UI tree и пропускать неизменившиеся composable.
+Recomposition is a repeated call of composable functions when state read during Composition has changed. Compose tries to update only the affected part of the UI tree and skip unchanged composables.
 
-Recomposition сама по себе нормальна и не является багом. Проблема появляется, когда она слишком частая, затрагивает слишком большую часть UI или внутри composable выполняется дорогая работа.
+Recomposition itself is normal and is not a bug. It becomes a problem when it is too frequent, affects too large a part of UI or expensive work is performed inside a composable.
 
-Важно различать фазы Compose: Composition определяет, что показывать, Layout измеряет и размещает, Drawing рисует. State change может перезапустить одну или несколько фаз в зависимости от того, где state читается: в body composable, layout modifier или draw phase.
+It is important to distinguish Compose phases: Composition determines what to show, Layout measures and places, Drawing renders. A state change can restart one or more phases depending on where the state is read: in the composable body, layout modifier or draw phase.
 
-**Коротко:** recomposition is how Compose updates UI from state changes; the goal is not to avoid it completely, but to keep it scoped and cheap.
+**In short:** recomposition is how Compose updates UI from state changes; the goal is not to avoid it completely, but to keep it scoped and cheap.
 
 ### `remember` vs `rememberSaveable`
 
-`remember` сохраняет значение между recomposition в пределах текущего composition. Он не переживает удаление composable из composition, configuration change или process death.
+`remember` keeps a value between recompositions within the current composition. It does not survive removing the composable from composition, configuration change or process death.
 
-`rememberSaveable` тоже сохраняет значение между recomposition, но дополнительно пытается восстановить его после `Activity` / `Fragment` recreation через saved instance state, если тип можно сохранить в `Bundle` или для него задан `Saver`.
+`rememberSaveable` also keeps a value between recompositions, but additionally tries to restore it after `Activity` / `Fragment` recreation through saved instance state if the type can be stored in a `Bundle` or has a `Saver`.
 
-`remember` подходит для локального transient UI state и кэширования вычислений внутри composition. `rememberSaveable` подходит для простого UI state, который пользователь ожидает восстановить после rotation, например input text или selected tab.
+`remember` fits local transient UI state and caching calculations inside composition. `rememberSaveable` fits simple UI state that the user expects to be restored after rotation, such as input text or selected tab.
 
-**Важно:** ни `remember`, ни `rememberSaveable` не заменяют `ViewModel` или persistent storage. Для screen/business state лучше использовать `ViewModel`, `SavedStateHandle`, repository/cache/database в зависимости от данных.
+**Important:** neither `remember` nor `rememberSaveable` replaces `ViewModel` or persistent storage. For screen/business state, prefer `ViewModel`, `SavedStateHandle`, repository/cache/database depending on the data.
 
-**Коротко:** `remember` survives recomposition, `rememberSaveable` also survives recreation when the value can be saved.
+**In short:** `remember` survives recomposition, `rememberSaveable` also survives recreation when the value can be saved.
 
 ### `mutableStateOf`
 
-`mutableStateOf` создаёт observable Compose `State`. Когда `value` меняется, Compose invalidates места, где этот state был прочитан, и может запустить recomposition.
+`mutableStateOf` creates observable Compose `State`. When `value` changes, Compose invalidates places where this state was read and can start recomposition.
 
-Обычно используется вместе с `remember`:
+It is usually used together with `remember`:
 
 ```kotlin
 var text by remember { mutableStateOf("") }
 ```
 
-Без `remember` state будет создаваться заново при каждой recomposition.
+Without `remember`, state will be created again on every recomposition.
 
-Для screen-level state чаще лучше использовать `ViewModel` + `StateFlow` и `collectAsStateWithLifecycle()`, а `mutableStateOf` оставлять для локального UI state или state holders, которые осознанно используют Compose runtime.
+For screen-level state, it is usually better to use `ViewModel` + `StateFlow` and `collectAsStateWithLifecycle()`, leaving `mutableStateOf` for local UI state or state holders that intentionally use Compose runtime.
 
-**Важно:** если хранить mutable collection внутри `mutableStateOf` и менять её содержимое без присваивания нового `value`, Compose может не увидеть изменение. Для UI state лучше предпочитать immutable copy.
+**Important:** if a mutable collection is stored inside `mutableStateOf` and its contents are changed without assigning a new `value`, Compose may not see the change. For UI state, prefer immutable copy.
 
-**Коротко:** `mutableStateOf` is Compose-observable state; changing it triggers invalidation where it was read, but state ownership still matters.
+**In short:** `mutableStateOf` is Compose-observable state; changing it triggers invalidation where it was read, but state ownership still matters.
 
 ### State hoisting
 
-State hoisting - это вынос state из child composable к ближайшему common owner, чтобы composable стал более stateless, переиспользуемым и тестируемым.
+State hoisting - moving state from a child composable to the nearest common owner so the composable becomes more stateless, reusable and testable.
 
-Обычно child получает `value` и callback вроде `onValueChange`, а state хранится выше: в parent composable, screen state holder или `ViewModel`, если состояние относится к экрану/бизнес-логике.
+Usually the child receives `value` and a callback like `onValueChange`, while state is stored higher: in a parent composable, screen state holder or `ViewModel` if the state belongs to screen/business logic.
 
-Не всё состояние нужно hoist-ить до `ViewModel`. Локальный UI state, например `expanded` у dropdown или pressed/animation state, может оставаться внутри composable, если он не нужен другим слоям и не должен переживать screen recreation.
+Not all state needs to be hoisted to `ViewModel`. Local UI state, such as `expanded` for a dropdown or pressed/animation state, can stay inside a composable if other layers do not need it and it does not need to survive screen recreation.
 
-**Коротко:** state hoisting separates state ownership from UI rendering; UI receives state and emits events, while the owner decides how state changes.
+**In short:** state hoisting separates state ownership from UI rendering; UI receives state and emits events, while the owner decides how state changes.
 
-## Stability и оптимизация
+## Stability and optimization
 
 ### Stable parameters / `@Stable` / immutability
 
-Stability в Compose помогает compiler/runtime понять, можно ли безопасно пропустить recomposition, если параметры composable не изменились.
+Stability in Compose helps the compiler/runtime understand whether recomposition can be safely skipped when composable parameters have not changed.
 
-Стабильный тип имеет предсказуемый `equals()` / identity contract и сообщает Compose об изменениях так, чтобы UI мог быть обновлён корректно. Immutable data classes с `val` properties и immutable/read-only данными обычно проще для Compose, чем mutable objects с неявными изменениями.
+A stable type has a predictable `equals()` / identity contract and reports changes to Compose so UI can be updated correctly. Immutable data classes with `val` properties and immutable/read-only data are usually easier for Compose than mutable objects with implicit changes.
 
-`@Stable` и `@Immutable` - это contract с Compose compiler, а не магическая оптимизация. Нельзя помечать mutable модель как stable, если изменения её полей не отслеживаются Compose: UI может перестать обновляться корректно.
+`@Stable` and `@Immutable` are contracts with the Compose compiler, not magic optimizations. Do not mark a mutable model as stable if changes to its fields are not tracked by Compose: UI may stop updating correctly.
 
-**Коротко:** stable parameters allow Compose to skip more safely, but annotations must reflect real state behavior; wrong stability is a correctness bug, not just a performance issue.
+**In short:** stable parameters allow Compose to skip more safely, but annotations must reflect real state behavior; wrong stability is a correctness bug, not just a performance issue.
 
-### Как уменьшать лишние recomposition?
+### How to reduce unnecessary recompositions?
 
-Лишние recomposition уменьшают не запретом recomposition как таковой, а правильным размещением state и снижением стоимости affected UI.
+Unnecessary recompositions are reduced not by banning recomposition itself, but by placing state correctly and lowering the cost of affected UI.
 
-Практические приёмы: держать state ближе к месту использования, hoist-ить только shared state, дробить экран на разумные composable, использовать stable keys в lazy lists, избегать тяжёлой работы в composable body и не создавать новые нестабильные объекты без необходимости.
+Practical techniques: keep state closer to where it is used, hoist only shared state, split the screen into reasonable composables, use stable keys in lazy lists, avoid heavy work in composable body and do not create new unstable objects unnecessarily.
 
-`derivedStateOf` полезен, когда derived value часто пересчитывается из часто меняющегося state, но реально должен инвалидировать UI только при изменении результата. `remember` полезен для кэширования вычислений, но не должен скрывать business logic.
+`derivedStateOf` is useful when a derived value is often recalculated from frequently changing state, but UI should actually be invalidated only when the result changes. `remember` is useful for caching calculations, but should not hide business logic.
 
-**Коротко:** optimize recomposition by understanding which state is read where, then reduce unnecessary invalidation and expensive work instead of blindly adding `remember` everywhere.
+**In short:** optimize recomposition by understanding which state is read where, then reduce unnecessary invalidation and expensive work instead of blindly adding `remember` everywhere.

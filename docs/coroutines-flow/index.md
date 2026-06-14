@@ -1,8 +1,8 @@
 # Coroutines & Flow
 
-Раздел про Kotlin Coroutines и Flow в Android: асинхронность, structured concurrency, cancellation, Flow operators, `StateFlow`, `SharedFlow` и lifecycle-aware collection.
+This section covers Kotlin Coroutines and Flow in Android: asynchronous work, structured concurrency, cancellation, Flow operators, `StateFlow`, `SharedFlow` and lifecycle-aware collection.
 
-## Структура раздела
+## Section structure
 
 - [Coroutines Basics](basics.md)
 - [Coroutine Scopes & Cancellation](scopes-cancellation.md)

@@ -1,38 +1,38 @@
 # DI Basics
 
-Dependency Injection (DI) - подход, при котором класс не создаёт свои dependencies сам, а получает их извне: через constructor, factory, framework или composition root.
+Dependency Injection (DI) is an approach where a class does not create its dependencies itself, but receives them from the outside: through a constructor, factory, framework or composition root.
 
-## Основы DI
+## DI Basics
 
-### Зачем нужен DI?
+### Why is DI needed?
 
-DI нужен для слабой связности, тестируемости и явного управления зависимостями. В Android это особенно полезно из-за слоёв, lifecycle, `ViewModel`, repositories, API clients, database, `DataStore`, analytics, dispatchers и feature flags.
+DI is needed for loose coupling, testability and explicit dependency management. In Android this is especially useful because of layers, lifecycle, `ViewModel`, repositories, API clients, database, `DataStore`, analytics, dispatchers and feature flags.
 
-Без DI `ViewModel` может сама создавать repository, repository - Retrofit service, а service - OkHttp client. Это приводит к tight coupling: зависимости сложно заменить, мокнуть в тестах и контролировать по lifecycle.
+Without DI, `ViewModel` may create repository itself, repository may create a Retrofit service, and the service may create an OkHttp client. This leads to tight coupling: dependencies are hard to replace, mock in tests and control by lifecycle.
 
-Хороший DI делает dependencies видимыми через constructor/API, позволяет подставить fake implementation в тестах, централизует wiring и помогает соблюдать Dependency Inversion Principle.
+Good DI makes dependencies visible through constructors/API, allows fake implementations in tests, centralizes wiring and helps follow the Dependency Inversion Principle.
 
-**Коротко:** DI is not just about avoiding `new`; it reduces coupling, improves testability and gives controlled lifecycle for dependencies.
+**In short:** DI is not just about avoiding `new`; it reduces coupling, improves testability and gives controlled lifecycle for dependencies.
 
 ### Dependency Injection vs Service Locator
 
-Dependency Injection означает, что dependency передаётся объекту извне. Класс явно объявляет, что ему нужно, обычно через constructor parameters, а composition root или DI container создаёт object graph.
+Dependency Injection means a dependency is passed into an object from the outside. The class explicitly declares what it needs, usually through constructor parameters, while the composition root or DI container creates the object graph.
 
-Service Locator - объект-реестр, из которого класс сам запрашивает dependency: например, `ServiceLocator.getRepository()`. Это проще для маленького проекта, но dependency становится менее явной.
+Service Locator is a registry object from which a class requests a dependency itself, for example `ServiceLocator.getRepository()`. This is simpler for a small project, but the dependency becomes less explicit.
 
-Главная разница: при DI зависимости видны в API класса, а при Service Locator класс скрыто знает о глобальном registry. Это усложняет тестирование, reasoning и поиск реальных зависимостей.
+The main difference: with DI, dependencies are visible in the class API; with Service Locator, the class secretly knows about a global registry. This complicates testing, reasoning and finding real dependencies.
 
-Service Locator не всегда зло: он может быть временным решением в legacy-коде или manual DI. Но в больших Android-проектах обычно лучше явный DI через constructor injection и Hilt/Dagger.
+Service Locator is not always bad: it can be a temporary solution in legacy code or manual DI. But in large Android projects, explicit DI through constructor injection and Hilt/Dagger is usually better.
 
-**Коротко:** DI pushes dependencies into a class, Service Locator lets the class pull them from a registry; DI is usually more explicit and testable.
+**In short:** DI pushes dependencies into a class, Service Locator lets the class pull them from a registry; DI is usually more explicit and testable.
 
 ### Constructor injection
 
-Constructor injection - способ DI, при котором все обязательные dependencies передаются через constructor.
+Constructor injection is a DI style where all required dependencies are passed through the constructor.
 
-Это предпочтительный вариант по умолчанию: объект нельзя создать без нужных dependencies, зависимости явно видны, их легко заменить в unit tests, а класс не зависит от конкретного DI framework внутри своей logic.
+This is the preferred default: the object cannot be created without required dependencies, dependencies are explicit, they are easy to replace in unit tests, and the class does not depend on a specific DI framework inside its logic.
 
-В Android через Hilt/Dagger constructor injection часто выглядит так:
+In Android with Hilt/Dagger, constructor injection often looks like this:
 
 ```kotlin
 class UserRepository @Inject constructor(
@@ -41,32 +41,32 @@ class UserRepository @Inject constructor(
 )
 ```
 
-Если класс принадлежит нам и его можно создать через constructor, обычно не нужен отдельный `@Provides` method.
+If the class belongs to us and can be created through the constructor, a separate `@Provides` method is usually not needed.
 
-Constructor injection хуже подходит, когда объект создаётся Android framework-ом напрямую, нужен runtime parameter, builder/factory или external SDK. Тогда используют assisted injection, factory, provider method или module.
+Constructor injection is less suitable when the object is created directly by the Android framework, needs a runtime parameter, uses a builder/factory or comes from an external SDK. In those cases use assisted injection, factory, provider method or module.
 
-**Коротко:** constructor injection is the default choice because it makes required dependencies explicit and keeps classes easy to test.
+**In short:** constructor injection is the default choice because it makes required dependencies explicit and keeps classes easy to test.
 
-### Scope в DI
+### Scope in DI
 
-Scope в DI определяет lifetime зависимости и границы переиспользования одного instance внутри object graph.
+Scope in DI defines a dependency lifetime and the boundaries for reusing one instance inside the object graph.
 
-Без scope dependency обычно создаётся каждый раз, когда она нужна. Scoped dependency переиспользуется внутри своего компонента/lifecycle: например, application-level singleton, `ViewModel`-scoped object или `Activity`-scoped object.
+Without a scope, a dependency is usually created each time it is needed. A scoped dependency is reused inside its component/lifecycle: for example, an application-level singleton, a `ViewModel`-scoped object or an `Activity`-scoped object.
 
-Scope нужно выбирать по реальному владельцу состояния. Stateless API client или database обычно может быть application-scoped, а объект с screen-specific state лучше держать ближе к `ViewModel` или feature scope.
+Choose scope based on the real owner of state. A stateless API client or database can usually be application-scoped, while an object with screen-specific state should live closer to `ViewModel` or feature scope.
 
-Неправильный scope может привести к memory leak, stale state или неожиданному shared mutable state. Например, нельзя хранить `Activity Context` в Singleton-scoped объекте.
+An incorrect scope can lead to memory leak, stale state or unexpected shared mutable state. For example, an `Activity Context` must not be stored in a Singleton-scoped object.
 
-**Коротко:** scope is about object lifetime; good DI is not "make everything singleton", but matching dependency lifetime to the owner lifecycle.
+**In short:** scope is about object lifetime; good DI is not "make everything singleton", but matching dependency lifetime to the owner lifecycle.
 
-### Почему не стоит делать всё singleton?
+### Why not make everything singleton?
 
-Делать всё singleton не стоит, потому что singleton расширяет lifetime объекта до всего приложения и может случайно удерживать state, `Context`, callbacks или heavy resources дольше, чем нужно.
+Making everything singleton is a bad default because singleton extends an object's lifetime to the whole application and can accidentally retain state, `Context`, callbacks or heavy resources longer than needed.
 
-Singleton удобен для stateless/shared infrastructure: Retrofit/OkHttp clients, database, `DataStore`, analytics, configuration providers. Но screen-specific state, user flow state, temporary caches и objects with lifecycle-sensitive references не должны жить application-wide без причины.
+Singleton is convenient for stateless/shared infrastructure: Retrofit/OkHttp clients, database, `DataStore`, analytics, configuration providers. But screen-specific state, user flow state, temporary caches and objects with lifecycle-sensitive references should not live application-wide without a reason.
 
-Избыточные singleton-ы увеличивают связанность, усложняют тесты, создают hidden global state и могут приводить к bugs между сессиями, пользователями или features.
+Excessive singletons increase coupling, complicate tests, create hidden global state and can cause bugs across sessions, users or features.
 
-Хороший подход - scoped dependencies по необходимости: singleton только для truly application-wide объектов, shorter scopes для lifecycle-specific logic, а transient objects оставлять unscoped.
+A good approach is scoped dependencies as needed: singleton only for truly application-wide objects, shorter scopes for lifecycle-specific logic, and transient objects left unscoped.
 
-**Коротко:** singleton is a lifecycle decision, not a default optimization; use it only when one application-wide instance is actually correct.
+**In short:** singleton is a lifecycle decision, not a default optimization; use it only when one application-wide instance is actually correct.

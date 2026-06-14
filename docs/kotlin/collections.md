@@ -1,14 +1,14 @@
 # Collections
 
-Раздел про коллекции Kotlin: read-only и mutable interfaces, реальную immutability и базовые операции над наборами данных.
+This section covers Kotlin collections: read-only and mutable interfaces, real immutability and basic operations over data sets.
 
-## Основные коллекции
+## Core collections
 
 ### `List` vs `MutableList`
 
-`List<T>` в Kotlin - read-only interface: через такую ссылку нельзя вызвать `add()`, `remove()` или `set()`. `MutableList<T>` - mutable interface, который позволяет изменять коллекцию.
+`List<T>` in Kotlin is a read-only interface: through such a reference, you cannot call `add()`, `remove()` or `set()`. `MutableList<T>` is a mutable interface that allows changing the collection.
 
-**Важно:** read-only не значит immutable. Если один и тот же mutable list передан как `List<T>`, владелец mutable reference все еще может изменить данные.
+**Important:** read-only does not mean immutable. If the same mutable list is passed as `List<T>`, the owner of the mutable reference can still change the data.
 
 ```kotlin
 val mutable = mutableListOf(1, 2)
@@ -18,35 +18,35 @@ mutable.add(3)
 println(readOnly) // [1, 2, 3]
 ```
 
-В API лучше возвращать `List<T>`, если вызывающий код не должен менять коллекцию, и `MutableList<T>` только когда mutation является частью contract.
+In APIs, prefer returning `List<T>` when caller code should not mutate the collection, and `MutableList<T>` only when mutation is part of the contract.
 
-**Коротко:** `List` is read-only from this reference, `MutableList` allows mutation, but `List` is not a deep immutability guarantee.
+**In short:** `List` is read-only from this reference, `MutableList` allows mutation, but `List` is not a deep immutability guarantee.
 
 ### Read-only vs immutable collections
 
-Read-only collection означает, что через данный interface нельзя изменить коллекцию. Immutable collection означает, что коллекция не может измениться вообще после создания.
+Read-only collection means the collection cannot be changed through the given interface. Immutable collection means the collection cannot change at all after creation.
 
-Стандартные Kotlin `List`, `Set` и `Map` являются read-only interfaces, но под ними может находиться mutable implementation.
+Standard Kotlin `List`, `Set` and `Map` are read-only interfaces, but a mutable implementation may be underneath.
 
-Например, `val list: List<Int> = mutableListOf(1, 2)` не дает вызвать `list.add()`, но original mutable reference может добавить элементы.
+For example, `val list: List<Int> = mutableListOf(1, 2)` does not allow calling `list.add()`, but the original mutable reference can add elements.
 
-Для реальной immutable модели нужно контролировать владельца mutable коллекции, делать defensive copy или использовать immutable collections, если они доступны в проекте.
+For a truly immutable model, control the owner of the mutable collection, make defensive copies or use immutable collections if they are available in the project.
 
-**Коротко:** Kotlin read-only collections protect the API surface, but they do not guarantee true immutability of the underlying object.
+**In short:** Kotlin read-only collections protect the API surface, but they do not guarantee true immutability of the underlying object.
 
-## Операции
+## Operations
 
 ### `map` / `flatMap` / `filter` / `fold` / `forEach`
 
-`map` преобразует каждый элемент коллекции и возвращает новую коллекцию результатов.
+`map` transforms each collection element and returns a new collection of results.
 
-`filter` оставляет только элементы, которые соответствуют predicate.
+`filter` keeps only elements that match the predicate.
 
-`flatMap` сначала преобразует каждый элемент в коллекцию или iterable result, а потом flatten-ит результаты в один список.
+`flatMap` first transforms each element into a collection or iterable result, then flattens the results into one list.
 
-`fold` аккумулирует одно итоговое значение, проходя по коллекции с initial value и accumulator function.
+`fold` accumulates one final value by traversing the collection with an initial value and accumulator function.
 
-`forEach` выполняет side effect для каждого элемента и обычно не должен использоваться для построения нового результата.
+`forEach` performs a side effect for each element and usually should not be used to build a new result.
 
 ```kotlin
 val names = users
@@ -56,4 +56,4 @@ val names = users
 val totalAge = users.fold(0) { acc, user -> acc + user.age }
 ```
 
-**Коротко:** `map` transforms, `filter` selects, `flatMap` transforms and flattens, `fold` accumulates, `forEach` is for side effects.
+**In short:** `map` transforms, `filter` selects, `flatMap` transforms and flattens, `fold` accumulates, `forEach` is for side effects.

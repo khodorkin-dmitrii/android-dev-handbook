@@ -1,12 +1,12 @@
 # Compose Testing
 
-Compose UI tests проверяют пользовательское поведение через Compose testing framework и semantics tree, а не через прямой доступ к composable functions.
+Compose UI tests verify user behavior through the Compose testing framework and semantics tree, not through direct access to composable functions.
 
-## UI tests и Semantics
+## UI tests and Semantics
 
 ### Compose UI tests
 
-Обычно тест строится вокруг `createComposeRule()` или `createAndroidComposeRule<Activity>()`, затем задаётся content, ищется node и выполняется assertion/action.
+A test is usually built around `createComposeRule()` or `createAndroidComposeRule<Activity>()`, then content is set, a node is found and an assertion/action is performed.
 
 ```kotlin
 composeTestRule
@@ -15,7 +15,7 @@ composeTestRule
     .performClick()
 ```
 
-Для более стабильных тестов часто используют `testTag`:
+For more stable tests, `testTag` is often used:
 
 ```kotlin
 Modifier.testTag("save_button")
@@ -27,24 +27,24 @@ composeTestRule
     .performClick()
 ```
 
-Compose tests синхронизируются с Compose runtime: тест обычно ждёт idle state, но для анимаций, корутин, clock control и внешних async sources иногда нужно явно управлять `mainClock`, test dispatcher или idling.
+Compose tests synchronize with Compose runtime: a test usually waits for idle state, but animations, coroutines, clock control and external async sources sometimes require explicit control of `mainClock`, test dispatcher or idling.
 
-**Важно:** не стоит проверять implementation details. Хороший UI test проверяет observable behavior: текст, accessibility role/state, enabled/disabled, navigation result, отображение loading/error/content.
+**Important:** do not test implementation details. A good UI test verifies observable behavior: text, accessibility role/state, enabled/disabled, navigation result, loading/error/content display.
 
-**Коротко:** Compose UI tests interact with the semantics tree; they should verify user-visible behavior, not internal composable implementation.
+**In short:** Compose UI tests interact with the semantics tree; they should verify user-visible behavior, not internal composable implementation.
 
 ### Semantics
 
-Semantics - это слой метаданных, который описывает смысл UI node для accessibility, testing и tooling.
+Semantics - a metadata layer that describes the meaning of a UI node for accessibility, testing and tooling.
 
-Compose testing API ищет элементы не по View id, а по semantics properties: text, `contentDescription`, role, `stateDescription`, `testTag`, enabled/clickable и другим признакам.
+Compose testing API searches elements not by View id, but by semantics properties: text, `contentDescription`, role, `stateDescription`, `testTag`, enabled/clickable and other signals.
 
-Semantics важны не только для тестов, но и для accessibility: screen readers используют эту информацию, чтобы пользователь понимал, что находится на экране и как с этим взаимодействовать.
+Semantics matter not only for tests, but also for accessibility: screen readers use this information so the user understands what is on screen and how to interact with it.
 
-`Modifier.semantics { ... }` позволяет добавить или переопределить semantics properties. `Modifier.clearAndSetSemantics { ... }` полностью заменяет semantics descendants и полезен, когда сложный визуальный компонент должен восприниматься как один accessibility element.
+`Modifier.semantics { ... }` allows adding or overriding semantics properties. `Modifier.clearAndSetSemantics { ... }` fully replaces semantics descendants and is useful when a complex visual component should be perceived as one accessibility element.
 
-`Modifier.testTag("...")` удобно использовать для тестов, когда текст нестабилен из-за локализации или UI содержит одинаковые строки. Но `testTag` не должен быть единственным способом описания UI для accessibility.
+`Modifier.testTag("...")` is convenient for tests when text is unstable because of localization or UI contains repeated strings. But `testTag` should not be the only way to describe UI for accessibility.
 
-**Важно:** merged и unmerged semantics trees могут отличаться. Иногда тест не находит node, потому что semantics объединены родителем; тогда нужно понять, искать ли в merged tree или использовать `useUnmergedTree = true`.
+**Important:** merged and unmerged semantics trees can differ. Sometimes a test cannot find a node because semantics are merged by the parent; then you need to decide whether to search in the merged tree or use `useUnmergedTree = true`.
 
-**Коротко:** semantics describe UI meaning for accessibility and tests; Compose UI tests query semantics instead of view hierarchy.
+**In short:** semantics describe UI meaning for accessibility and tests; Compose UI tests query semantics instead of view hierarchy.

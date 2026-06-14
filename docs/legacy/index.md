@@ -1,7 +1,7 @@
 # Legacy
 
-Раздел про старые, но всё ещё встречающиеся Android/Java/Kotlin-подходы и библиотеки: RxJava, RxAndroid, legacy XML patterns, callbacks и миграционные сценарии.
+This section covers older but still common Android/Java/Kotlin approaches and libraries: RxJava, RxAndroid, legacy XML patterns, callbacks and migration scenarios.
 
-## Структура раздела
+## Section structure
 
 - [RxJava](rxjava.md)

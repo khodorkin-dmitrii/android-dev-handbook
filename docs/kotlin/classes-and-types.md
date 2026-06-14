@@ -1,14 +1,14 @@
 # Classes & Types
 
-Раздел про классы, объектные декларации и специальные типы Kotlin, которые часто используются в Android-коде для моделей данных, состояния UI и API.
+This section covers classes, object declarations and special Kotlin types that are often used in Android code for data models, UI state and APIs.
 
-## Классы и модели
+## Classes and models
 
 ### `data class`
 
-`data class` - это класс для хранения данных, для которого Kotlin автоматически генерирует `equals()`, `hashCode()`, `toString()`, `copy()` и `componentN()` по свойствам primary constructor.
+`data class` - a class for storing data, for which Kotlin automatically generates `equals()`, `hashCode()`, `toString()`, `copy()` and `componentN()` based on properties from the primary constructor.
 
-Минимальное требование: в primary constructor должен быть хотя бы один параметр, помеченный `val` или `var`.
+Minimum requirement: the primary constructor must have at least one parameter marked as `val` or `var`.
 
 ```kotlin
 data class User(
@@ -17,19 +17,19 @@ data class User(
 )
 ```
 
-**Важно:** свойства, объявленные в body класса, не участвуют в generated `equals()`, `hashCode()`, `copy()` и `componentN()`. `copy()` делает shallow copy, а не deep copy.
+**Important:** properties declared in the class body do not participate in generated `equals()`, `hashCode()`, `copy()` and `componentN()`. `copy()` performs a shallow copy, not a deep copy.
 
-`data class` не может быть `open`, `abstract`, `sealed` или `inner`. В Android `data class` часто используют для DTO, domain models и UI state.
+`data class` cannot be `open`, `abstract`, `sealed` or `inner`. In Android, `data class` is often used for DTO, domain models and UI state.
 
-**Коротко:** `data class` reduces boilerplate for value-like models, but it does not make objects deeply immutable automatically.
+**In short:** `data class` reduces boilerplate for value-like models, but it does not make objects deeply immutable automatically.
 
 ### `sealed class` vs `enum class`
 
-`enum class` описывает фиксированный набор singleton-констант одного типа. Он удобен для простых состояний без сложных данных или с одинаковым набором свойств и методов.
+`enum class` describes a fixed set of singleton constants of one type. It is convenient for simple states without complex data or with the same set of properties and methods.
 
-`sealed class` или `sealed interface` описывает закрытую иерархию типов. Каждый subtype может быть отдельным `class`, `object` или `data class` и хранить разные данные.
+`sealed class` or `sealed interface` describes a restricted type hierarchy. Each subtype can be a separate `class`, `object` or `data class` and can hold different data.
 
-Главное преимущество `sealed` - exhaustive `when`: Kotlin может проверить, что все варианты обработаны без `else`.
+The main advantage of `sealed` is exhaustive `when`: Kotlin can check that all variants are handled without `else`.
 
 ```kotlin
 sealed class Result {
@@ -39,17 +39,17 @@ sealed class Result {
 }
 ```
 
-`enum` подходит для `Loading` / `Success` / `Error`, только если у вариантов нет разных payload. `sealed` лучше, если `Success` хранит data, а `Error` хранит `Throwable` или message.
+`enum` fits `Loading` / `Success` / `Error` only if the variants do not have different payloads. `sealed` is better if `Success` stores data and `Error` stores `Throwable` or message.
 
-**Коротко:** `enum` is a fixed set of constants, `sealed` is a restricted type hierarchy with different subclasses and payloads.
+**In short:** `enum` is a fixed set of constants, `sealed` is a restricted type hierarchy with different subclasses and payloads.
 
-## Объекты
+## Objects
 
 ### `object` keyword
 
-`object` в Kotlin используется для трех основных сценариев: anonymous objects, object declarations и companion objects.
+`object` in Kotlin is used for three main scenarios: anonymous objects, object declarations and companion objects.
 
-Anonymous object создается прямо в месте использования. Он удобен для одноразовой реализации interface или небольшого объекта без отдельного named class.
+An anonymous object is created directly at the usage site. It is convenient for one-off interface implementations or small objects without a separate named class.
 
 ```kotlin
 val helloWorld = object {
@@ -60,7 +60,7 @@ val helloWorld = object {
 }
 ```
 
-Object declaration объявляет singleton. Такой объект инициализируется лениво, при первом доступе, и его инициализация thread-safe.
+Object declaration declares a singleton. Such an object is initialized lazily on first access, and its initialization is thread-safe.
 
 ```kotlin
 object DataProviderManager {
@@ -70,7 +70,7 @@ object DataProviderManager {
 }
 ```
 
-Companion object связан с классом. Его members можно вызывать через имя класса, а сам companion object инициализируется при загрузке или разрешении соответствующего класса, что близко к Java static initializer semantics.
+Companion object is associated with a class. Its members can be called through the class name, and the companion object itself is initialized when the corresponding class is loaded or resolved, which is close to Java static initializer semantics.
 
 ```kotlin
 class MyClass {
@@ -82,37 +82,37 @@ class MyClass {
 val instance = MyClass.create()
 ```
 
-Если имя companion object не указано, он получает имя `Companion`.
+If the companion object name is omitted, it gets the name `Companion`.
 
-**Коротко:** anonymous object инициализируется сразу при использовании, object declaration - лениво при первом доступе, companion object - вместе с соответствующим классом.
+**In short:** anonymous object is initialized immediately at the usage site, object declaration is initialized lazily on first access, and companion object is initialized together with the corresponding class.
 
 ### `object` / `companion object` / `class`
 
-`class` описывает blueprint для объектов. Каждый вызов constructor создает новый instance.
+`class` describes a blueprint for objects. Each constructor call creates a new instance.
 
-`object declaration` создает singleton: один лениво инициализируемый instance на все приложение или classloader. Это удобно для stateless helpers, constants или simple singletons, но global state может усложнить тестирование.
+`object declaration` creates a singleton: one lazily initialized instance for the whole app or classloader. This is convenient for stateless helpers, constants or simple singletons, but global state can complicate testing.
 
-`companion object` - singleton, связанный с конкретным классом. Из Kotlin его members можно вызывать как `ClassName.member()`, но это не то же самое, что Java `static` на уровне языка.
+`companion object` - a singleton associated with a specific class. From Kotlin, its members can be called as `ClassName.member()`, but this is not the same as Java `static` at the language level.
 
-Для Java interop иногда используют `@JvmStatic`, `@JvmField` или `const val`, чтобы companion / object API выглядел привычнее для Java.
+For Java interop, `@JvmStatic`, `@JvmField` or `const val` are sometimes used so companion / object APIs look more familiar from Java.
 
-**Коротко:** `class` creates instances, `object` creates a singleton, `companion object` provides class-associated members.
+**In short:** `class` creates instances, `object` creates a singleton, `companion object` provides class-associated members.
 
-## Специальные типы
+## Special types
 
 ### `inline class` / `value class`
 
-Value class - это Kotlin-класс-обертка вокруг одного value, объявленный как `@JvmInline value class`. Раньше эта возможность называлась inline class.
+Value class - a Kotlin wrapper class around a single value, declared as `@JvmInline value class`. Previously, this feature was called inline class.
 
-Основная идея - дать доменный тип без лишней runtime allocation там, где компилятор может заменить wrapper на underlying value.
+The main idea is to provide a domain type without unnecessary runtime allocation where the compiler can replace the wrapper with the underlying value.
 
 ```kotlin
 @JvmInline
 value class UserId(val value: String)
 ```
 
-Такой тип помогает не путать `UserId` с обычной `String`, даже если внутри хранится строковое значение.
+This type helps avoid confusing `UserId` with a regular `String`, even if a string value is stored inside.
 
-Ограничения: value class должен иметь ровно одно property в primary constructor, не имеет identity, не может хранить backing fields кроме underlying value, а boxing все равно возможен в generics, nullable types и interface usage.
+Limitations: a value class must have exactly one property in the primary constructor, has no identity, cannot store backing fields other than the underlying value, and boxing is still possible in generics, nullable types and interface usage.
 
-**Коротко:** value class improves type-safety with low overhead, but it is not a normal wrapper object in all runtime scenarios.
+**In short:** value class improves type-safety with low overhead, but it is not a normal wrapper object in all runtime scenarios.

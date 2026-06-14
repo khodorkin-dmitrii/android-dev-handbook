@@ -1,8 +1,8 @@
 # Architecture
 
-Раздел про архитектуру Android-приложений: слои, UI state, MV* patterns, multi-module projects, legacy-код и incremental refactoring.
+This section covers Android app architecture: layers, UI state, MV* patterns, multi-module projects, legacy code and incremental refactoring.
 
-## Структура раздела
+## Section structure
 
 - [Architecture Basics](basics.md)
 - [UI State Architecture](ui-state.md)

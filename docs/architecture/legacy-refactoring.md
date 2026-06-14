@@ -1,49 +1,49 @@
 # Legacy & Refactoring
 
-Legacy и refactoring в Android требуют аккуратности: важно сохранять существующее поведение, постепенно улучшать boundaries и не превращать migration в большой рискованный rewrite.
+Legacy and refactoring in Android require care: existing behavior should be preserved, boundaries should be improved gradually, and migration should not turn into a large risky rewrite.
 
 ## Legacy
 
-### Legacy-код в Android-проекте
+### Legacy code in an Android project
 
-Legacy-код - это не обязательно плохой код. Обычно это код, который долго живёт в проекте, написан под старые требования, старые архитектурные решения, устаревшие библиотеки или до появления текущих team conventions.
+Legacy code is not necessarily bad code. Usually it is code that has lived in the project for a long time and was written for old requirements, old architectural decisions, outdated libraries or before the current team conventions existed.
 
-В Android legacy часто выглядит как massive `Activity` / `Fragment`, XML + callbacks, RxJava chains, ручной DI/service locator, static singletons, сложные inheritance hierarchies, старые navigation approaches или смешение UI, business logic и data access в одном классе.
+In Android, legacy often looks like massive `Activity` / `Fragment`, XML + callbacks, RxJava chains, manual DI/service locator, static singletons, complex inheritance hierarchies, old navigation approaches or mixing UI, business logic and data access in one class.
 
-Работа с legacy требует осторожности: сначала нужно понять текущий behavior, покрыть критичные сценарии тестами или хотя бы characterization tests, и только потом менять структуру.
+Working with legacy code requires caution: first understand the current behavior, cover critical scenarios with tests or at least characterization tests, and only then change the structure.
 
-Главный принцип - не переписывать всё ради "красивой архитектуры", а снижать риск и постепенно улучшать boundaries: выносить data access в repository, бизнес-логику в use case/domain, UI state во `ViewModel`, а side effects делать явными.
+The main principle is not to rewrite everything for a "beautiful architecture", but to reduce risk and gradually improve boundaries: move data access into repository, business logic into use case/domain, UI state into `ViewModel`, and make side effects explicit.
 
-**Коротко:** legacy code is code with existing behavior and constraints; refactor it incrementally, first protecting behavior with tests or checks, then improving boundaries and reducing coupling.
+**In short:** legacy code is code with existing behavior and constraints; refactor it incrementally, first protecting behavior with tests or checks, then improving boundaries and reducing coupling.
 
 ### Incremental refactoring
 
-Incremental refactoring - постепенное улучшение кода маленькими безопасными шагами без большого big bang rewrite.
+Incremental refactoring is improving code gradually through small safe steps without a large big bang rewrite.
 
-В Android это особенно важно, потому что feature может быть связана с lifecycle, navigation, analytics, caching, push/deep links, permissions и разными версиями OS. Большой rewrite легко ломает скрытые сценарии.
+In Android this is especially important because a feature can be connected to lifecycle, navigation, analytics, caching, push/deep links, permissions and different OS versions. A large rewrite can easily break hidden scenarios.
 
-Практичный процесс: найти pain point, зафиксировать текущее поведение, добавить тесты или ручной checklist, выделить small seams, затем переносить логику по частям.
+A practical process: find a pain point, capture current behavior, add tests or a manual checklist, create small seams, then move logic piece by piece.
 
-Примеры small steps: вынести network call из `Activity` в repository, заменить callback на suspend function/Flow, ввести `UiState`, отделить mapper, добавить interface для legacy dependency, покрыть `ViewModel` тестами, постепенно удалить дублирование.
+Examples of small steps: move a network call from `Activity` into repository, replace a callback with a suspend function/Flow, introduce `UiState`, separate a mapper, add an interface for a legacy dependency, cover `ViewModel` with tests, gradually remove duplication.
 
-Важно сохранять public contracts и мигрировать call sites постепенно. Если нужно менять API, лучше сначала добавить новый путь, перевести клиентов, потом удалить старый.
+Keep public contracts stable and migrate call sites gradually. If an API needs to change, it is better to add a new path first, move clients to it, and then remove the old one.
 
-**Коротко:** incremental refactoring reduces risk by changing one boundary at a time, keeping behavior stable and continuously verifying the result.
+**In short:** incremental refactoring reduces risk by changing one boundary at a time, keeping behavior stable and continuously verifying the result.
 
 ## Migration
 
 ### Migration from XML/RxJava to Compose/Flow
 
-Миграция с XML/RxJava на Compose/Flow обычно должна быть постепенной, потому что в реальном Android-проекте UI, navigation, lifecycle, DI, analytics и data layer часто сильно связаны.
+Migration from XML/RxJava to Compose/Flow should usually be gradual because in a real Android project UI, navigation, lifecycle, DI, analytics and the data layer are often tightly connected.
 
-Для UI можно использовать interoperability: добавлять Compose через `ComposeView` внутри XML/Fragment или, наоборот, встраивать `AndroidView` / `ViewBinding` в Compose, если нужно временно переиспользовать старый `View`.
+For UI, interoperability can help: add Compose through `ComposeView` inside XML/Fragment or, conversely, embed `AndroidView` / `ViewBinding` in Compose if an old `View` needs to be reused temporarily.
 
-Для state management полезно сначала привести экран к `ViewModel` + `UiState`, а уже потом менять rendering layer. Если `ViewModel` отдаёт стабильный `StateFlow<UiState>`, UI можно заменить с XML на Compose с меньшим риском.
+For state management, it is useful to move the screen to `ViewModel` + `UiState` first, and only then change the rendering layer. If `ViewModel` exposes a stable `StateFlow<UiState>`, UI can be replaced from XML to Compose with less risk.
 
-Для RxJava миграции важно не делать механическую замену операторов. Нужно понять semantics: cold/hot streams, backpressure, schedulers, error handling, cancellation/disposal и lifecycle. Rx `Observable` / `Single` / `Completable` можно постепенно адаптировать в suspend functions или `Flow` на границах слоя.
+For RxJava migration, avoid mechanically replacing operators. Understand the semantics: cold/hot streams, backpressure, schedulers, error handling, cancellation/disposal and lifecycle. Rx `Observable` / `Single` / `Completable` can be gradually adapted to suspend functions or `Flow` at layer boundaries.
 
-Практичный путь: сначала изолировать Rx внутри repository/data layer, наружу отдавать suspend/Flow для нового кода, затем постепенно переписывать внутреннюю реализацию. Для UI collection использовать lifecycle-aware APIs: `collectAsStateWithLifecycle()` в Compose и `repeatOnLifecycle()` во View System.
+A practical path: first isolate Rx inside repository/data layer, expose suspend/Flow APIs for new code, then gradually rewrite the internal implementation. For UI collection, use lifecycle-aware APIs: `collectAsStateWithLifecycle()` in Compose and `repeatOnLifecycle()` in the View System.
 
-**Важно:** нельзя одновременно менять UI framework, reactive stack и бизнес-логику без чёткой проверки поведения. Лучше разделять migration steps и делать rollback-friendly изменения.
+**Important:** do not change the UI framework, reactive stack and business logic at the same time without clear behavior checks. It is better to separate migration steps and keep changes rollback-friendly.
 
-**Коротко:** prefer migration in layers: first stabilize state contracts, then bridge old and new UI/reactive APIs, and only then replace implementations gradually.
+**In short:** prefer migration in layers: first stabilize state contracts, then bridge old and new UI/reactive APIs, and only then replace implementations gradually.

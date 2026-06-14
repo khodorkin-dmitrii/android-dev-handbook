@@ -1,8 +1,8 @@
 # Jetpack Compose
 
-Раздел про Jetpack Compose: declarative UI, composable-функции, state, recomposition, side effects, performance и UI testing.
+This section covers Jetpack Compose: declarative UI, composable functions, state, recomposition, side effects, performance and UI testing.
 
-## Структура раздела
+## Section structure
 
 - [Compose Basics](basics.md)
 - [State & Recomposition](state-recomposition.md)

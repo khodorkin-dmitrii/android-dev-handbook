@@ -1,16 +1,16 @@
 # Coroutines & Flow Testing
 
-Раздел про тестирование coroutines и `Flow`: virtual time, test dispatchers, `runTest`, collection, cancellation и проверку emissions.
+This section covers testing coroutines and `Flow`: virtual time, test dispatchers, `runTest`, collection, cancellation and emission checks.
 
-## Coroutines и Flow
+## Coroutines and Flow
 
 ### `runTest`
 
-`runTest` - основной API из `kotlinx-coroutines-test` для тестирования suspend-кода и coroutines.
+`runTest` is the main API from `kotlinx-coroutines-test` for testing suspend code and coroutines.
 
-Он создаёт test coroutine scope, поддерживает virtual time, корректно ждёт child coroutines и помогает находить незавершённые jobs. В отличие от `runBlocking`, `runTest` не заставляет тест реально ждать `delay()`.
+It creates a test coroutine scope, supports virtual time, correctly waits for child coroutines and helps detect unfinished jobs. Unlike `runBlocking`, `runTest` does not force the test to actually wait for `delay()`.
 
-Пример:
+Example:
 
 ```kotlin
 @Test
@@ -23,7 +23,7 @@ fun `load returns user`() = runTest {
 }
 ```
 
-Если внутри кода есть `delay(1_000)`, `runTest` может пройти его виртуально:
+If the code contains `delay(1_000)`, `runTest` can advance through it virtually:
 
 ```kotlin
 @Test
@@ -41,26 +41,26 @@ fun `timer emits after delay`() = runTest {
 }
 ```
 
-Полезные функции:
+Useful functions:
 
-- `advanceUntilIdle()` - выполнить всё запланированное до idle state;
-- `advanceTimeBy(time)` - продвинуть virtual time;
-- `runCurrent()` - выполнить задачи, запланированные на текущее virtual time.
+- `advanceUntilIdle()` - run everything scheduled until idle state;
+- `advanceTimeBy(time)` - advance virtual time;
+- `runCurrent()` - run tasks scheduled for the current virtual time.
 
-**Важно:** `runTest` контролирует только coroutines, которые используют test scheduler. Если код уходит на реальный `Dispatchers.IO` или создаёт собственные unmanaged threads, тест может снова стать flaky.
+**Important:** `runTest` controls only coroutines that use the test scheduler. If code switches to real `Dispatchers.IO` or creates its own unmanaged threads, the test can become flaky again.
 
-**Коротко:** `runTest` даёт controlled coroutine test scope и virtual time, поэтому suspend-код тестируется быстро и предсказуемо.
+**In short:** `runTest` provides a controlled coroutine test scope and virtual time, so suspend code is tested quickly and predictably.
 
 ### `TestDispatcher`
 
-`TestDispatcher` - dispatcher для coroutine tests, который работает с `TestCoroutineScheduler` и позволяет управлять выполнением задач.
+`TestDispatcher` is a dispatcher for coroutine tests that works with `TestCoroutineScheduler` and lets the test control task execution.
 
-Чаще всего используют:
+Most common options:
 
-- `StandardTestDispatcher` - задачи запускаются контролируемо, тест явно двигает scheduler через `advanceUntilIdle()`, `runCurrent()` или `advanceTimeBy()`;
-- `UnconfinedTestDispatcher` - запускает tasks более eagerly и удобен для некоторых простых tests, но может скрыть ordering issues.
+- `StandardTestDispatcher` - tasks run in a controlled way, and the test explicitly advances the scheduler through `advanceUntilIdle()`, `runCurrent()` or `advanceTimeBy()`;
+- `UnconfinedTestDispatcher` - starts tasks more eagerly and is convenient for some simple tests, but can hide ordering issues.
 
-Для `ViewModel` tests часто заменяют `Dispatchers.Main`:
+For `ViewModel` tests, `Dispatchers.Main` is often replaced:
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -78,7 +78,7 @@ class MainDispatcherRule(
 }
 ```
 
-Хорошая архитектура не хардкодит dispatchers внутри классов. Лучше передавать dispatcher или `DispatcherProvider` через DI:
+Good architecture does not hardcode dispatchers inside classes. It is better to pass a dispatcher or `DispatcherProvider` through DI:
 
 ```kotlin
 interface DispatcherProvider {
@@ -88,15 +88,15 @@ interface DispatcherProvider {
 }
 ```
 
-В tests можно подставить test dispatchers и не зависеть от реальных threads.
+In tests, test dispatchers can be substituted so the code does not depend on real threads.
 
-**Коротко:** `TestDispatcher` делает coroutine execution управляемым; для стабильных tests лучше инжектить dispatchers и не хардкодить `Dispatchers.IO` внутри логики.
+**In short:** `TestDispatcher` makes coroutine execution controllable; for stable tests, inject dispatchers and avoid hardcoding `Dispatchers.IO` inside logic.
 
 ### Testing Flow
 
-`Flow` тестируют через collection emissions и проверку результата. Для finite flows можно использовать `toList()`, `first()`, `single()`. Для long-running flows удобнее Turbine или ручной collection с cancel.
+`Flow` is tested by collecting emissions and checking the result. For finite flows, use `toList()`, `first()`, `single()`. For long-running flows, Turbine or manual collection with cancellation is more convenient.
 
-Пример finite flow:
+Example finite flow:
 
 ```kotlin
 @Test
@@ -109,7 +109,7 @@ fun `flow emits mapped values`() = runTest {
 }
 ```
 
-Пример `StateFlow`:
+Example `StateFlow`:
 
 ```kotlin
 @Test
@@ -127,21 +127,21 @@ fun `state flow emits content`() = runTest {
 }
 ```
 
-Для hot flows важно сначала подписаться, а потом вызывать action, который emit-ит значение. Иначе `SharedFlow` с `replay = 0` может потерять emission.
+For hot flows, subscribe first and then call the action that emits a value. Otherwise `SharedFlow` with `replay = 0` can lose the emission.
 
-Также нужно помнить про `StateFlow`: он всегда имеет current value и может не emit-ить новое значение, если оно `equals()` старому.
+Also remember `StateFlow`: it always has a current value and may not emit a new value if it is `equals()` to the old one.
 
-**Важно:** тест должен завершать collection long-running flow. Иначе test coroutine может зависнуть или `runTest` сообщит о незавершённой работе.
+**Important:** the test must finish collection of a long-running flow. Otherwise the test coroutine can hang or `runTest` can report unfinished work.
 
-**Коротко:** Flow tests проверяют emissions; для finite flows хватит `toList()` / `first()`, для hot и long-running flows удобнее Turbine или controlled collection с cancellation.
+**In short:** Flow tests check emissions; for finite flows, `toList()` / `first()` is enough, while hot and long-running flows are easier with Turbine or controlled collection with cancellation.
 
-### Почему не использовать `Thread.sleep` в тестах?
+### Why not use `Thread.sleep` in tests?
 
-`Thread.sleep` в тестах делает suite медленным, flaky и зависимым от скорости машины, CI, нагрузки CPU и реальных threads.
+`Thread.sleep` in tests makes the suite slow, flaky and dependent on machine speed, CI, CPU load and real threads.
 
-Если тест ждёт "на всякий случай", он либо иногда падает, потому что sleep слишком короткий, либо всегда тормозит, потому что sleep слишком длинный.
+If a test waits "just in case", it either sometimes fails because sleep is too short, or always slows down because sleep is too long.
 
-В coroutine tests вместо `Thread.sleep` используют virtual time:
+In coroutine tests, virtual time is used instead of `Thread.sleep`:
 
 ```kotlin
 @Test
@@ -165,6 +165,6 @@ fun `debounce emits latest value`() = runTest {
 }
 ```
 
-Для UI tests вместо sleep лучше использовать idling resources, Compose test synchronization, `mainClock`, explicit assertions with waiting APIs или controlled fake dependencies.
+For UI tests, use idling resources, Compose test synchronization, `mainClock`, explicit assertions with waiting APIs or controlled fake dependencies instead of sleep.
 
-**Коротко:** `Thread.sleep` ждёт реальное время и делает tests нестабильными; coroutine tests должны использовать virtual time, а UI tests - synchronization mechanisms.
+**In short:** `Thread.sleep` waits for real time and makes tests unstable; coroutine tests should use virtual time, and UI tests should use synchronization mechanisms.

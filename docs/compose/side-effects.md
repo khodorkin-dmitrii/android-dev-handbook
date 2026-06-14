@@ -1,67 +1,67 @@
 # Side Effects
 
-Side effects в Compose нужны для работы, которая выходит за рамки описания UI: coroutine, подписки, listeners, analytics, snackbar, navigation events и адаптация внешних источников state.
+Side effects in Compose are needed for work that goes beyond describing UI: coroutine, subscriptions, listeners, analytics, snackbar, navigation events and adapting external state sources.
 
 ## Effect APIs
 
 ### `LaunchedEffect`
 
-`LaunchedEffect` запускает coroutine, привязанную к lifecycle конкретного composable call site.
+`LaunchedEffect` starts a coroutine tied to the lifecycle of a specific composable call site.
 
-Когда `LaunchedEffect` входит в Composition, coroutine стартует. Когда он выходит из Composition, coroutine отменяется. Если меняются keys, текущая coroutine отменяется и effect запускается заново с новыми keys.
+When `LaunchedEffect` enters Composition, the coroutine starts. When it leaves Composition, the coroutine is canceled. If keys change, the current coroutine is canceled and the effect starts again with new keys.
 
-Используется для suspend side effects: initial load, one-off navigation/event collection, animation, delay, scroll, snackbar flow collection, analytics из `snapshotFlow`.
+It is used for suspend side effects: initial load, one-off navigation/event collection, animation, delay, scroll, snackbar flow collection, analytics from `snapshotFlow`.
 
-Ключи важны: key должен включать значения, при изменении которых effect нужно перезапустить. Если нужно использовать свежую lambda/value без restart, применяют `rememberUpdatedState`.
+Keys matter: a key should include values whose changes require restarting the effect. If a fresh lambda/value is needed without restart, use `rememberUpdatedState`.
 
-**Важно:** `LaunchedEffect(Unit)` или `LaunchedEffect(true)` означает effect на lifetime call site. Это допустимо, но требует осознанного понимания, почему restart не нужен.
+**Important:** `LaunchedEffect(Unit)` or `LaunchedEffect(true)` means an effect for the lifetime of the call site. This is acceptable, but requires a clear understanding of why restart is not needed.
 
-**Коротко:** `LaunchedEffect` runs suspend side effects scoped to composition and restarts when its keys change.
+**In short:** `LaunchedEffect` runs suspend side effects scoped to composition and restarts when its keys change.
 
 ### `rememberCoroutineScope`
 
-`rememberCoroutineScope` возвращает `CoroutineScope`, привязанный к месту вызова в Composition. Scope автоматически отменяется, когда этот call site выходит из Composition.
+`rememberCoroutineScope` returns a `CoroutineScope` tied to the call site in Composition. The scope is automatically canceled when this call site leaves Composition.
 
-Используется, когда coroutine нужно запускать не сразу при входе в composition, а из event handler: `onClick`, `onDismiss`, swipe callback. Например, показать `Snackbar`, запустить animation или выполнить короткое UI-related действие по событию пользователя.
+It is used when a coroutine should not start immediately on entering composition, but from an event handler: `onClick`, `onDismiss`, swipe callback. For example, to show a `Snackbar`, start an animation or perform a short UI-related action from a user event.
 
-Важно не запускать coroutine прямо в body composable. Для автоматического запуска при появлении composable лучше `LaunchedEffect`, для запуска по событию - `rememberCoroutineScope`.
+Do not launch a coroutine directly in the composable body. For automatic launch when a composable appears, prefer `LaunchedEffect`; for launch from an event, use `rememberCoroutineScope`.
 
-**Коротко:** `rememberCoroutineScope` gives a composition-aware scope for launching coroutines from callbacks and UI events.
+**In short:** `rememberCoroutineScope` gives a composition-aware scope for launching coroutines from callbacks and UI events.
 
 ### `DisposableEffect`
 
-`DisposableEffect` используется для side effects, которым нужен cleanup при выходе из Composition или при изменении keys.
+`DisposableEffect` is used for side effects that need cleanup when leaving Composition or when keys change.
 
-Типичные сценарии: зарегистрировать listener/observer/broadcast callback, подписаться на lifecycle events, подключить внешний imperative API и гарантированно отписаться в `onDispose`.
+Typical scenarios: registering a listener/observer/broadcast callback, subscribing to lifecycle events, connecting an external imperative API and reliably unsubscribing in `onDispose`.
 
-`DisposableEffect` обязан завершаться блоком `onDispose`. Если cleanup пустой, стоит проверить, не подходит ли лучше `LaunchedEffect` или `SideEffect`.
+`DisposableEffect` must end with an `onDispose` block. If cleanup is empty, check whether `LaunchedEffect` or `SideEffect` fits better.
 
-Keys должны описывать зависимости effect. Если listener зависит от `lifecycleOwner`, `lifecycleOwner` должен быть key, чтобы старый observer снялся, а новый зарегистрировался.
+Keys should describe effect dependencies. If a listener depends on `lifecycleOwner`, `lifecycleOwner` should be a key so the old observer is removed and the new one is registered.
 
-**Коротко:** `DisposableEffect` is for effects with setup and cleanup, like registering and unregistering observers.
+**In short:** `DisposableEffect` is for effects with setup and cleanup, like registering and unregistering observers.
 
 ### `SideEffect`
 
-`SideEffect` используется, чтобы выполнить non-suspending side effect после успешной recomposition.
+`SideEffect` is used to run a non-suspending side effect after successful recomposition.
 
-Типичный сценарий - передать актуальное Compose state во внешний объект, которым Compose не управляет: analytics, logging, imperative controller, системный объект или legacy API.
+A typical scenario is passing current Compose state to an external object not managed by Compose: analytics, logging, imperative controller, system object or legacy API.
 
-`SideEffect` выполняется после каждой успешной recomposition, поэтому его не используют для suspend work, subscriptions или cleanup. Для coroutine work нужен `LaunchedEffect`, для register/unregister - `DisposableEffect`.
+`SideEffect` runs after every successful recomposition, so it is not used for suspend work, subscriptions or cleanup. Coroutine work needs `LaunchedEffect`; register/unregister work needs `DisposableEffect`.
 
-**Коротко:** `SideEffect` publishes Compose state to non-Compose code after a successful recomposition.
+**In short:** `SideEffect` publishes Compose state to non-Compose code after a successful recomposition.
 
 ### `produceState` / `derivedStateOf`
 
-`produceState` - effect API, который превращает внешний источник данных в Compose `State`. Он запускает coroutine, scoped к Composition, возвращает `State<T>` и обновляет `value` из producer block.
+`produceState` - an effect API that turns an external data source into Compose `State`. It starts a coroutine scoped to Composition, returns `State<T>` and updates `value` from the producer block.
 
-Используется, когда нужно адаптировать non-Compose state к Compose: suspend загрузку, callback/subscription API, `Flow` / `LiveData` / RxJava-like источник или custom observer.
+It is used when non-Compose state needs to be adapted to Compose: suspend loading, callback/subscription API, `Flow` / `LiveData` / RxJava-like source or custom observer.
 
-Когда composable выходит из Composition, producer отменяется. Если меняются keys, producer перезапускается. Для callback-based источников cleanup можно делать через `awaitDispose`.
+When the composable leaves Composition, the producer is canceled. If keys change, the producer restarts. For callback-based sources, cleanup can be done through `awaitDispose`.
 
-В обычной Android-архитектуре `Flow` из `ViewModel` чаще собирают через `collectAsStateWithLifecycle()`, а `produceState` полезен для custom adapters и локальных интеграций.
+In regular Android architecture, `Flow` from `ViewModel` is usually collected through `collectAsStateWithLifecycle()`, while `produceState` is useful for custom adapters and local integrations.
 
-`derivedStateOf` создаёт derived Compose `State` и нужен, когда input state меняется чаще, чем UI реально должен обновляться. Например, scroll index меняется постоянно, но кнопка "scroll to top" должна появиться только при переходе через threshold.
+`derivedStateOf` creates derived Compose `State` and is needed when input state changes more often than UI should actually update. For example, scroll index changes constantly, but a "scroll to top" button should appear only when crossing a threshold.
 
-**Важно:** `derivedStateOf` не нужно использовать для обычной склейки строк или простых вычислений, которые должны обновляться так же часто, как inputs. Это overhead, а не универсальная оптимизация.
+**Important:** `derivedStateOf` should not be used for ordinary string concatenation or simple calculations that should update as often as inputs. It is overhead, not a universal optimization.
 
-**Коротко:** `produceState` converts external async state into Compose `State`, while `derivedStateOf` reduces recomposition only when derived result changes less often than its inputs.
+**In short:** `produceState` converts external async state into Compose `State`, while `derivedStateOf` reduces recomposition only when derived result changes less often than its inputs.

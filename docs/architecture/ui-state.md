@@ -1,16 +1,16 @@
 # UI State Architecture
 
-UI state architecture описывает, кто владеет состоянием экрана, как UI получает данные и как одноразовые effects отделяются от durable state.
+UI state architecture describes who owns screen state, how UI receives data, and how one-off effects are separated from durable state.
 
 ## UI state
 
 ### ViewModel + UI state
 
-`ViewModel` в modern Android обычно играет роль screen-level state holder: получает события от UI, запускает use cases/repository calls и публикует UI state для экрана.
+In modern Android, `ViewModel` usually acts as a screen-level state holder: it receives events from UI, runs use cases/repository calls and publishes UI state for the screen.
 
-UI state должен быть описанием того, что экран должен показать прямо сейчас: loading, data, error, selected values, input text, enabled/disabled states и другие user-visible данные.
+UI state should describe what the screen needs to show right now: loading, data, error, selected values, input text, enabled/disabled states and other user-visible data.
 
-Практичный подход - хранить UI state как immutable data class или sealed hierarchy и отдавать наружу read-only `StateFlow`. UI только рендерит state и отправляет actions/events обратно во `ViewModel`.
+A practical approach is to store UI state as an immutable data class or sealed hierarchy and expose it as a read-only `StateFlow`. UI only renders state and sends actions/events back to `ViewModel`.
 
 ```kotlin
 data class ProfileUiState(
@@ -23,13 +23,13 @@ private val _uiState = MutableStateFlow(ProfileUiState())
 val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 ```
 
-**Коротко:** `ViewModel` owns screen UI state, exposes it as an observable immutable state, and handles user actions by updating that state through domain or data layer.
+**In short:** `ViewModel` owns screen UI state, exposes it as an observable immutable state, and handles user actions by updating that state through domain or data layer.
 
 ### Loading / content / error
 
-Loading/content/error - базовая модель состояния экрана, которая помогает явно описать основные режимы UI: данные загружаются, данные успешно показаны, произошла ошибка.
+Loading/content/error is a basic screen-state model that explicitly describes the main UI modes: data is loading, data is shown successfully, or an error happened.
 
-Для простого экрана можно использовать sealed interface:
+For a simple screen, a sealed interface can work well:
 
 ```kotlin
 sealed interface UiState {
@@ -39,29 +39,29 @@ sealed interface UiState {
 }
 ```
 
-Такой подход удобен, когда состояния взаимоисключающие: экран либо loading, либо content, либо error. Он уменьшает количество противоречивых boolean flags вроде `isLoading = true` и `error != null` одновременно.
+This approach is convenient when states are mutually exclusive: the screen is either loading, content or error. It reduces contradictory boolean flags such as `isLoading = true` and `error != null` at the same time.
 
-Для более сложных экранов часто используют data class state: content может оставаться на экране во время refresh, а loading/error могут быть дополнительными полями. Например, список уже показан, но сверху идёт pull-to-refresh или snackbar error.
+For more complex screens, a data class state is often better: content can remain on screen during refresh, while loading/error are additional fields. For example, a list is already displayed, but a pull-to-refresh indicator or snackbar error appears on top.
 
-**Коротко:** sealed state works well for mutually exclusive screen states, while data class state is better when content, loading and errors can coexist.
+**In short:** sealed state works well for mutually exclusive screen states, while data class state is better when content, loading and errors can coexist.
 
 ### State vs events/effects
 
-State - durable описание UI, которое можно отрисовать повторно после recomposition, rotation или новой подписки. Например: список элементов, выбранная вкладка, текст в поле ввода, loading flag.
+State is a durable description of UI that can be rendered again after recomposition, rotation or a new subscription. Examples: item list, selected tab, input text, loading flag.
 
-Events/effects - одноразовые действия, которые не являются постоянным состоянием экрана: navigation, snackbar, toast, scroll command, permission request, open external screen.
+Events/effects are one-off actions that are not persistent screen state: navigation, snackbar, toast, scroll command, permission request, opening an external screen.
 
-Главный риск - положить one-off event в обычный UI state и случайно повторить его после rotation или повторного collect. Например, если state содержит `navigateBack = true`, новый UI collector может выполнить навигацию ещё раз.
+The main risk is putting a one-off event into regular UI state and accidentally repeating it after rotation or another collection. For example, if state contains `navigateBack = true`, a new UI collector may navigate again.
 
-Обычно state публикуют через `StateFlow<UiState>`, а one-off effects - через `SharedFlow<UiEvent>`, `Channel` или explicit callback, в зависимости от архитектуры проекта.
+State is usually published through `StateFlow<UiState>`, while one-off effects are published through `SharedFlow<UiEvent>`, `Channel` or an explicit callback, depending on the project architecture.
 
-**Коротко:** state describes what the UI should look like, effects describe one-time actions the UI should perform.
+**In short:** state describes what the UI should look like, effects describe one-time actions the UI should perform.
 
 ### One-off events
 
-One-off event - событие, которое должно быть обработано один раз: показать snackbar, открыть экран, закрыть экран, запросить permission, проскроллить список.
+One-off event is an event that should be handled once: show a snackbar, open a screen, close a screen, request permission, scroll a list.
 
-Типичный вариант во `ViewModel`:
+A typical `ViewModel` option:
 
 ```kotlin
 sealed interface UiEvent {
@@ -73,26 +73,26 @@ private val _events = MutableSharedFlow<UiEvent>()
 val events = _events.asSharedFlow()
 ```
 
-UI collect-ит events lifecycle-aware и выполняет side effect. В Compose это часто делают через `LaunchedEffect`, во View System - через `repeatOnLifecycle`.
+UI collects events in a lifecycle-aware way and performs the side effect. In Compose this is often done with `LaunchedEffect`; in the View System, with `repeatOnLifecycle`.
 
-**Важно:** `SharedFlow` с `replay = 0` может потерять событие, если collector ещё не активен. Для некритичных UI effects это часто приемлемо, но для важного состояния лучше моделировать результат как часть `UiState`.
+**Important:** `SharedFlow` with `replay = 0` can lose an event if the collector is not active yet. This is often acceptable for non-critical UI effects, but important results are better modeled as part of `UiState`.
 
-Альтернатива - event wrapper/consumable state, но он легко усложняет код. Важно выбирать подход осознанно и не смешивать durable state с transient commands.
+An alternative is an event wrapper/consumable state, but it can easily complicate the code. The important part is to choose the approach deliberately and not mix durable state with transient commands.
 
-**Коротко:** one-off events should be separated from persistent UI state, but event delivery must be lifecycle-aware to avoid duplicates or lost events.
+**In short:** one-off events should be separated from persistent UI state, but event delivery must be lifecycle-aware to avoid duplicates or lost events.
 
 ## Feature design
 
-### Как проектировать feature flow с нуля?
+### How to design a feature flow from scratch?
 
-При проектировании feature flow сначала нужно понять user scenario: какие данные нужны экрану, какие states возможны, какие user actions есть и какие side effects должны произойти.
+When designing a feature flow from scratch, first understand the user scenario: what data the screen needs, which states are possible, which user actions exist and which side effects should happen.
 
-Практичный порядок: определить UI contract, описать `UiState`, `UiEvent` и `UserAction`, понять источники данных, выбрать owner состояния, затем связать UI -> `ViewModel` -> use cases/repositories -> data sources.
+A practical order: define the UI contract, describe `UiState`, `UiEvent` and `UserAction`, understand data sources, choose the state owner, then connect UI -> `ViewModel` -> use cases/repositories -> data sources.
 
-Дальше стоит решить, какие операции one-shot suspend functions, а какие являются streams `Flow`. Например, загрузить профиль один раз можно suspend-функцией, а наблюдать статус робота или базу данных лучше через `Flow`.
+Next, decide which operations are one-shot suspend functions and which are `Flow` streams. For example, loading a profile once can be a suspend function, while observing a robot status or database is better modeled with `Flow`.
 
-Важно сразу отделить state от effects: content/loading/error должны быть частью `UiState`, а navigation/snackbar/permission request - отдельными events/effects, если они действительно одноразовые.
+Separate state from effects early: content/loading/error should be part of `UiState`, while navigation/snackbar/permission request should be separate events/effects if they are truly one-off.
 
-Также нужно подумать о lifecycle, process death, retry, offline/cache, error mapping, analytics, testing и границах модулей. Не обязательно строить идеальную Clean Architecture для маленького экрана, но ответственность слоёв должна быть понятной.
+Also consider lifecycle, process death, retry, offline/cache, error mapping, analytics, testing and module boundaries. A small screen does not need ideal Clean Architecture, but layer responsibilities should be clear.
 
-**Коротко:** start from the UI contract and user actions, model durable `UiState` and one-off effects, then decide which logic belongs to `ViewModel`, domain/use cases, repositories and data sources.
+**In short:** start from the UI contract and user actions, model durable `UiState` and one-off effects, then decide which logic belongs to `ViewModel`, domain/use cases, repositories and data sources.

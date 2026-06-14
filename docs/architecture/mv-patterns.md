@@ -1,79 +1,79 @@
 # MV* Patterns
 
-MV* patterns помогают разделять UI, presentation logic, state и data/business logic. В Android они часто смешиваются с Jetpack `ViewModel`, lifecycle и Flow/Compose-подходами.
+MV* patterns help separate UI, presentation logic, state and data/business logic. In Android they are often combined with Jetpack `ViewModel`, lifecycle and Flow/Compose approaches.
 
 ## Patterns
 
 ### MVC
 
-MVC (Model-View-Controller) разделяет приложение на Model, View и Controller. Model отвечает за данные и бизнес-логику, View отображает UI, Controller обрабатывает user input и обновляет Model/View.
+MVC (Model-View-Controller) separates an application into Model, View and Controller. Model owns data and business logic, View displays UI, and Controller handles user input and updates Model/View.
 
-В классическом Android старые `Activity` / `Fragment` часто становились одновременно View и Controller: они держали UI, lifecycle, navigation, validation, network calls и часть business logic.
+In classic Android, old `Activity` / `Fragment` classes often became both View and Controller: they contained UI, lifecycle, navigation, validation, network calls and part of business logic.
 
-Проблема такого подхода - massive `Activity` / `Fragment`: сложнее тестировать, переиспользовать и поддерживать код, потому что слишком много ответственности оказывается в одном классе.
+The problem with this approach is massive `Activity` / `Fragment`: code becomes harder to test, reuse and maintain because too many responsibilities end up in one class.
 
-**Коротко:** MVC is a basic separation into Model, View and Controller, but in Android it often led to heavy `Activity` / `Fragment` classes.
+**In short:** MVC is a basic separation into Model, View and Controller, but in Android it often led to heavy `Activity` / `Fragment` classes.
 
 ### MVP
 
-MVP (Model-View-Presenter) разделяет UI и presentation logic. View обычно реализует interface и показывает данные, Presenter получает user actions, обращается к Model/repositories и командует View, что показать.
+MVP (Model-View-Presenter) separates UI and presentation logic. View usually implements an interface and displays data, while Presenter receives user actions, talks to Model/repositories and tells View what to show.
 
-Presenter легче unit-тестировать, потому что он может не зависеть напрямую от Android UI classes. View в MVP обычно пассивная: показать loading, показать content, показать error, открыть экран.
+Presenter is easier to unit test because it can avoid direct dependency on Android UI classes. View in MVP is usually passive: show loading, show content, show error, open a screen.
 
-MVP был популярен в Android до широкого распространения `ViewModel` / `LiveData` / Flow / Compose, особенно в XML UI и legacy проектах.
+MVP was popular in Android before `ViewModel` / `LiveData` / Flow / Compose became common, especially in XML UI and legacy projects.
 
-**Важно:** Presenter часто держит reference на View, поэтому важно правильно attach/detach по lifecycle, иначе легко получить leaks или callback в уничтоженный экран.
+**Important:** Presenter often holds a reference to View, so attach/detach must follow the lifecycle correctly. Otherwise it is easy to get leaks or callbacks into a destroyed screen.
 
-**Коротко:** MVP moves presentation logic from `Activity` / `Fragment` into Presenter, but requires careful View lifecycle management.
+**In short:** MVP moves presentation logic from `Activity` / `Fragment` into Presenter, but requires careful View lifecycle management.
 
 ### MVVM
 
-MVVM (Model-View-ViewModel) разделяет UI и state/presentation logic через `ViewModel`. View рендерит observable state и отправляет user actions, `ViewModel` готовит UI state и вызывает domain/data layer.
+MVVM (Model-View-ViewModel) separates UI and state/presentation logic through `ViewModel`. View renders observable state and sends user actions, while `ViewModel` prepares UI state and calls the domain/data layer.
 
-В Android `ViewModel` из Jetpack также переживает configuration changes и хорошо сочетается с `StateFlow` / `LiveData`, Coroutines, Compose и lifecycle-aware collection.
+In Android, Jetpack `ViewModel` also survives configuration changes and works well with `StateFlow` / `LiveData`, Coroutines, Compose and lifecycle-aware collection.
 
-Типичный flow: UI вызывает action -> `ViewModel` запускает use case/repository -> обновляет `UiState` -> UI перерисовывается из нового state.
+A typical flow: UI calls an action -> `ViewModel` runs a use case/repository -> updates `UiState` -> UI redraws from the new state.
 
-Плюсы: меньше логики в `Activity` / `Fragment` / composable, проще тестировать `ViewModel`, легче хранить screen state и переживать rotation.
+Benefits: less logic in `Activity` / `Fragment` / composable functions, easier `ViewModel` testing, easier screen state storage and better handling of rotation.
 
-**Важно:** `ViewModel` не должна превращаться в god object. Если логика сложная, её стоит выносить в use cases, repositories, mappers или отдельные state holders.
+**Important:** `ViewModel` should not turn into a god object. If logic is complex, move it into use cases, repositories, mappers or separate state holders.
 
-**Коротко:** MVVM fits modern Android well: View observes state from `ViewModel`, sends actions back, and `ViewModel` coordinates domain/data logic.
+**In short:** MVVM fits modern Android well: View observes state from `ViewModel`, sends actions back, and `ViewModel` coordinates domain/data logic.
 
 ### MVI
 
-MVI (Model-View-Intent) делает акцент на unidirectional data flow: View отправляет Intent/Action, logic обрабатывает его, создаётся новый immutable State, View рендерит этот State.
+MVI (Model-View-Intent) focuses on unidirectional data flow: View sends an Intent/Action, logic handles it, a new immutable State is created, and View renders that State.
 
-Обычно в MVI есть три ключевых элемента: State, Intent/Action и Reducer/Processor. State описывает экран, Intent описывает действие пользователя или системы, Reducer/Processor превращает old state + action/result в new state.
+MVI usually has three key elements: State, Intent/Action and Reducer/Processor. State describes the screen, Intent describes a user or system action, and Reducer/Processor turns old state + action/result into new state.
 
-Плюсы: предсказуемость, один источник truth для UI, удобное логирование state transitions, проще reasoning для сложных экранов с большим количеством состояний.
+Benefits: predictability, one source of truth for UI, convenient logging of state transitions, and simpler reasoning for complex screens with many states.
 
-Минусы: может быть больше boilerplate, сложнее onboarding, а для простых экранов строгий MVI может быть избыточным.
+Drawbacks: more boilerplate, harder onboarding, and strict MVI can be excessive for simple screens.
 
-**Коротко:** MVI is unidirectional and state-driven: actions go in, state comes out, and the UI is rendered from a single immutable state.
+**In short:** MVI is unidirectional and state-driven: actions go in, state comes out, and the UI is rendered from a single immutable state.
 
 ## Comparison
 
 ### MVVM vs MVI
 
-MVVM - более общий pattern: `ViewModel` отдаёт observable state и обрабатывает действия UI. Он не обязательно требует строгого reducer, единого intent pipeline или полностью immutable state transitions.
+MVVM is a more general pattern: `ViewModel` exposes observable state and handles UI actions. It does not necessarily require a strict reducer, a single intent pipeline or fully immutable state transitions.
 
-MVI - более строгий state-management подход с unidirectional flow, explicit intents/actions, immutable state и часто reducer-like обновлением состояния.
+MVI is a stricter state-management approach with unidirectional flow, explicit intents/actions, immutable state and often reducer-like state updates.
 
-В modern Android часто используют гибрид: `ViewModel` как Android state holder + MVI-style `UiState`, `UiAction` и `UiEffect`. Это даёт практичность MVVM и предсказуемость MVI без лишнего framework boilerplate.
+Modern Android often uses a hybrid: `ViewModel` as the Android state holder plus MVI-style `UiState`, `UiAction` and `UiEffect`. This gives the practicality of MVVM and the predictability of MVI without unnecessary framework boilerplate.
 
-Для простых экранов MVVM обычно достаточно. Для сложных экранов с множеством событий, partial loading, optimistic updates и сложными transitions MVI-style state management может быть удобнее.
+For simple screens, MVVM is usually enough. For complex screens with many events, partial loading, optimistic updates and complex transitions, MVI-style state management can be more convenient.
 
-**Коротко:** MVVM is the architectural container around `ViewModel` and observable state, while MVI is a stricter unidirectional state-management style.
+**In short:** MVVM is the architectural container around `ViewModel` and observable state, while MVI is a stricter unidirectional state-management style.
 
 ### MVVM with MVI-style state management
 
-MVVM with MVI-style state management - практичный Android-подход, где `ViewModel` остаётся владельцем состояния, но state обновляется в стиле unidirectional data flow.
+MVVM with MVI-style state management is a practical Android approach where `ViewModel` remains the state owner, but state is updated in a unidirectional data flow style.
 
-Обычно есть `UiState`, `UiAction` и `UiEffect`. UI рендерит `UiState`, отправляет `UiAction` во `ViewModel`, `ViewModel` выполняет logic/use cases и обновляет state. Одноразовые команды вроде navigation/snackbar идут как `UiEffect`.
+Usually there are `UiState`, `UiAction` and `UiEffect`. UI renders `UiState`, sends `UiAction` to `ViewModel`, and `ViewModel` runs logic/use cases and updates state. One-off commands such as navigation/snackbar are emitted as `UiEffect`.
 
-Такой подход хорошо подходит для Compose и `StateFlow`: экран становится функцией от state, а actions идут в одну точку обработки.
+This approach works well with Compose and `StateFlow`: the screen becomes a function of state, and actions go into one handling point.
 
-Важно не делать архитектуру слишком тяжёлой: reducer, action/result layers и отдельные processors нужны только если они реально упрощают сложность feature.
+Avoid making the architecture too heavy: reducer, action/result layers and separate processors are useful only if they actually reduce feature complexity.
 
-**Коротко:** MVVM with MVI-style state means `ViewModel` owns immutable `UiState`, UI sends actions, and one-off effects are separated from persistent state.
+**In short:** MVVM with MVI-style state means `ViewModel` owns immutable `UiState`, UI sends actions, and one-off effects are separated from persistent state.

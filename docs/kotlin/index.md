@@ -1,8 +1,8 @@
 # Kotlin
 
-Раздел про Kotlin в Android-разработке: синтаксис, типы, функции, классы, null-safety, коллекции и идиоматичный стиль кода.
+This section covers Kotlin in Android development: syntax, types, functions, classes, null-safety, collections and idiomatic code style.
 
-## Структура раздела
+## Section structure
 
 - [Basics](basics.md)
 - [Kotlin vs Java](kotlin-vs-java.md)

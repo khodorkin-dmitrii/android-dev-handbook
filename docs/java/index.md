@@ -1,8 +1,8 @@
 # Java
 
-Раздел про Java в Android-разработке: базовый язык, `Object`, коллекции, generics, многопоточность, исключения и особенности JVM/Android Runtime.
+This section covers Java in Android development: the core language, `Object`, collections, generics, concurrency, exceptions and JVM/Android Runtime specifics.
 
-## Структура раздела
+## Section structure
 
 - [Java Core](core.md)
 - [Java Concurrency](concurrency.md)

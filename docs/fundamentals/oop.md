@@ -1,33 +1,33 @@
 # OOP
 
-OOP (Object-Oriented Programming) - подход к проектированию, где программа строится вокруг объектов: данных и поведения, связанных вместе.
+OOP (Object-Oriented Programming) is a design approach where a program is built around objects: data and behavior connected together.
 
-## Основы OOP
+## OOP Basics
 
-### Что такое OOP?
+### What is OOP?
 
-OOP помогает моделировать предметную область через классы, объекты, их ответственность и взаимодействие. Это упрощает разделение кода на понятные части, переиспользование логики и снижение связанности.
+OOP helps model a domain through classes, objects, their responsibilities and interactions. This makes it easier to split code into understandable parts, reuse logic and reduce coupling.
 
-**Коротко:** OOP организует код вокруг объектов с состоянием и поведением, используя инкапсуляцию, наследование, полиморфизм и абстракцию.
+**In short:** OOP organizes code around objects with state and behavior, using encapsulation, inheritance, polymorphism and abstraction.
 
-### 4 принципа ООП
+### 4 OOP principles
 
-Основные принципы OOP (Object-Oriented Programming): инкапсуляция, наследование, полиморфизм и абстракция.
+The main principles of OOP (Object-Oriented Programming): encapsulation, inheritance, polymorphism and abstraction.
 
-### Инкапсуляция / наследование / полиморфизм / абстракция
+### Encapsulation / inheritance / polymorphism / abstraction
 
-Инкапсуляция (Encapsulation) - это сокрытие внутреннего состояния и деталей реализации за публичным API. Например, поле делается `private`, а доступ к нему контролируется через методы или свойства.
+Encapsulation is hiding internal state and implementation details behind a public API. For example, a field is made `private`, and access to it is controlled through methods or properties.
 
-Наследование (Inheritance) - механизм, который позволяет описать новый класс на основе существующего родительского класса, заимствуя его свойства и методы. Его стоит использовать осторожно, потому что глубокая иерархия классов часто повышает связанность.
+Inheritance is a mechanism that lets a new class be described based on an existing parent class, reusing its properties and methods. Use it carefully because deep class hierarchies often increase coupling.
 
-Полиморфизм (Polymorphism) - это возможность работать с разными объектами через общий тип. Например, `ViewModel` зависит от интерфейса `Repository`, а конкретная реализация подставляется через DI.
+Polymorphism is the ability to work with different objects through a common type. For example, `ViewModel` depends on a `Repository` interface, and the concrete implementation is supplied through DI.
 
-Абстракция (Abstraction) - выделение значимой информации и поведения объекта без привязки к деталям реализации. В Kotlin и Java это обычно interfaces, abstract classes и public contracts.
+Abstraction is extracting meaningful information and behavior of an object without binding code to implementation details. In Kotlin and Java this is usually interfaces, abstract classes and public contracts.
 
-### Мутабельность / иммутабельность
+### Mutability / immutability
 
-Мутабельность (Mutability) означает, что объект можно изменить после создания. Иммутабельность (Immutability) означает, что объект нельзя изменить или он выглядит неизменяемым снаружи.
+Mutability means an object can be changed after creation. Immutability means an object cannot be changed or appears unchanged from the outside.
 
-Иммутабельность упрощает reasoning о состоянии, снижает риск неожиданных изменений и особенно полезна в многопоточности, UI state и Compose. Мутабельность удобна для локальных оптимизаций, но требует контроля владельца состояния.
+Immutability makes reasoning about state easier, reduces the risk of unexpected changes and is especially useful in concurrency, UI state and Compose. Mutability is convenient for local optimizations, but requires control over the state owner.
 
-**Главная мысль:** immutable state проще тестировать, безопаснее передавать между слоями и легче использовать в reactive UI.
+**Key idea:** immutable state is easier to test, safer to pass between layers and easier to use in reactive UI.

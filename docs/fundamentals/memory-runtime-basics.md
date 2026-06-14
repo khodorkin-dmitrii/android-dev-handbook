@@ -2,34 +2,34 @@
 
 ![Stack vs Heap](../assets/images/fundamentals/stack-vs-heap.png)
 
-Базовые понятия памяти и runtime помогают понимать утечки памяти, жизненный цикл объектов, работу GC и поведение Java/Kotlin-кода на Android.
+Core memory and runtime concepts help explain memory leaks, object lifetime, GC behavior and Java/Kotlin code behavior on Android.
 
-## Память и GC
+## Memory and GC
 
 ### Stack vs Heap
 
-Stack - область памяти для call stack, локальных переменных, параметров вызовов и return addresses. Он быстрый и освобождается автоматически при выходе из функции.
+Stack is a memory area for the call stack, local variables, call parameters and return addresses. It is fast and released automatically when a function exits.
 
-Heap - область памяти для объектов, которые могут жить дольше одного вызова функции. За их освобождение отвечает Garbage Collector.
+Heap is a memory area for objects that can live longer than one function call. The Garbage Collector is responsible for releasing them.
 
-В Java/Kotlin объект обычно создаётся в heap, а локальная переменная может хранить reference на этот объект.
+In Java/Kotlin, an object is usually created in the heap, while a local variable can store a reference to that object.
 
-У каждого thread свой stack. Если он переполнен, возникает `StackOverflowError`. Heap общий для объектов, и при нехватке памяти возможен `OutOfMemoryError`.
+Each thread has its own stack. If it overflows, `StackOverflowError` occurs. Heap is shared for objects, and when memory is insufficient, `OutOfMemoryError` is possible.
 
 ### Garbage Collection roots
 
-GC roots - стартовые точки, от которых Garbage Collector определяет достижимые объекты.
+GC roots are starting points from which the Garbage Collector determines reachable objects.
 
-К GC roots относятся active thread stacks, static fields, JNI references, system class loader references и объекты, удерживаемые monitor lock. Если объект достижим от root, он считается живым и не будет удалён.
+GC roots include active thread stacks, static fields, JNI references, system class loader references and objects held by a monitor lock. If an object is reachable from a root, it is considered alive and will not be collected.
 
-Memory leak возникает, когда объект уже не нужен логически, но всё ещё достижим через какую-то цепочку references.
+Memory leak happens when an object is no longer needed logically, but is still reachable through some chain of references.
 
 ### Strong / Soft / Weak / Phantom references
 
-Strong reference - обычная ссылка. Пока объект достижим через strong reference, GC его не удалит.
+Strong reference is a regular reference. While an object is reachable through a strong reference, GC will not collect it.
 
-Weak reference - ссылка, которая не удерживает объект от сборки мусора. Она полезна для caches, listeners или ситуаций, где нельзя продлевать lifetime объекта.
+Weak reference does not keep an object from garbage collection. It is useful for caches, listeners or situations where an object's lifetime must not be extended.
 
-Soft reference - ссылка, которая может удерживаться дольше и очищаться при нехватке памяти, но в современном Android обычно лучше использовать явные cache policies.
+Soft reference can be kept longer and cleared when memory is low, but in modern Android explicit cache policies are usually better.
 
-Phantom reference - ссылка для низкоуровневого отслеживания момента, когда объект стал недоступен. Вместе с `ReferenceQueue` позволяет выполнить cleanup ресурсов без `finalize()`. В обычной Android-разработке встречается редко.
+Phantom reference is a reference for low-level tracking of the moment when an object becomes unreachable. Together with `ReferenceQueue`, it allows resource cleanup without `finalize()`. It is rare in regular Android development.

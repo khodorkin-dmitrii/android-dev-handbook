@@ -1,71 +1,71 @@
 # Multi-module Architecture
 
-Multi-module architecture помогает разделять большой Android-проект на Gradle-модули с понятными границами, зависимостями и ответственностью.
+Multi-module architecture helps split a large Android project into Gradle modules with clear boundaries, dependencies and responsibilities.
 
 ## Modules
 
-### Что такое multi-module project?
+### What is a multi-module project?
 
-Multi-module project - Android/Gradle проект, разделённый на несколько модулей вместо одного большого app module.
+A multi-module project is an Android/Gradle project split into several modules instead of one large app module.
 
-Модули могут быть feature, core/library, data, domain, design system, testing utilities или platform-specific wrappers. Каждый module имеет свой `build.gradle`, dependencies и public API.
+Modules can be feature modules, core/library modules, data, domain, design system, testing utilities or platform-specific wrappers. Each module has its own `build.gradle`, dependencies and public API.
 
-Зачем это нужно: ускорить incremental builds, уменьшить связанность, разделить ownership между командами, переиспользовать код, упростить тестирование и скрыть внутренние детали реализации.
+Why it is useful: faster incremental builds, lower coupling, clearer ownership between teams, code reuse, easier testing and hiding internal implementation details.
 
-Trade-off: multi-module architecture добавляет сложность в Gradle configuration, dependency graph, navigation, DI setup и version management. Маленькому проекту она может быть не нужна.
+Trade-off: multi-module architecture adds complexity to Gradle configuration, dependency graph, navigation, DI setup and version management. A small project may not need it.
 
-**Коротко:** multi-module architecture splits a large app into Gradle modules to improve boundaries, build performance, ownership and testability, but it should be introduced pragmatically.
+**In short:** multi-module architecture splits a large app into Gradle modules to improve boundaries, build performance, ownership and testability, but it should be introduced pragmatically.
 
 ### Feature modules
 
-Feature module содержит код конкретной функциональности или user flow: login, profile, payments, product details, settings, onboarding.
+A feature module contains code for a specific feature or user flow: login, profile, payments, product details, settings, onboarding.
 
-Обычно feature module включает UI, `ViewModel` / state holder, feature-specific models, navigation entry point и иногда feature-specific domain logic. Общие вещи не должны копироваться в каждую feature, а должны жить в core modules.
+A feature module usually includes UI, `ViewModel` / state holder, feature-specific models, a navigation entry point and sometimes feature-specific domain logic. Shared things should not be copied into every feature; they should live in core modules.
 
-Feature modules помогают изолировать ответственность: команда может менять feature, не затрагивая весь app module. Также они могут ускорить сборку и улучшить архитектурные границы.
+Feature modules help isolate responsibility: a team can change a feature without touching the whole app module. They can also speed up builds and improve architectural boundaries.
 
-**Важно:** feature modules не должны напрямую зависеть друг от друга хаотично. Для связи между features часто используют navigation contracts, interfaces, shared domain models или app-level coordinator.
+**Important:** feature modules should not directly depend on each other chaotically. Communication between features often uses navigation contracts, interfaces, shared domain models or an app-level coordinator.
 
-**Коротко:** feature modules isolate user-facing features and should depend on shared core/domain contracts rather than directly knowing about every other feature.
+**In short:** feature modules isolate user-facing features and should depend on shared core/domain contracts rather than directly knowing about every other feature.
 
 ### Core modules
 
-Core modules содержат переиспользуемую инфраструктуру и shared code, который нужен нескольким features.
+Core modules contain reusable infrastructure and shared code needed by several features.
 
-Типичные core modules: `core:network`, `core:database`, `core:ui` / `designsystem`, `core:common`, `core:model`, `core:analytics`, `core:testing`, `core:datastore`.
+Typical core modules: `core:network`, `core:database`, `core:ui` / `designsystem`, `core:common`, `core:model`, `core:analytics`, `core:testing`, `core:datastore`.
 
-Хороший core module имеет понятную ответственность и стабильный public API. Он не должен превращаться в dumping ground для всего подряд.
+A good core module has a clear responsibility and a stable public API. It should not become a dumping ground for everything.
 
-Core modules обычно не должны зависеть от feature modules. Направление зависимостей чаще идёт от features к core, а app module связывает всё вместе.
+Core modules usually should not depend on feature modules. Dependencies usually go from features to core, while the app module wires everything together.
 
-**Важно:** слишком общий `core:utils` быстро превращается в мусорный модуль. Лучше создавать маленькие модули по ответственности: formatting, date/time, dispatchers, logging, permissions, design system.
+**Important:** overly generic `core:utils` quickly turns into a junk module. It is better to create small modules by responsibility: formatting, date/time, dispatchers, logging, permissions, design system.
 
-**Коротко:** core modules hold reusable infrastructure and shared contracts, but they must stay focused and not become a global utils dump.
+**In short:** core modules hold reusable infrastructure and shared contracts, but they must stay focused and not become a global utils dump.
 
 ## Dependencies
 
 ### Dependency graph
 
-Dependency graph показывает, какие modules зависят друг от друга. В хорошей архитектуре он направленный и понятный: app module собирает features, features зависят от domain/core contracts, data modules реализуют repositories и зависят от network/database.
+Dependency graph shows which modules depend on each other. In a good architecture it is directed and clear: app module assembles features, features depend on domain/core contracts, data modules implement repositories and depend on network/database.
 
-Главная цель - не допустить хаотичных зависимостей, когда любой module может импортировать любой другой. Это ломает boundaries и делает изменения дорогими.
+The main goal is to avoid chaotic dependencies where any module can import any other module. That breaks boundaries and makes changes expensive.
 
-Типичный принцип: низкоуровневые shared modules не зависят от высокоуровневых feature modules. Domain/contracts должны быть стабильнее, чем конкретные data/UI implementations.
+A common principle: low-level shared modules do not depend on high-level feature modules. Domain/contracts should be more stable than concrete data/UI implementations.
 
-DI помогает соединять реализации с абстракциями: feature или domain может зависеть от `Repository` interface, а app/data layer предоставляет реализацию через Hilt/Dagger module.
+DI helps connect implementations to abstractions: a feature or domain layer can depend on a `Repository` interface, while the app/data layer provides the implementation through a Hilt/Dagger module.
 
-**Коротко:** module dependency graph should be acyclic and layered; app wiring and DI connect modules without breaking boundaries.
+**In short:** module dependency graph should be acyclic and layered; app wiring and DI connect modules without breaking boundaries.
 
 ### Cyclic dependencies
 
-Cyclic dependency возникает, когда module A зависит от module B, а B прямо или косвенно зависит от A.
+A cyclic dependency appears when module A depends on module B, and B directly or indirectly depends on A.
 
-Gradle обычно не позволяет прямые cycles, но архитектурные cycles могут появляться через shared modules, callbacks, navigation и неверное размещение interfaces.
+Gradle usually does not allow direct cycles, but architectural cycles can appear through shared modules, callbacks, navigation and misplaced interfaces.
 
-Проблема cycles в том, что модули нельзя независимо собирать, тестировать и переиспользовать. Любое изменение тянет цепочку зависимостей назад и ломает смысл modularization.
+The problem with cycles is that modules cannot be built, tested and reused independently. Any change pulls the dependency chain backwards and defeats the purpose of modularization.
 
-Решение: вынести общий contract в отдельный module, инвертировать зависимость через interface, использовать DI, event/navigation contract или app-level coordinator.
+The solution is to move the shared contract into a separate module, invert the dependency through an interface, use DI, an event/navigation contract or an app-level coordinator.
 
-Пример: если feature A должна открыть feature B, A не должна зависеть от implementation B напрямую. Можно вынести Route/Navigation contract в shared module, а app module выполнит actual navigation.
+Example: if feature A needs to open feature B, A should not depend directly on implementation B. A Route/Navigation contract can be moved into a shared module, and the app module performs the actual navigation.
 
-**Коротко:** cyclic dependencies mean module boundaries are wrong; usually the cycle is broken by extracting a contract module or inverting the dependency.
+**In short:** cyclic dependencies mean module boundaries are wrong; usually the cycle is broken by extracting a contract module or inverting the dependency.

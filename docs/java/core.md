@@ -1,74 +1,74 @@
 # Java Core
 
-Базовые темы Java, которые важны для Android-разработки: `Object`, равенство объектов, коллекции, generics, модификаторы доступа, приведение типов и singleton.
+Core Java topics that matter in Android development: `Object`, object equality, collections, generics, access modifiers, type casting and singleton.
 
-## Объекты и равенство
+## Objects and Equality
 
 ### `Object` class
 
-`Object` - базовый класс для всех reference types в Java. Если класс явно ничего не наследует, он неявно наследуется от `Object`.
+`Object` is the base class for all reference types in Java. If a class does not explicitly extend another class, it implicitly extends `Object`.
 
-Ключевые методы `Object`: `toString()`, `equals()`, `hashCode()`, `getClass()`, `clone()`, `wait()`, `notify()` и `notifyAll()`. Методы `wait()` / `notify()` связаны с monitor lock и многопоточностью, а `clone()` используется редко и требует осторожности.
+Key `Object` methods: `toString()`, `equals()`, `hashCode()`, `getClass()`, `clone()`, `wait()`, `notify()` and `notifyAll()`. `wait()` / `notify()` are related to monitor locks and concurrency, while `clone()` is rarely used and requires caution.
 
-**Важно:** `finalize()` встречается в старых материалах, но в современном Java/Android-коде на него нельзя полагаться для cleanup. Для ресурсов лучше использовать `try-with-resources`, `close()`, lifecycle-aware cleanup или явное управление ресурсами.
+**Important:** `finalize()` appears in old materials, but modern Java/Android code should not rely on it for cleanup. For resources, prefer `try-with-resources`, `close()`, lifecycle-aware cleanup or explicit resource management.
 
 ### `equals()` / `hashCode()` contract
 
-`equals()` определяет логическое равенство объектов, а `hashCode()` возвращает числовой хэш, который используют `HashMap`, `HashSet` и другие hash-based коллекции.
+`equals()` defines logical equality of objects, while `hashCode()` returns a numeric hash used by `HashMap`, `HashSet` and other hash-based collections.
 
-Главный контракт: если `a.equals(b) == true`, то `a.hashCode()` должен быть равен `b.hashCode()`. Обратное не гарантируется: одинаковый `hashCode()` не означает, что объекты равны, потому что возможны collisions.
+The main contract: if `a.equals(b) == true`, then `a.hashCode()` must be equal to `b.hashCode()`. The opposite is not guaranteed: the same `hashCode()` does not mean objects are equal, because collisions are possible.
 
-Если переопределяешь `equals()`, почти всегда нужно переопределить `hashCode()`. Иначе объект может некорректно работать в `HashMap` / `HashSet`: добавился, но потом не находится.
+If you override `equals()`, you almost always need to override `hashCode()`. Otherwise the object may behave incorrectly in `HashMap` / `HashSet`: it can be added, but later not found.
 
-### Класс как ключ `HashMap`
+### Class as a `HashMap` key
 
-Если custom class используется как ключ в `HashMap`, нужно корректно переопределить `equals()` и `hashCode()`.
+If a custom class is used as a key in `HashMap`, it needs correct `equals()` and `hashCode()` implementations.
 
-`HashMap` сначала использует `hashCode()` для выбора bucket, а затем `equals()` для проверки конкретного ключа среди возможных collisions. Если контракт нарушен, `get()` и `remove()` могут не найти объект даже при логически равном ключе.
+`HashMap` first uses `hashCode()` to choose a bucket, then uses `equals()` to check the specific key among possible collisions. If the contract is broken, `get()` and `remove()` may fail to find an object even with a logically equal key.
 
-В Kotlin `data class` генерирует `equals()` и `hashCode()` автоматически по свойствам primary constructor. Но mutable поля в ключе `HashMap` опасны: если поле, участвующее в `hashCode()`, изменилось после вставки, ключ может стать недоступным.
+In Kotlin, `data class` generates `equals()` and `hashCode()` automatically from primary constructor properties. But mutable fields in a `HashMap` key are dangerous: if a field participating in `hashCode()` changes after insertion, the key can become unreachable.
 
-## Generics и коллекции
+## Generics and Collections
 
-### Generics и примитивы в Java
+### Generics and primitives in Java
 
-Java generics работают только с reference types, поэтому `List<int>` невозможен. Для примитивов используются wrapper types: `Integer`, `Long`, `Boolean` и т.д.
+Java generics work only with reference types, so `List<int>` is impossible. Primitive values use wrapper types: `Integer`, `Long`, `Boolean` and so on.
 
-Из-за type erasure generic-типы в runtime в основном теряют информацию о конкретном `T`, а операции работают через `Object` и casts. Примитивы не являются `Object`, поэтому для них нужен boxing/unboxing.
+Because of type erasure, generic types mostly lose information about the concrete `T` at runtime, and operations work through `Object` and casts. Primitives are not `Object`, so they require boxing/unboxing.
 
-На Android это важно для производительности: коллекции вроде `List<Integer>` могут создавать лишние allocations по сравнению с массивами `int[]` или специализированными структурами.
+On Android this matters for performance: collections such as `List<Integer>` can create extra allocations compared with `int[]` arrays or specialized structures.
 
-### `Iterator` и `Iterable`
+### `Iterator` and `Iterable`
 
-`Iterable` - интерфейс для объектов, которые можно перебирать. Он содержит метод `iterator()`, который возвращает `Iterator`.
+`Iterable` is an interface for objects that can be iterated. It contains the `iterator()` method, which returns an `Iterator`.
 
-`Iterator` - объект, который выполняет сам обход: `hasNext()` проверяет наличие следующего элемента, `next()` возвращает следующий элемент, `remove()` опционально удаляет текущий элемент.
+`Iterator` is the object that performs the traversal: `hasNext()` checks whether there is a next element, `next()` returns the next element, and `remove()` optionally removes the current element.
 
-`for-each` в Java работает поверх `Iterable`. Важно не менять коллекцию напрямую во время обхода обычным iterator, иначе можно получить `ConcurrentModificationException`. Для удаления во время обхода используют `iterator.remove()` или безопасные альтернативы.
+Java `for-each` works on top of `Iterable`. Do not modify a collection directly while traversing it with a regular iterator, otherwise `ConcurrentModificationException` is possible. For removal during traversal, use `iterator.remove()` or safer alternatives.
 
 ### Java Collections hierarchy
 
-`Collection` - базовый интерфейс для большинства коллекций Java: `List`, `Set`, `Queue` и `Deque`. `List` хранит упорядоченные элементы, `Set` хранит уникальные элементы, `Queue` / `Deque` описывают очереди.
+`Collection` is the base interface for most Java collections: `List`, `Set`, `Queue` and `Deque`. `List` stores ordered elements, `Set` stores unique elements, and `Queue` / `Deque` describe queues.
 
-`Map` не наследуется от `Collection`, потому что хранит пары key-value, а не одиночные элементы. `HashMap`, `TreeMap` и `LinkedHashMap` - разные реализации `Map` с разными гарантиями порядка и сложности.
+`Map` does not extend `Collection` because it stores key-value pairs rather than individual elements. `HashMap`, `TreeMap` and `LinkedHashMap` are different `Map` implementations with different ordering guarantees and complexity characteristics.
 
-**Главная мысль:** Java Collections Framework - это набор интерфейсов и реализаций для хранения групп объектов, где важно понимать не только API, но и сложность операций, порядок элементов и требования к `equals()` / `hashCode()`.
+**Key idea:** Java Collections Framework is a set of interfaces and implementations for storing groups of objects, where it is important to understand not only the API, but also operation complexity, element ordering and `equals()` / `hashCode()` requirements.
 
-## Типы и доступ
+## Types and Access
 
-### Модификаторы доступа Java
+### Java access modifiers
 
-В Java есть `public`, `protected`, package-private и `private`.
+Java has `public`, `protected`, package-private and `private`.
 
-`public` доступен отовсюду. `private` доступен только внутри класса. Если модификатор не указан, используется package-private: доступ только внутри того же package.
+`public` is accessible from anywhere. `private` is accessible only inside the class. If no modifier is specified, package-private is used: access is allowed only within the same package.
 
-`protected` в Java означает доступ внутри package и из subclasses. Это частая ловушка: `protected` не означает только "доступно наследникам".
+In Java, `protected` means access from within the package and from subclasses. This is a common pitfall: `protected` does not mean only "available to subclasses".
 
 ### Type checks and casting: `instanceof`
 
-`instanceof` проверяет, является ли объект экземпляром конкретного класса или интерфейса. Это runtime-проверка типа перед безопасным downcast.
+`instanceof` checks whether an object is an instance of a specific class or interface. It is a runtime type check before a safe downcast.
 
-Обычно `instanceof` используют, когда код работает с базовым типом, но для конкретного subtype нужно вызвать специфичное поведение. В современном дизайне часто лучше использовать polymorphism, но сам механизм важно понимать.
+`instanceof` is usually used when code works with a base type, but a specific subtype needs subtype-specific behavior. In modern design, polymorphism is often better, but the mechanism itself is still important to understand.
 
 ```java
 class Animal {
@@ -88,7 +88,7 @@ if (animal instanceof Cat) {
 }
 ```
 
-В новых версиях Java можно использовать pattern matching for `instanceof`:
+In newer Java versions, pattern matching for `instanceof` can be used:
 
 ```java
 if (animal instanceof Cat cat) {
@@ -96,11 +96,11 @@ if (animal instanceof Cat cat) {
 }
 ```
 
-В Android-проектах доступность зависит от версии Java language features и toolchain.
+In Android projects, availability depends on the supported Java language features and toolchain.
 
 ### Java Singleton implementation
 
-В Java нет отдельного ключевого слова для Singleton. Классический вариант - `private` constructor, `private static` instance и `public static getInstance()`.
+Java has no dedicated keyword for Singleton. The classic implementation uses a `private` constructor, `private static` instance and `public static getInstance()`.
 
 ```java
 public class MySingleton {
@@ -115,4 +115,4 @@ public class MySingleton {
 }
 ```
 
-Такой eager singleton прост и thread-safe за счёт class loading. Для ленивой инициализации используют holder pattern или enum singleton. Double-checked locking возможен, но его легко написать неправильно без `volatile`.
+This eager singleton is simple and thread-safe because of class loading. For lazy initialization, use the holder pattern or enum singleton. Double-checked locking is possible, but easy to implement incorrectly without `volatile`.

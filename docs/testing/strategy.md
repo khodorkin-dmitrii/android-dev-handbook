@@ -1,47 +1,47 @@
 # Testing Strategy
 
-Testing strategy помогает выбирать, что тестировать в первую очередь, какие уровни тестов использовать и как сохранять test suite быстрым и устойчивым.
+Testing strategy helps choose what to test first, which test levels to use and how to keep the test suite fast and stable.
 
-## Приоритеты тестирования
+## Testing Priorities
 
-### Что тестировать в первую очередь?
+### What should be tested first?
 
-В первую очередь стоит тестировать код с высокой бизнес-ценностью и высоким риском: business logic, use cases, mappers, validators, reducers, error mapping и `ViewModel` state transitions.
+Test high-business-value and high-risk code first: business logic, use cases, mappers, validators, reducers, error mapping and `ViewModel` state transitions.
 
-Не всё нужно покрывать одинаково. Хорошая стратегия начинается с вопросов: что чаще ломается, что дорого сломать в production, где есть сложные условия, edge cases, деньги, авторизация, offline/cache или critical user flow.
+Not everything needs the same level of coverage. A good strategy starts with questions: what breaks often, what is expensive to break in production, where there are complex conditions, edge cases, money, authorization, offline/cache or critical user flow.
 
-UI и framework glue обычно тестируют выборочно, а не пытаются unit-тестами покрыть каждую `Activity` или composable. Важнее проверять observable behavior, а не private implementation details.
+UI and framework glue are usually tested selectively instead of trying to cover every `Activity` or composable with unit tests. Observable behavior matters more than private implementation details.
 
-**Коротко:** prioritize tests by risk and value: business logic, mapping, state transitions and critical flows first, then UI/integration tests for important user scenarios.
+**In short:** prioritize tests by risk and value: business logic, mapping, state transitions and critical flows first, then UI/integration tests for important user scenarios.
 
 ### Unit tests vs UI tests
 
-Unit tests проверяют маленькие части логики быстро и изолированно: use cases, mappers, validators, reducers, `ViewModel` logic, error handling. Они дешёвые, быстрые и хорошо подходят для большинства бизнес-логики.
+Unit tests check small pieces of logic quickly and in isolation: use cases, mappers, validators, reducers, `ViewModel` logic, error handling. They are cheap, fast and well suited for most business logic.
 
-UI tests проверяют поведение приложения ближе к пользователю: отображение экрана, клики, navigation, формы, happy path и критичные regression scenarios. Но они медленнее, дороже в поддержке и чаще flaky.
+UI tests check app behavior closer to the user: screen rendering, clicks, navigation, forms, happy path and critical regression scenarios. But they are slower, more expensive to maintain and more often flaky.
 
-Практичный подход: большую часть логики покрывать unit tests, а UI tests оставлять для ключевых пользовательских сценариев, где важно проверить интеграцию UI + state + navigation.
+A practical approach: cover most logic with unit tests, and keep UI tests for key user scenarios where UI + state + navigation integration matters.
 
-**Коротко:** unit tests are fast and good for logic, UI tests are slower but useful for critical user flows and integration behavior.
+**In short:** unit tests are fast and good for logic, UI tests are slower but useful for critical user flows and integration behavior.
 
 ### Mocks vs fakes
 
-Mock - тестовый объект, который обычно проверяет interactions: был ли вызван метод, с какими параметрами, сколько раз.
+Mock is a test object that usually verifies interactions: whether a method was called, with which parameters and how many times.
 
-Fake - упрощённая рабочая реализация dependency, например in-memory repository или test data source.
+Fake is a simplified working implementation of a dependency, for example an in-memory repository or test data source.
 
-В Android обычно удобнее предпочитать fakes там, где это просто: тест получается ближе к реальному поведению и меньше зависит от внутренних вызовов. Mocks полезны точечно, когда важно проверить конкретное взаимодействие, например analytics event, navigation callback или retry call.
+In Android, fakes are usually preferable when they are simple: the test becomes closer to real behavior and depends less on internal calls. Mocks are useful in focused cases where a specific interaction matters, for example analytics event, navigation callback or retry call.
 
-**Важно:** если mock-ать всё подряд, тест становится хрупким и начинает проверять implementation details, а не поведение. Хороший тест обычно задаёт input/action и проверяет observable output/state.
+**Important:** if everything is mocked, the test becomes fragile and starts checking implementation details instead of behavior. A good test usually provides input/action and checks observable output/state.
 
-**Коротко:** prefer fakes for readable behavior-based tests and use mocks only when interaction verification is actually important.
+**In short:** prefer fakes for readable behavior-based tests and use mocks only when interaction verification is actually important.
 
 ### Test pyramid / testing priorities
 
-Test pyramid - идея, что большинство тестов должны быть быстрыми unit tests, меньше должно быть integration tests, и ещё меньше - дорогих end-to-end/UI tests.
+Test pyramid is the idea that most tests should be fast unit tests, fewer should be integration tests, and even fewer should be expensive end-to-end/UI tests.
 
-Для Android это обычно означает: много unit tests для domain/data/`ViewModel` логики, умеренное количество integration tests для repository/database/network boundaries, и небольшое количество UI tests для критичных flows.
+For Android this usually means many unit tests for domain/data/`ViewModel` logic, a moderate number of integration tests for repository/database/network boundaries, and a small number of UI tests for critical flows.
 
-Приоритеты: business-critical logic, state transitions, error cases, edge cases, mapping between layers, persistence/migrations, authentication/payment-like flows и баги, которые уже ломались раньше.
+Priorities: business-critical logic, state transitions, error cases, edge cases, mapping between layers, persistence/migrations, authentication/payment-like flows and bugs that have already broken before.
 
-**Коротко:** test pyramid keeps the suite fast and stable: many unit tests, fewer integration tests, and a small number of UI/E2E tests for critical paths.
+**In short:** test pyramid keeps the suite fast and stable: many unit tests, fewer integration tests, and a small number of UI/E2E tests for critical paths.

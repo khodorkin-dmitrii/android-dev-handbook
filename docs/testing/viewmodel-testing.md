@@ -1,23 +1,23 @@
 # ViewModel Testing
 
-Раздел про тестирование `ViewModel`: проверку state transitions, user actions, loading/error/content состояний и одноразовых events/effects.
+This section covers `ViewModel` testing: state transitions, user actions, loading/error/content states and one-off events/effects.
 
 ## ViewModel tests
 
-### Как тестировать ViewModel?
+### How to test ViewModel?
 
-`ViewModel` обычно тестируют как обычный Kotlin-класс: создают fake dependencies, вызывают public actions и проверяют observable output - чаще всего `StateFlow<UiState>` и поток events/effects.
+`ViewModel` is usually tested like a regular Kotlin class: create fake dependencies, call public actions and check observable output, most often `StateFlow<UiState>` and an events/effects stream.
 
-Главная цель - проверить поведение, а не внутреннюю реализацию. Тест должен отвечать на вопрос: "если пользователь сделал действие или repository вернул результат, какой state/effect увидит UI?"
+The main goal is to verify behavior, not internal implementation. The test should answer: "if the user performed an action or repository returned a result, which state/effect will UI observe?"
 
-Обычно в тесте нужны:
+Usually the test needs:
 
 - fake repository/use case;
-- test dispatcher для coroutines;
-- замена `Dispatchers.Main`, если `ViewModel` использует `viewModelScope`;
-- проверка initial state, state transitions и one-off events.
+- test dispatcher for coroutines;
+- replacement for `Dispatchers.Main` if `ViewModel` uses `viewModelScope`;
+- checks for initial state, state transitions and one-off events.
 
-Пример правила для подмены Main dispatcher:
+Example rule for replacing Main dispatcher:
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -35,7 +35,7 @@ class MainDispatcherRule(
 }
 ```
 
-Пример теста:
+Example test:
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,17 +62,17 @@ class ProfileViewModelTest {
 }
 ```
 
-**Важно:** если `ViewModel` стартует загрузку в `init`, fake dependencies нужно настроить до создания `ViewModel`, иначе тест может проверить не тот сценарий.
+**Important:** if `ViewModel` starts loading in `init`, fake dependencies must be configured before creating `ViewModel`, otherwise the test may verify the wrong scenario.
 
-**Коротко:** тестируй `ViewModel` через public actions и observable state/effects, используя fakes и test dispatchers вместо реальных network/database dependencies.
+**In short:** test `ViewModel` through public actions and observable state/effects, using fakes and test dispatchers instead of real network/database dependencies.
 
 ### Testing UiState transitions
 
-UiState transitions - это последовательность состояний, через которые проходит экран: например initial -> loading -> content или initial -> loading -> error.
+UiState transitions are the sequence of states a screen goes through: for example initial -> loading -> content or initial -> loading -> error.
 
-Для простых synchronous сценариев достаточно проверить финальный `uiState.value`. Но если важна сама последовательность, нужно collect-ить emissions.
+For simple synchronous scenarios, checking the final `uiState.value` is enough. But if the sequence itself matters, collect emissions.
 
-Пример с ручным collection:
+Example with manual collection:
 
 ```kotlin
 @Test
@@ -101,7 +101,7 @@ fun `load emits loading then content`() = runTest {
 }
 ```
 
-На практике для `Flow` и `StateFlow` часто используют библиотеку Turbine, потому что она делает assertions по emissions удобнее и читабельнее:
+In practice, `Flow` and `StateFlow` tests often use Turbine because it makes assertions over emissions more convenient and readable:
 
 ```kotlin
 @Test
@@ -121,17 +121,17 @@ fun `load emits loading then error`() = runTest {
 }
 ```
 
-**Важно:** не делай state test слишком завязанным на каждую промежуточную мелочь, если это не часть contract экрана. Иногда достаточно проверить финальный user-visible state.
+**Important:** do not make a state test depend on every small intermediate detail if it is not part of the screen contract. Sometimes checking the final user-visible state is enough.
 
-**Коротко:** state transition tests полезны для loading/content/error, retry, validation и complex flows, но проверять нужно observable UI contract, а не внутренние шаги implementation.
+**In short:** state transition tests are useful for loading/content/error, retry, validation and complex flows, but they should verify observable UI contract, not internal implementation steps.
 
 ### Testing events/effects
 
-Events/effects - это одноразовые команды для UI: navigation, snackbar, toast, permission request, scroll command. Их обычно публикуют через `SharedFlow`, `Channel` или callback.
+Events/effects are one-off commands for UI: navigation, snackbar, toast, permission request, scroll command. They are usually published through `SharedFlow`, `Channel` or callback.
 
-Тест должен проверить, что при конкретном action `ViewModel` отправляет нужный effect, и что durable `UiState` не используется как одноразовая команда.
+The test should verify that a specific action makes `ViewModel` send the expected effect, and that durable `UiState` is not used as a one-off command.
 
-Пример с `SharedFlow`:
+Example with `SharedFlow`:
 
 ```kotlin
 @Test
@@ -147,15 +147,15 @@ fun `save success emits navigate back event`() = runTest {
 }
 ```
 
-Если используется `Channel`, наружу часто отдают `receiveAsFlow()`:
+If `Channel` is used, the public API often exposes `receiveAsFlow()`:
 
 ```kotlin
 private val _events = Channel<UiEvent>(Channel.BUFFERED)
 val events = _events.receiveAsFlow()
 ```
 
-Тестируется это так же как обычный `Flow`.
+It is tested the same way as a regular `Flow`.
 
-**Важно:** event tests часто зависят от буфера. `MutableSharedFlow` с `replay = 0` может потерять событие, если collector ещё не подписан. В тесте сначала запускай collection, потом вызывай action.
+**Important:** event tests often depend on buffering. `MutableSharedFlow` with `replay = 0` can lose an event if the collector has not subscribed yet. In a test, start collection first, then call the action.
 
-**Коротко:** one-off events тестируют через collection event stream: сначала подписка, потом action, затем assertion на конкретный effect.
+**In short:** one-off events are tested by collecting the event stream: subscribe first, then call the action, then assert the specific effect.

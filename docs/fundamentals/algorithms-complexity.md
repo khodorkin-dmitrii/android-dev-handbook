@@ -2,52 +2,52 @@
 
 ![Big O chart](../assets/images/fundamentals/big-o-chart.png)
 
-Алгоритмическая сложность помогает оценивать, как код будет масштабироваться при росте входных данных. Это важно не только для алгоритмических задач, но и для обычных коллекций, поиска, сортировки и обработки списков в приложении.
+Algorithmic complexity helps estimate how code scales as input data grows. This matters not only for algorithm tasks, but also for regular collections, search, sorting and list processing in an application.
 
 ## Big O
 
-### Что такое Big O?
+### What is Big O?
 
-Big O - это способ описать, как растёт время выполнения или потребление памяти алгоритма при увеличении размера входных данных.
+Big O is a way to describe how an algorithm's execution time or memory usage grows as input size increases.
 
-Это не точное время в миллисекундах, а оценка масштабируемости. Например, `O(n)` означает, что работа растёт примерно линейно с размером input.
+It is not exact time in milliseconds, but a scalability estimate. For example, `O(n)` means work grows roughly linearly with input size.
 
-Важно отдельно понимать time complexity и space complexity: алгоритм может быть быстрым по времени, но требовать много дополнительной памяти.
+Understand time complexity and space complexity separately: an algorithm can be fast in time but require a lot of additional memory.
 
 ### `O(1)`, `O(n)`, `O(log n)`, `O(n log n)`
 
-`O(1)` - константная сложность: операция не зависит от размера input. Пример: доступ к элементу массива по индексу.
+`O(1)` is constant complexity: the operation does not depend on input size. Example: array access by index.
 
-`O(n)` - линейная сложность: нужно пройти по input один раз. Пример: поиск элемента в неотсортированном массиве.
+`O(n)` is linear complexity: the input needs to be traversed once. Example: finding an element in an unsorted array.
 
-`O(log n)` - логарифмическая сложность: на каждом шаге пространство поиска уменьшается, например binary search.
+`O(log n)` is logarithmic complexity: at each step, the search space decreases, for example binary search.
 
-`O(n log n)` часто встречается у эффективных сортировок вроде merge sort и average case quicksort.
+`O(n log n)` often appears in efficient sorting algorithms such as merge sort and average-case quicksort.
 
-Простая эвристика: один проход по коллекции обычно даёт `O(n)`, вложенный цикл часто даёт `O(n^2)`, а деление пространства поиска пополам даёт `O(log n)`.
+A simple heuristic: one pass over a collection usually gives `O(n)`, a nested loop often gives `O(n^2)`, and halving the search space gives `O(log n)`.
 
-## Поиск, сортировки и коллекции
+## Search, Sorting and Collections
 
-### Сложность поиска в отсортированном массиве
+### Search complexity in a sorted array
 
-В отсортированном массиве можно использовать binary search со сложностью `O(log n)`.
+In a sorted array, binary search can be used with `O(log n)` complexity.
 
-Идея: сравниваем искомое значение с серединой массива и отбрасываем половину диапазона. Это намного быстрее линейного поиска `O(n)` на больших данных.
+The idea: compare the target value with the middle of the array and discard half of the range. This is much faster than linear search `O(n)` on large data.
 
-Но если массив не отсортирован, binary search неприменим без предварительной сортировки.
+But if the array is not sorted, binary search cannot be used without sorting first.
 
-### Сортировки и QuickSort
+### Sorting and QuickSort
 
-Популярные сортировки: bubble sort, insertion sort, merge sort, quicksort.
+Popular sorting algorithms: bubble sort, insertion sort, merge sort, quicksort.
 
-Quicksort в среднем работает за `O(n log n)`, но в худшем случае может деградировать до `O(n^2)`, если pivot выбирается неудачно. На практике хорошие реализации используют random pivot, median-of-three или гибридные подходы.
+Quicksort runs in `O(n log n)` on average, but in the worst case can degrade to `O(n^2)` if the pivot is chosen poorly. In practice, good implementations use random pivot, median-of-three or hybrid approaches.
 
-**Важно:** для quicksort полезно помнить average case и worst case. Обычно quicksort быстрый на практике и часто работает in-place, но худший случай всё равно существует.
+**Important:** for quicksort, remember both average case and worst case. Quicksort is usually fast in practice and often works in-place, but the worst case still exists.
 
 ### `ArrayList` / `LinkedList` / `HashMap` complexity
 
-`ArrayList` даёт `O(1)` доступ по индексу и обычно `O(1)` добавление в конец, но при расширении внутреннего массива добавление может стать `O(n)`. Вставка или удаление в середине стоит `O(n)`, потому что элементы нужно сдвигать.
+`ArrayList` gives `O(1)` access by index and usually `O(1)` append to the end, but when the internal array grows, append can become `O(n)`. Insert or remove in the middle costs `O(n)` because elements need to be shifted.
 
-`LinkedList` даёт `O(1)` вставку или удаление, если node уже известна, но поиск нужного элемента обычно `O(n)`. В реальном Android/Java-коде `LinkedList` часто проигрывает `ArrayList` из-за плохой cache locality.
+`LinkedList` gives `O(1)` insert or remove if the node is already known, but finding the required element is usually `O(n)`. In real Android/Java code, `LinkedList` often loses to `ArrayList` because of poor cache locality.
 
-`HashMap` в среднем даёт `O(1)` для `put()` / `get()` / `remove()`, но зависит от `hashCode()`, `equals()` и распределения ключей. В плохих случаях возможна деградация, поэтому важно корректно реализовывать `equals()` / `hashCode()` для custom keys.
+`HashMap` gives `O(1)` on average for `put()` / `get()` / `remove()`, but depends on `hashCode()`, `equals()` and key distribution. Degradation is possible in bad cases, so custom keys need correct `equals()` / `hashCode()` implementations.

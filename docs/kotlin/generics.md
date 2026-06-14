@@ -1,43 +1,43 @@
 # Generics
 
-Раздел про generics в Kotlin: type safety, type erasure и variance через `in` / `out`.
+This section covers generics in Kotlin: type safety, type erasure and variance through `in` / `out`.
 
-## Основы generics
+## Generics basics
 
 ### Generics Java vs Kotlin
 
-Generics позволяют писать код, работающий с разными типами, сохраняя type safety: `List<String>`, `Repository<User>`, `Result<T>`.
+Generics allow writing code that works with different types while preserving type safety: `List<String>`, `Repository<User>`, `Result<T>`.
 
-И Java, и Kotlin на JVM используют type erasure: конкретный generic type обычно недоступен в runtime.
+Both Java and Kotlin on JVM use type erasure: the concrete generic type is usually unavailable at runtime.
 
-Kotlin добавляет declaration-site variance через `out` / `in`, nullable type system, star-projections и reified type parameters для inline functions.
+Kotlin adds declaration-site variance through `out` / `in`, nullable type system, star-projections and reified type parameters for inline functions.
 
-В Java variance обычно выражается use-site wildcards: `? extends T` и `? super T`. В Kotlin чаще пишут `out T` и `in T` прямо в declaration.
+In Java, variance is usually expressed through use-site wildcards: `? extends T` and `? super T`. In Kotlin, `out T` and `in T` are more often written directly in the declaration.
 
-**Коротко:** Kotlin generics are still erased on JVM, but Kotlin gives stronger syntax for variance and reified support in inline functions.
+**In short:** Kotlin generics are still erased on JVM, but Kotlin gives stronger syntax for variance and reified support in inline functions.
 
 ## Variance
 
 ### Variance: `in` / `out`
 
-Variance описывает, как generic type с subtype-отношениями ведет себя относительно другого generic type.
+Variance describes how a generic type with subtype relationships behaves relative to another generic type.
 
-`out` означает producer: тип можно безопасно читать как `T`, но нельзя принимать `T` как input. Пример: `Source<out T>`. Это похоже на Java `? extends T`.
+`out` means producer: the type can be safely read as `T`, but cannot accept `T` as input. Example: `Source<out T>`. This is similar to Java `? extends T`.
 
-`in` означает consumer: тип можно безопасно принимать как `T`, но чтение будет менее точным. Пример: `Sink<in T>`. Это похоже на Java `? super T`.
+`in` means consumer: the type can safely accept `T`, but reading will be less precise. Example: `Sink<in T>`. This is similar to Java `? super T`.
 
-Простая формула PECS: Producer Extends, Consumer Super. В Kotlin: producer - `out`, consumer - `in`.
+Simple PECS formula: Producer Extends, Consumer Super. In Kotlin: producer - `out`, consumer - `in`.
 
-**Коротко:** use `out` when a type only produces `T`, use `in` when it only consumes `T`.
+**In short:** use `out` when a type only produces `T`, use `in` when it only consumes `T`.
 
 ### Covariance / contravariance / invariance
 
-Covariance означает сохранение subtype-направления. Если `Cat` наследуется от `Animal`, то `Producer<Cat>` можно использовать как `Producer<Animal>`. В Kotlin это обычно `out T`.
+Covariance means preserving the subtype direction. If `Cat` inherits from `Animal`, then `Producer<Cat>` can be used as `Producer<Animal>`. In Kotlin this is usually `out T`.
 
-Contravariance означает обратное направление. Если `Cat` наследуется от `Animal`, то `Consumer<Animal>` можно использовать как `Consumer<Cat>`. В Kotlin это обычно `in T`.
+Contravariance means the opposite direction. If `Cat` inherits from `Animal`, then `Consumer<Animal>` can be used as `Consumer<Cat>`. In Kotlin this is usually `in T`.
 
-Invariance означает, что generic types не считаются subtype друг друга: `MutableList<Cat>` не является `MutableList<Animal>`. Это защищает от type-safety ошибок при записи.
+Invariance means generic types are not considered subtypes of each other: `MutableList<Cat>` is not `MutableList<Animal>`. This protects against type-safety errors when writing.
 
-Пример проблемы: если бы `MutableList<Cat>` можно было передать как `MutableList<Animal>`, туда можно было бы добавить `Dog`, что сломало бы список котов.
+Example problem: if `MutableList<Cat>` could be passed as `MutableList<Animal>`, a `Dog` could be added to it, breaking the list of cats.
 
-**Коротко:** covariance is for producers, contravariance is for consumers, invariance is the default when both read and write are possible.
+**In short:** covariance is for producers, contravariance is for consumers, invariance is the default when both read and write are possible.

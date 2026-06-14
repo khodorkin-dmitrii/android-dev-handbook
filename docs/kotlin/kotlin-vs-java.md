@@ -1,74 +1,74 @@
 # Kotlin vs Java
 
-Kotlin и Java оба работают на JVM и хорошо взаимодействуют друг с другом, но Kotlin добавляет более современную type system и более компактный синтаксис.
+Kotlin and Java both run on the JVM and interoperate well, but Kotlin adds a more modern type system and more compact syntax.
 
-## Сравнение языков
+## Language comparison
 
 ### Key differences
 
-Kotlin не заменяет JVM-модель полностью, а строится поверх нее и улучшает безопасность, выразительность и interop с Java-кодом.
+Kotlin does not replace the JVM model completely. It builds on top of it and improves safety, expressiveness and interop with Java code.
 
-Ключевые отличия: null-safety встроена в язык, классы и методы `final` по умолчанию, нет checked exceptions, есть properties, `data class`, `sealed class` / `sealed interface`, extension functions, top-level functions, coroutines и более выразительные коллекции.
+Key differences: null-safety is built into the language, classes and methods are `final` by default, there are no checked exceptions, and Kotlin has properties, `data class`, `sealed class` / `sealed interface`, extension functions, top-level functions, coroutines and more expressive collections.
 
-**Коротко:** Kotlin уменьшает boilerplate, делает часть ошибок видимой на этапе компиляции и при этом остается совместимым с Java API.
+**In short:** Kotlin reduces boilerplate, makes some errors visible at compile time and remains compatible with Java APIs.
 
 ### Visibility modifiers
 
-В Java модификатор по умолчанию - package-private. В Kotlin модификатор по умолчанию - `public`.
+In Java, the default modifier is package-private. In Kotlin, the default modifier is `public`.
 
-В Kotlin есть `public`, `private`, `protected` и `internal`. `internal` означает видимость внутри module, но при компиляции в JVM такой API технически становится public с name mangling, поэтому это не security boundary.
+Kotlin has `public`, `private`, `protected` and `internal`. `internal` means visibility inside a module, but when compiled to JVM such API technically becomes public with name mangling, so it is not a security boundary.
 
-`protected` отличается важной деталью: в Kotlin `protected` виден только внутри класса и subclasses, а в Java `protected` также доступен другим классам из того же package.
+`protected` has an important difference: in Kotlin, `protected` is visible only inside the class and subclasses, while in Java `protected` is also available to other classes in the same package.
 
-**Главная мысль:** основная разница - Java package-private vs Kotlin `public` by default, плюс Kotlin `internal` и более строгий `protected`.
+**Key idea:** the main difference is Java package-private vs Kotlin `public` by default, plus Kotlin `internal` and stricter `protected`.
 
 | Modifier | Kotlin meaning | Java comparison |
 |---|---|---|
-| `public` | Доступен отовсюду. Модификатор по умолчанию. | Аналог `public`, но в Java default access - не `public`, а package-private. |
-| `private` | Доступен внутри класса или файла, если это top-level declaration. | Аналог `private`. Java package-private - отдельный механизм, прямого аналога в Kotlin нет. |
-| `protected` | Доступен внутри класса и subclasses. | В Java шире: доступен subclasses и всем классам внутри того же package. |
-| `internal` | Доступен внутри Kotlin module. | Прямого аналога в Java нет. На JVM обычно компилируется как `public` с name mangling. |
-| package-private | В Kotlin такого модификатора нет. | В Java это default visibility, если модификатор не указан. |
+| `public` | Accessible from everywhere. Default modifier. | Similar to `public`, but Java default access is package-private, not `public`. |
+| `private` | Accessible inside the class or file if this is a top-level declaration. | Similar to `private`. Java package-private is a separate mechanism with no direct Kotlin equivalent. |
+| `protected` | Accessible inside the class and subclasses. | Broader in Java: accessible to subclasses and all classes in the same package. |
+| `internal` | Accessible inside a Kotlin module. | No direct Java equivalent. On JVM, usually compiled as `public` with name mangling. |
+| package-private | Kotlin has no such modifier. | In Java this is default visibility when no modifier is specified. |
 
-### Null-safety в Kotlin и Java
+### Null-safety in Kotlin and Java
 
-В Kotlin nullability является частью type system: `String` не может быть `null`, а `String?` может. Компилятор заставляет обработать nullable value через safe call `?.`, Elvis operator `?:`, null-check или другое явное решение.
+In Kotlin, nullability is part of the type system: `String` cannot be `null`, while `String?` can. The compiler forces nullable values to be handled through safe call `?.`, Elvis operator `?:`, null-check or another explicit solution.
 
-В Java `null` обычно не выражен в типе, поэтому `NullPointerException` чаще обнаруживается только в runtime. Аннотации вроде `@Nullable` и `@NonNull` помогают, но это не базовая часть Java type system.
+In Java, `null` is usually not expressed in the type, so `NullPointerException` is more often discovered only at runtime. Annotations like `@Nullable` and `@NonNull` help, but they are not a core part of the Java type system.
 
-**Важно:** Kotlin не гарантирует абсолютную защиту от `NullPointerException`. Остаются `!!`, platform types из Java, ошибки инициализации, reflection и некоторые interop-сценарии.
+**Important:** Kotlin does not guarantee absolute protection from `NullPointerException`. `!!`, platform types from Java, initialization errors, reflection and some interop scenarios remain.
 
-**Коротко:** Kotlin делает null-safety compile-time проблемой, но при работе с Java API все равно нужна осторожность.
+**In short:** Kotlin makes null-safety a compile-time concern, but Java API boundaries still require caution.
 
 ### Platform types
 
-Platform type - это тип, пришедший из Java, у которого Kotlin не знает точную nullability. В IDE он часто отображается как `T!`, например `String!`.
+Platform type - a type coming from Java where Kotlin does not know exact nullability. In the IDE it is often shown as `T!`, for example `String!`.
 
-С таким значением Kotlin ослабляет null-checks: его можно присвоить и в `String?`, и в `String`, но non-null вариант может упасть в runtime, если Java реально вернула `null`.
+For such a value, Kotlin relaxes null-checks: it can be assigned both to `String?` and `String`, but the non-null variant can fail at runtime if Java actually returned `null`.
 
-**Практический совет:** на границе с Java API лучше явно выбирать nullable тип, проверять `null` или опираться на корректные nullability annotations.
+**Practical note:** at the Java API boundary, prefer explicitly choosing a nullable type, checking `null` or relying on correct nullability annotations.
 
-**Коротко:** platform types - это компромисс Java interop, где Kotlin не может полностью гарантировать null-safety.
+**In short:** platform types are a Java interop compromise where Kotlin cannot fully guarantee null-safety.
 
 ### Checked exceptions
 
-В Kotlin нет checked exceptions на уровне языка. Компилятор не заставляет ловить `IOException` или объявлять `throws` в сигнатуре.
+Kotlin has no checked exceptions at the language level. The compiler does not force you to catch `IOException` or declare `throws` in the signature.
 
-При вызове Java API из Kotlin checked exception все равно может быть выброшен в runtime, поэтому его нужно обрабатывать осознанно, если это часть contract.
+When calling Java API from Kotlin, a checked exception can still be thrown at runtime, so it should be handled intentionally if it is part of the contract.
 
-Если Kotlin-функцию нужно удобно вызывать из Java и дать Java-компилятору увидеть `throws`, используют `@Throws`.
+If a Kotlin function should be convenient to call from Java and Java compiler should see `throws`, use `@Throws`.
 
-**Коротко:** Kotlin treats all exceptions as unchecked, but for Java interop `@Throws` can expose exceptions in the Java signature.
+**In short:** Kotlin treats all exceptions as unchecked, but for Java interop `@Throws` can expose exceptions in the Java signature.
 
-## JVM и interop
+## JVM and interop
 
-### `Int`: primitive или object на JVM
+### `Int`: primitive or object on JVM
 
-В Kotlin `Int` выглядит как обычный тип: у него можно вызывать методы, и он ведет себя как class-like type на уровне языка.
+In Kotlin, `Int` looks like a regular type: methods can be called on it, and it behaves like a class-like type at the language level.
 
-На JVM компилятор обычно использует primitive `int`, когда это возможно. Но в nullable типах, generics и некоторых interop-сценариях происходит boxing в `java.lang.Integer`.
+On JVM, the compiler usually uses primitive `int` when possible. But in nullable types, generics and some interop scenarios, boxing to `java.lang.Integer` happens.
 
-Примеры: `val x: Int = 10` обычно primitive; `val x: Int? = 10` и `List<Int>` требуют boxed representation.
+Examples: `val x: Int = 10` is usually primitive; `val x: Int? = 10` and `List<Int>` require boxed representation.
 
 ```kotlin
 val count: Int = 10
@@ -76,88 +76,88 @@ val optionalCount: Int? = 10
 val counts: List<Int> = listOf(1, 2, 3)
 ```
 
-**Коротко:** Kotlin hides primitive vs boxed distinction at the language level, but the JVM backend optimizes to primitives where possible.
+**In short:** Kotlin hides primitive vs boxed distinction at the language level, but the JVM backend optimizes to primitives where possible.
 
-### Kotlin properties в Java
+### Kotlin properties in Java
 
-Kotlin property обычно компилируется в private backing field и accessor methods. Для `val` генерируется getter, для `var` - getter и setter.
+Kotlin property is usually compiled into a private backing field and accessor methods. For `val`, a getter is generated; for `var`, a getter and setter are generated.
 
-Например, `val name: String` из Java обычно виден как `getName()`, а `var age: Int` - как `getAge()` и `setAge(int)`.
+For example, `val name: String` is usually visible from Java as `getName()`, while `var age: Int` is visible as `getAge()` and `setAge(int)`.
 
-Если property начинается с `is`, getter может называться `isOpen()`, а setter - `setOpen(...)`.
+If a property starts with `is`, the getter may be named `isOpen()`, and the setter - `setOpen(...)`.
 
-**Коротко:** Kotlin properties are not magic fields for Java; Java usually sees getters and setters.
+**In short:** Kotlin properties are not magic fields for Java; Java usually sees getters and setters.
 
 ### Static members
 
-В Kotlin нет прямого ключевого слова `static` для членов класса. Вместо этого используются top-level declarations, `object declarations` и `companion object`.
+Kotlin has no direct `static` keyword for class members. Instead, it uses top-level declarations, `object declarations` and `companion object`.
 
-Top-level functions и properties компилируются в static members специального generated class. `object` дает singleton. `companion object` дает static-like доступ через имя класса в Kotlin.
+Top-level functions and properties are compiled into static members of a special generated class. `object` provides a singleton. `companion object` provides static-like access through the class name in Kotlin.
 
-Для Java interop иногда нужны `@JvmStatic`, `@JvmField`, `const val` или `@file:JvmName`, чтобы API выглядел более Java-friendly.
+For Java interop, `@JvmStatic`, `@JvmField`, `const val` or `@file:JvmName` are sometimes needed so the API looks more Java-friendly.
 
-**Коротко:** Kotlin replaces `static` with top-level declarations, objects and companion objects, while JVM bytecode still may contain static members.
+**In short:** Kotlin replaces `static` with top-level declarations, objects and companion objects, while JVM bytecode still may contain static members.
 
-### Companion object из Java
+### Companion object from Java
 
-`companion object` - это реальный object, связанный с классом. Из Kotlin его members можно вызывать как `ClassName.member()`.
+`companion object` is a real object associated with a class. From Kotlin, its members can be called as `ClassName.member()`.
 
-Из Java без дополнительных аннотаций members companion object обычно доступны через `ClassName.Companion.member()`.
+From Java, without additional annotations, companion object members are usually available through `ClassName.Companion.member()`.
 
-Если добавить `@JvmStatic` к функции в companion object, Java сможет вызвать ее как `ClassName.method()`. При этом instance-метод в `Companion` тоже остается.
+If `@JvmStatic` is added to a function in a companion object, Java can call it as `ClassName.method()`. The instance method in `Companion` still remains.
 
-**Коротко:** `companion object` looks static from Kotlin, but from Java it is usually accessed through `Companion` unless `@JvmStatic` is used.
+**In short:** `companion object` looks static from Kotlin, but from Java it is usually accessed through `Companion` unless `@JvmStatic` is used.
 
-### Top-level functions из Java
+### Top-level functions from Java
 
-Top-level functions и properties в Kotlin компилируются в static methods / fields generated class на JVM.
+Top-level functions and properties in Kotlin are compiled into static methods / fields of a generated class on JVM.
 
-По умолчанию имя generated class строится из имени файла: например, functions из `Utils.kt` будут доступны из Java примерно как `UtilsKt.someFunction()`.
+By default, the generated class name is based on the file name: for example, functions from `Utils.kt` will be available from Java roughly as `UtilsKt.someFunction()`.
 
-Имя можно изменить через `@file:JvmName("BetterName")`. Для нескольких файлов можно использовать `@JvmMultifileClass`.
+The name can be changed with `@file:JvmName("BetterName")`. For several files, `@JvmMultifileClass` can be used.
 
-**Коротко:** top-level Kotlin functions are compiled as static members of a generated file facade class.
+**In short:** top-level Kotlin functions are compiled as static members of a generated file facade class.
 
 ### `@JvmStatic`, `@JvmField`, `@JvmOverloads`, `@Throws`
 
-`@JvmStatic` генерирует static method для функции или accessor-а в `object` / `companion object`, чтобы Java могла вызывать его как обычный static member.
+`@JvmStatic` generates a static method for a function or accessor in an `object` / `companion object`, so Java can call it as a regular static member.
 
-`@JvmField` открывает property как field для Java без getter/setter, если property подходит под ограничения аннотации.
+`@JvmField` exposes a property as a field for Java without getter/setter, if the property matches the annotation restrictions.
 
-`@JvmOverloads` генерирует перегруженные Java-методы или конструкторы для Kotlin-функций с default parameters.
+`@JvmOverloads` generates overloaded Java methods or constructors for Kotlin functions with default parameters.
 
-`@Throws` добавляет `throws` declaration в Java signature для Kotlin-функции, что важно для checked exceptions на стороне Java.
+`@Throws` adds a `throws` declaration to the Java signature of a Kotlin function, which matters for checked exceptions on the Java side.
 
-**Главная мысль:** эти аннотации нужны не для обычного Kotlin-кода, а чтобы Kotlin API выглядел удобнее и понятнее для Java callers.
+**Key idea:** these annotations are not needed for regular Kotlin code, but help make Kotlin APIs more convenient and understandable for Java callers.
 
-### `open` / `final` по умолчанию
+### `open` / `final` by default
 
-В Java классы и методы можно наследовать / переопределять по умолчанию, если они не `final`. В Kotlin наоборот: классы и members `final` по умолчанию.
+In Java, classes and methods can be inherited / overridden by default if they are not `final`. Kotlin is the opposite: classes and members are `final` by default.
 
-Чтобы разрешить наследование класса или override метода / свойства, нужно явно написать `open`. При переопределении используется `override`.
+To allow class inheritance or method / property override, write `open` explicitly. Overrides use `override`.
 
-Если override member не должен переопределяться дальше, его можно явно пометить `final override`.
+If an overridden member should not be overridden further, it can be explicitly marked as `final override`.
 
-**Коротко:** Kotlin forces explicit inheritance, which reduces accidental overriding and makes class contracts safer.
+**In short:** Kotlin forces explicit inheritance, which reduces accidental overriding and makes class contracts safer.
 
-### Sealed classes из Java
+### Sealed classes from Java
 
-Kotlin `sealed class` / `sealed interface` описывает ограниченную иерархию: direct subclasses известны compile-time и должны соблюдать ограничения Kotlin по package, module или source set.
+Kotlin `sealed class` / `sealed interface` describes a restricted hierarchy: direct subclasses are known at compile time and must follow Kotlin restrictions by package, module or source set.
 
-В Kotlin это дает exhaustive `when` без `else`, если все варианты покрыты. В Java такой проверки Kotlin `when` нет, и использование зависит от того, как sealed hierarchy скомпилирована и какой Java level используется.
+In Kotlin, this gives exhaustive `when` without `else` if all variants are covered. Java does not have this Kotlin `when` check, and usage depends on how the sealed hierarchy is compiled and which Java level is used.
 
-Начиная с современных JVM targets Kotlin может использовать Java sealed mechanisms там, где это совместимо, но на Android важно помнить о target / toolchain и не рассчитывать, что Java-код получит такой же ergonomic exhaustiveness.
+Starting with modern JVM targets, Kotlin can use Java sealed mechanisms where compatible, but on Android it is important to remember target / toolchain and not assume Java code will get the same ergonomic exhaustiveness.
 
-**Главная мысль:** sealed hierarchy в Kotlin удобнее всего раскрывается внутри Kotlin-кода; Java interop зависит от bytecode target и версии Java.
+**Key idea:** sealed hierarchy in Kotlin is most convenient inside Kotlin code; Java interop depends on bytecode target and Java version.
 
 ### Data classes vs Java POJOs / records
 
-Kotlin `data class` предназначен для хранения данных и автоматически генерирует `equals()`, `hashCode()`, `toString()`, `copy()` и `componentN()` по свойствам primary constructor.
+Kotlin `data class` is designed for storing data and automatically generates `equals()`, `hashCode()`, `toString()`, `copy()` and `componentN()` based on properties from the primary constructor.
 
-Java POJO обычно требует ручной или generated boilerplate: fields, constructor, getters, `equals()`, `hashCode()` и `toString()`. Java `record` ближе к `data class` по идее, но это отдельная Java language feature с другой моделью и ограничениями.
+Java POJO usually requires manual or generated boilerplate: fields, constructor, getters, `equals()`, `hashCode()` and `toString()`. Java `record` is closer to `data class` conceptually, but it is a separate Java language feature with a different model and restrictions.
 
-**Важно:** `data class` не может быть `open`, `abstract`, `sealed` или `inner`. Свойства, объявленные в body класса, не участвуют в generated `equals()`, `hashCode()`, `copy()` и `componentN()`.
+**Important:** `data class` cannot be `open`, `abstract`, `sealed` or `inner`. Properties declared in the class body do not participate in generated `equals()`, `hashCode()`, `copy()` and `componentN()`.
 
-`copy()` делает shallow copy, поэтому mutable вложенные объекты будут разделяться между original и copy.
+`copy()` performs a shallow copy, so mutable nested objects will be shared between the original and the copy.
 
-**Коротко:** `data class` is a concise Kotlin model type with generated value-like methods, but it is not deep immutable automatically.
+**In short:** `data class` is a concise Kotlin model type with generated value-like methods, but it is not deep immutable automatically.

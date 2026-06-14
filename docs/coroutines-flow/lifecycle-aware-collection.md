@@ -1,34 +1,34 @@
 # Lifecycle-aware Collection
 
-Lifecycle-aware collection нужна, чтобы UI собирал `Flow` только тогда, когда экран активен, и не продолжал лишнюю работу в фоне.
+Lifecycle-aware collection is needed so UI collects `Flow` only when the screen is active and does not continue unnecessary work in the background.
 
 ## Android UI collection
 
 ### `collectAsStateWithLifecycle`
 
-`collectAsStateWithLifecycle()` - Compose API из `lifecycle-runtime-compose`, который собирает `Flow` / `StateFlow` и конвертирует его в Compose `State` с учётом `Lifecycle`.
+`collectAsStateWithLifecycle()` - a Compose API from `lifecycle-runtime-compose` that collects `Flow` / `StateFlow` and converts it into Compose `State` with `Lifecycle` awareness.
 
-Он используется в Compose UI, чтобы безопасно подписаться на `uiState` из `ViewModel`:
+It is used in Compose UI to safely subscribe to `uiState` from `ViewModel`:
 
 ```kotlin
 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 ```
 
-Главная польза: collection активна только в подходящем lifecycle state, обычно `STARTED` и выше. Когда screen уходит в background, collection приостанавливается, а при возврате возобновляется.
+Main benefit: collection is active only in the appropriate lifecycle state, usually `STARTED` and above. When the screen goes to the background, collection is paused; when it returns, collection resumes.
 
-Для `StateFlow` это особенно удобно: UI сразу получает latest value и не запускает лишнюю работу, пока экран неактивен.
+For `StateFlow`, this is especially convenient: UI immediately receives the latest value and does not start unnecessary work while the screen is inactive.
 
-**Важно:** не стоит использовать обычный `collectAsState()` для Android screen-level flows без понимания lifecycle, потому что collection может продолжаться, когда UI уже неактивен.
+**Important:** do not use regular `collectAsState()` for Android screen-level flows without understanding lifecycle, because collection may continue when UI is already inactive.
 
-**Коротко:** `collectAsStateWithLifecycle` is the recommended Compose way to collect `Flow` / `StateFlow` from `ViewModel` with Android lifecycle awareness.
+**In short:** `collectAsStateWithLifecycle` is the recommended Compose way to collect `Flow` / `StateFlow` from `ViewModel` with Android lifecycle awareness.
 
 ### `repeatOnLifecycle`
 
-`repeatOnLifecycle()` - lifecycle-aware API для запуска coroutine block только в определённом `Lifecycle.State`, например `STARTED`.
+`repeatOnLifecycle()` - a lifecycle-aware API for running a coroutine block only in a specific `Lifecycle.State`, for example `STARTED`.
 
-Когда lifecycle достигает нужного состояния, block запускается. Когда lifecycle опускается ниже этого состояния, coroutine внутри block отменяется. При возврате в нужное состояние block запускается заново.
+When lifecycle reaches the target state, the block starts. When lifecycle drops below that state, the coroutine inside the block is canceled. When lifecycle returns to the target state, the block starts again.
 
-Типичный Fragment/View System пример:
+Typical Fragment/View System example:
 
 ```kotlin
 viewLifecycleOwner.lifecycleScope.launch {
@@ -40,17 +40,17 @@ viewLifecycleOwner.lifecycleScope.launch {
 }
 ```
 
-Важно использовать `viewLifecycleOwner` для Fragment UI, а не lifecycle самого `Fragment`, потому что View lifecycle короче Fragment lifecycle.
+Use `viewLifecycleOwner` for Fragment UI, not the lifecycle of the `Fragment` itself, because the View lifecycle is shorter than the Fragment lifecycle.
 
-`repeatOnLifecycle` лучше, чем `launchWhenStarted` / `launchWhenResumed`, потому что явно отменяет и перезапускает collection, а не просто suspends execution в неочевидных местах.
+`repeatOnLifecycle` is better than `launchWhenStarted` / `launchWhenResumed` because it explicitly cancels and restarts collection, rather than just suspending execution in less obvious places.
 
-**Важно:** если внутри `repeatOnLifecycle` нужно collect-ить несколько `Flow` параллельно, каждый `collect` должен быть в отдельном `launch`, иначе первый `collect` заблокирует остальные.
+**Important:** if several `Flow`s need to be collected in parallel inside `repeatOnLifecycle`, each `collect` should be in a separate `launch`; otherwise the first `collect` blocks the others.
 
-**Коротко:** `repeatOnLifecycle` starts collection only when lifecycle is at least the target state and cancels it when the UI is stopped.
+**In short:** `repeatOnLifecycle` starts collection only when lifecycle is at least the target state and cancels it when the UI is stopped.
 
-### `LaunchedEffect` для effects
+### `LaunchedEffect` for effects
 
-В Compose одноразовые UI effects часто collect-ят через `LaunchedEffect`, потому что это coroutine, привязанная к composition lifecycle.
+In Compose, one-off UI effects are often collected through `LaunchedEffect` because it is a coroutine tied to composition lifecycle.
 
 ```kotlin
 LaunchedEffect(Unit) {
@@ -65,10 +65,10 @@ LaunchedEffect(Unit) {
 }
 ```
 
-`LaunchedEffect` подходит для navigation, snackbar, scroll command, permission request trigger и других one-off effects, которые должны выполняться как реакция UI на event stream.
+`LaunchedEffect` fits navigation, snackbar, scroll command, permission request trigger and other one-off effects that should run as a UI reaction to an event stream.
 
-Ключи `LaunchedEffect` важны: если key изменится, старая coroutine отменится и collection начнётся заново. Для постоянной подписки на events обычно используют `LaunchedEffect(Unit)` или `LaunchedEffect(viewModel)`, если именно смена `ViewModel` должна перезапустить collection.
+`LaunchedEffect` keys matter: if a key changes, the old coroutine is canceled and collection starts again. For a persistent subscription to events, usually use `LaunchedEffect(Unit)` or `LaunchedEffect(viewModel)` if changing the `ViewModel` should restart collection.
 
-**Важно:** `SharedFlow` с `replay = 0` может потерять event, если UI collector ещё не активен. Для критичных событий лучше хранить их в state или проектировать event delivery отдельно.
+**Important:** `SharedFlow` with `replay = 0` can lose an event if the UI collector is not active yet. For critical events, prefer storing them in state or designing event delivery separately.
 
-**Коротко:** in Compose, `LaunchedEffect` is used to collect one-off UI effects in a coroutine scoped to the composable lifecycle.
+**In short:** in Compose, `LaunchedEffect` is used to collect one-off UI effects in a coroutine scoped to the composable lifecycle.
