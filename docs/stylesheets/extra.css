@@ -107,3 +107,87 @@
     margin: 1rem 0 0.4rem;
     text-indent: 0.4em;
 }
+
+/* Keep Material's desktop navigation layout until the content reaches tablet width.
+ *
+ * Material normally moves top tabs and the primary sidebar into the drawer below
+ * 76.25em. This handbook has compact top-level navigation, so the desktop layout
+ * remains usable down to 60em.
+ */
+/*
+@media screen and (min-width: 50em) and (max-width: 76.234375em) {
+    .md-tabs {
+        display: block;
+    }
+
+    .md-header__button[for="__drawer"] {
+        display: none;
+    }
+
+    .md-sidebar {
+        height: 0;
+    }
+
+    .md-sidebar--primary {
+        background-color: transparent;
+        height: 0;
+        position: sticky;
+        top: 2.4rem;
+        transform: none;
+        transition: none;
+        z-index: 1;
+    }
+
+    [dir="ltr"] .md-sidebar--primary {
+        left: auto;
+    }
+
+    [dir="rtl"] .md-sidebar--primary {
+        right: auto;
+    }
+
+    .md-sidebar--primary .md-sidebar__scrollwrap {
+        bottom: auto;
+        left: auto;
+        margin: 0 0.2rem;
+        overflow-y: auto;
+        position: static;
+        right: auto;
+        top: auto;
+    }
+
+    .md-nav--primary,
+    .md-nav--primary .md-nav {
+        background-color: transparent;
+        display: block;
+        height: auto;
+        left: auto;
+        position: static;
+        right: auto;
+        top: auto;
+        z-index: auto;
+    }
+
+    .md-nav--primary .md-nav__title {
+        background: var(--md-default-bg-color);
+        box-shadow: 0 0 0.4rem 0.4rem var(--md-default-bg-color);
+        cursor: default;
+        height: auto;
+        line-height: 1.5;
+        padding: 0 0.6rem;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .md-nav--primary .md-nav__title .md-nav__icon {
+        display: none;
+    }
+
+    .md-nav--primary .md-nav__title ~ .md-nav__list {
+        box-shadow: none;
+        overflow-y: visible;
+        scroll-snap-type: none;
+        touch-action: auto;
+    }
+}*/

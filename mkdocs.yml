@@ -89,6 +89,7 @@ plugins:
             JVM / Android Runtime: JVM / Android Runtime
             DI Basics: Основы DI
             Dagger / Hilt: Dagger / Hilt
+            Koin: Koin
             Legacy DI: Legacy DI
             HTTP / REST: HTTP / REST
             Retrofit / OkHttp: Retrofit / OkHttp
@@ -104,6 +105,14 @@ plugins:
             Algorithms & Complexity: Algorithms & Complexity
             Memory & Runtime Basics: Memory & Runtime Basics
             RxJava: RxJava
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
 
 hooks:
   - hooks/i18n_url_structure.py
@@ -168,6 +177,7 @@ nav:
       - Overview: di/index.md
       - DI Basics: di/basics.md
       - Dagger / Hilt: di/dagger-hilt.md
+      - Koin: di/koin.md
       - Legacy DI: di/legacy-di.md
   - Networking:
       - Overview: networking/index.md
