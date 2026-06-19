@@ -12,6 +12,8 @@ It also helps large teams work in parallel. When modules have stable public APIs
 
 The trade-off is real: more modules mean more Gradle configuration, more dependency coordination, more DI wiring, more navigation contracts and more decisions about where code belongs. A small app may be better served by a simple package structure inside one or a few modules.
 
+More modules do not automatically mean better architecture. Hundreds of modules can be normal for a huge enterprise app, but they are not a target for every project. Every module introduces Gradle configuration, dependency management, testing, ownership and maintenance overhead.
+
 **In short:** multi-module architecture is useful when isolation, ownership and build scalability justify the Gradle and coordination cost.
 
 ## Layer-based modularization
@@ -143,11 +145,13 @@ Feature modules encapsulate product functionality. A feature can contain interna
   presentation/
   domain/
   data/
+  di/
+  navigation/
 ```
 
-This keeps Clean Architecture separation where it helps, without forcing every layer into a separate Gradle module.
+This keeps feature code close together while preserving separation of concerns inside the feature. Feature-based modularization does not cancel Clean Architecture: `presentation`, `domain` and `data` often still exist, but as packages instead of separate Gradle modules.
 
-Split feature internals into separate Gradle modules only when the feature is large enough, reused independently, owned independently or has a build-performance reason.
+Split feature internals into separate Gradle modules, such as `:feature:payments:presentation`, `:feature:payments:domain` and `:feature:payments:data`, only when the feature is large enough, reused independently, owned independently or has a build-performance reason. Otherwise it may add Gradle overhead without improving isolation.
 
 ## How to decide
 
@@ -170,14 +174,28 @@ Do not create a separate Gradle module when:
 - the boundary is still unstable;
 - the module would become a generic dumping ground.
 
+Small apps can stay single-module or use only a few modules. Growing apps can extract `core` and `shared` modules when there is real reuse. Large product apps usually scale better with feature-based modularization plus focused `core` and `shared` modules. Modularization should reduce complexity, not create it.
+
+When the number of modules grows, build logic should also become more disciplined. Convention plugins, version catalogs, shared Gradle build logic and consistent module templates help avoid copy-paste Gradle configuration. This keeps module creation predictable without turning every `build.gradle.kts` into a custom snowflake.
+
 **Practical approach:** multi-module architecture is useful when the project is large enough to benefit from isolation, ownership and build scalability. Avoid splitting the whole app only by Clean Architecture layers such as `data`, `domain` and `presentation`, because this can scatter features across technical modules. For larger Android apps, prefer a feature-based structure with focused `core` technical modules and `shared` domain modules where reuse is real. Inside a feature, keep `presentation`, `domain` and `data` separation as packages, and extract them into Gradle modules only when there is a practical reason.
 
 ## Dependency rules
 
 A good module graph is directed and boring. Low-level shared modules should not depend on high-level feature modules. Feature modules should not depend on each other randomly. The `:app` module often wires features together through navigation, DI and app-level coordination.
 
+Simple default rule:
+
+```text
+feature -> core
+feature -> shared
+feature -> feature  // avoid by default
+```
+
+Direct feature-to-feature dependencies can create hidden coupling and cycles. Shared contracts, reusable business logic and navigation abstractions should live in `shared` or `core` where appropriate, while `:app` or root navigation wires features together. Exceptions are possible, but they should be intentional.
+
 When a cycle appears, the boundary is usually wrong. Move the shared contract into a smaller module, invert the dependency through an interface, or let `:app` coordinate the interaction.
 
 Example: if `:feature:profile` needs to open `:feature:payments`, profile should not depend directly on the payments implementation. A route or navigation contract can live in a shared contract module, and `:app` can perform the actual navigation.
 
-**Key idea:** feature-based modularization is usually the better default direction for large product apps, but layer separation still matters. It often belongs inside features as packages, and becomes separate Gradle modules only when reuse, ownership or build isolation justifies the cost.
+**Key idea:** the best approach is pragmatic. A small project may only need a simple package structure, a growing project can extract `core` and `shared` modules when reuse is real, and a large product app usually scales better with feature-based modularization. Clean Architecture layers can still exist inside features, or become separate Gradle modules only when they give real value.

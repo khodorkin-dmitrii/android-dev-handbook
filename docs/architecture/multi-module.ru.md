@@ -12,6 +12,8 @@ Multi-module architecture помогает с build scalability, понятны�
 
 Trade-off реальный: больше модулей означает больше Gradle configuration, больше coordination по dependencies, больше DI wiring, больше navigation contracts и больше решений о том, где должен жить код. Маленькому приложению может быть достаточно простой package structure внутри одного или нескольких модулей.
 
+Больше модулей не означает автоматически лучшую архитектуру. Сотни modules могут быть нормой для огромного enterprise app, но это не цель для каждого проекта. Каждый module добавляет Gradle configuration, dependency management, testing, ownership и maintenance overhead.
+
 **Коротко:** multi-module architecture полезна, когда isolation, ownership и build scalability оправдывают Gradle-сложность и coordination cost.
 
 ## Layer-based modularization
@@ -143,11 +145,13 @@ Feature modules инкапсулируют продуктовую функцио
   presentation/
   domain/
   data/
+  di/
+  navigation/
 ```
 
-Так Clean Architecture separation остаётся там, где она полезна, но каждый слой не обязательно становится отдельным Gradle module.
+Так feature code остаётся рядом, но внутри feature всё равно сохраняется separation of concerns. Feature-based modularization не отменяет Clean Architecture: `presentation`, `domain` и `data` часто продолжают существовать, но как packages, а не как отдельные Gradle modules.
 
-Разделять внутренности feature на отдельные Gradle modules стоит только тогда, когда feature достаточно большая, переиспользуется независимо, имеет отдельный ownership или есть причина по build performance.
+Разделять внутренности feature на отдельные Gradle modules, например `:feature:payments:presentation`, `:feature:payments:domain` и `:feature:payments:data`, стоит только тогда, когда feature достаточно большая, переиспользуется независимо, имеет отдельный ownership или есть причина по build performance. Иначе это может добавить Gradle overhead без улучшения isolation.
 
 ## Как принять решение
 
@@ -170,14 +174,28 @@ Feature modules инкапсулируют продуктовую функцио
 - boundary ещё нестабильна;
 - module станет generic dumping ground.
 
+Маленькие apps могут оставаться single-module или использовать всего несколько modules. Растущие apps могут выделять `core` и `shared` modules, когда появляется реальный reuse. Большие product apps обычно лучше масштабируются через feature-based modularization плюс сфокусированные `core` и `shared` modules. Modularization должна уменьшать complexity, а не создавать её.
+
+Когда количество modules растёт, build logic тоже должна становиться более дисциплинированной. Convention plugins, version catalogs, shared Gradle build logic и consistent module templates помогают избежать copy-paste Gradle configuration. Это делает создание modules предсказуемым и не превращает каждый `build.gradle.kts` в отдельную custom-настройку.
+
 **Практический подход:** multi-module architecture полезна, когда проект достаточно большой, чтобы получить выгоду от isolation, ownership и build scalability. Не стоит делить всё приложение только по Clean Architecture layers вроде `data`, `domain` и `presentation`, потому что это может размазать features по техническим modules. Для больших Android-приложений лучше начинать с feature-based structure, сфокусированных `core` technical modules и `shared` domain modules там, где reuse реальный. Внутри feature можно сохранить разделение `presentation`, `domain` и `data` как packages, а выносить их в Gradle modules только при практической необходимости.
 
 ## Dependency rules
 
 Хороший module graph направленный и скучный. Низкоуровневые shared modules не должны зависеть от высокоуровневых feature modules. Feature modules не должны хаотично зависеть друг от друга. `:app` module часто связывает features через navigation, DI и app-level coordination.
 
+Простое default-правило:
+
+```text
+feature -> core
+feature -> shared
+feature -> feature  // avoid by default
+```
+
+Прямые feature-to-feature dependencies могут создавать hidden coupling и cycles. Shared contracts, reusable business logic и navigation abstractions должны жить в `shared` или `core`, где это уместно, а `:app` или root navigation связывает features вместе. Исключения возможны, но они должны быть осознанными.
+
 Если появляется cycle, обычно boundary выбрана неверно. Нужно вынести общий contract в меньший module, инвертировать зависимость через interface или дать `:app` скоординировать взаимодействие.
 
 Пример: если `:feature:profile` должна открыть `:feature:payments`, profile не должна зависеть от implementation payments напрямую. Route или navigation contract может жить в shared contract module, а `:app` выполнит actual navigation.
 
-**Главная мысль:** feature-based modularization обычно лучше подходит как default direction для больших product apps, но layer separation всё равно важна. Часто ей место внутри features как packages, а отдельными Gradle modules она становится только тогда, когда reuse, ownership или build isolation оправдывают стоимость.
+**Главная мысль:** лучший подход прагматичный. Маленькому project может хватить простой package structure, растущий project может выделять `core` и `shared` modules при реальном reuse, а большой product app обычно лучше масштабируется через feature-based modularization. Clean Architecture layers могут оставаться внутри features или становиться отдельными Gradle modules только тогда, когда дают реальную пользу.
