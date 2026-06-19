@@ -1,71 +1,183 @@
 # Multi-module Architecture
 
-Multi-module architecture помогает разделять большой Android-проект на Gradle-модули с понятными границами, зависимостями и ответственностью.
+Multi-module architecture разделяет Android-проект на Gradle-модули с явными границами, зависимостями и ownership. Она полезна, когда проект достаточно большой и один application module становится сложно собирать, тестировать, поддерживать и развивать.
 
-## Modules
+Цель не в том, чтобы создать как можно больше модулей. Цель - сделать границы модулей похожими на реальные продуктовые и технические ответственности.
 
-### Что такое multi-module project?
+## Какие проблемы решает multi-module architecture
 
-Multi-module project - Android/Gradle проект, разделённый на несколько модулей вместо одного большого app module.
+Multi-module architecture помогает с build scalability, понятным code ownership, переиспользуемой shared logic и более строгими dependency boundaries. Feature часто можно собирать, тестировать, переписывать или мигрировать с меньшим влиянием на остальное приложение.
 
-Модули могут быть feature, core/library, data, domain, design system, testing utilities или platform-specific wrappers. Каждый module имеет свой `build.gradle`, dependencies и public API.
+Она также помогает большим командам работать параллельно. Если у модулей стабильные public API, команды могут владеть features или shared capabilities без постоянных изменений в одних и тех же файлах.
 
-Зачем это нужно: ускорить incremental builds, уменьшить связанность, разделить ownership между командами, переиспользовать код, упростить тестирование и скрыть внутренние детали реализации.
+Trade-off реальный: больше модулей означает больше Gradle configuration, больше coordination по dependencies, больше DI wiring, больше navigation contracts и больше решений о том, где должен жить код. Маленькому приложению может быть достаточно простой package structure внутри одного или нескольких модулей.
 
-Trade-off: multi-module architecture добавляет сложность в Gradle configuration, dependency graph, navigation, DI setup и version management. Маленькому проекту она может быть не нужна.
+**Коротко:** multi-module architecture полезна, когда isolation, ownership и build scalability оправдывают Gradle-сложность и coordination cost.
 
-**Коротко:** multi-module architecture splits a large app into Gradle modules to improve boundaries, build performance, ownership and testability, but it should be introduced pragmatically.
+## Layer-based modularization
 
-### Feature modules
+Layer-based modularization отражает Clean Architecture layers на уровне Gradle-модулей:
 
-Feature module содержит код конкретной функциональности или user flow: login, profile, payments, product details, settings, onboarding.
+```text
+:app
+:presentation
+:domain
+:data
+```
 
-Обычно feature module включает UI, `ViewModel` / state holder, feature-specific models, navigation entry point и иногда feature-specific domain logic. Общие вещи не должны копироваться в каждую feature, а должны жить в core modules.
+Такая структура может выглядеть чисто, потому что направление зависимостей очевидно: UI зависит от domain contracts, data реализует repositories, а app module связывает всё вместе. Это может быть полезно для изучения Clean Architecture, разделения ответственности и независимого тестирования domain logic.
 
-Feature modules помогают изолировать ответственность: команда может менять feature, не затрагивая весь app module. Также они могут ускорить сборку и улучшить архитектурные границы.
+Ограничение в том, что продуктовые features часто размазываются по техническим buckets. Изменение в payments может требовать правок в `:presentation`, `:domain` и `:data` одновременно:
 
-**Важно:** feature modules не должны напрямую зависеть друг от друга хаотично. Для связи между features часто используют navigation contracts, interfaces, shared domain models или app-level coordinator.
+```text
+:presentation  -> payments screen, ViewModel, UI state
+:domain        -> payments use cases, entities, repository interface
+:data          -> payments repository implementation, API, local cache
+```
 
-**Коротко:** feature modules isolate user-facing features and should depend on shared core/domain contracts rather than directly knowing about every other feature.
+Для маленьких и средних проектов это может быть приемлемо. В больших product apps такие модули могут превратиться в крупные технические монолиты: каждая feature живёт в каждом слое, ownership неочевиден, а добавление feature затрагивает несколько широких modules.
 
-### Core modules
+Layer-based modules не бесполезны. Они помогают с dependency direction, testability и явными architecture boundaries. Проблема начинается, когда их механически применяют как главную стратегию modularization для всего приложения.
 
-Core modules содержат переиспользуемую инфраструктуру и shared code, который нужен нескольким features.
+**Плюсы:**
 
-Типичные core modules: `core:network`, `core:database`, `core:ui` / `designsystem`, `core:common`, `core:model`, `core:analytics`, `core:testing`, `core:datastore`.
+- понятное направление зависимостей;
+- легко объяснять Clean Architecture boundaries;
+- полезно для маленьких и средних приложений;
+- domain logic можно тестировать отдельно;
+- технические ответственности хорошо видны.
 
-Хороший core module имеет понятную ответственность и стабильный public API. Он не должен превращаться в dumping ground для всего подряд.
+**Минусы:**
 
-Core modules обычно не должны зависеть от feature modules. Направление зависимостей чаще идёт от features к core, а app module связывает всё вместе.
+- feature code размазан по модулям;
+- ownership часто неочевиден;
+- modules могут стать большими technical buckets;
+- добавление feature может требовать правок во многих modules;
+- reuse не появляется автоматически;
+- это может стать тем же монолитом, разбитым на несколько технических частей.
 
-**Важно:** слишком общий `core:utils` быстро превращается в мусорный модуль. Лучше создавать маленькие модули по ответственности: formatting, date/time, dispatchers, logging, permissions, design system.
+## Feature-based modularization
 
-**Коротко:** core modules hold reusable infrastructure and shared contracts, but they must stay focused and not become a global utils dump.
+Feature-based modularization группирует код по продуктовой функциональности:
 
-## Dependencies
+```text
+:app
+:feature:profile
+:feature:payments
+:feature:offers
+:feature:settings
+:core:network
+:core:database
+:core:ui
+```
 
-### Dependency graph
+Feature module владеет пользовательской capability или flow: profile, payments, checkout, offers, settings, onboarding. Это часто лучше совпадает с тем, как работают команды и как доставляются изменения.
 
-Dependency graph показывает, какие modules зависят друг от друга. В хорошей архитектуре он направленный и понятный: app module собирает features, features зависят от domain/core contracts, data modules реализуют repositories и зависят от network/database.
+Feature modules держат рядом связанные UI, state, feature-specific business logic и navigation entry points. Команда может менять или переписывать feature без размазывания работы по глобальным техническим modules.
 
-Главная цель - не допустить хаотичных зависимостей, когда любой module может импортировать любой другой. Это ломает boundaries и делает изменения дорогими.
+Feature-based modularization не магия. Без внутренних правил feature module может стать mini-monolith. Shared logic может дублироваться, слишком рано переезжать в `core` или связываться через нестабильные contracts. Navigation и DI boundaries тоже становятся важнее.
 
-Типичный принцип: низкоуровневые shared modules не зависят от высокоуровневых feature modules. Domain/contracts должны быть стабильнее, чем конкретные data/UI implementations.
+**Плюсы:**
 
-DI помогает соединять реализации с абстракциями: feature или domain может зависеть от `Repository` interface, а app/data layer предоставляет реализацию через Hilt/Dagger module.
+- feature code находится ближе друг к другу;
+- ownership проще определить;
+- features проще изолировать, удалить, переписать или мигрировать;
+- большие приложения и несколько команд обычно масштабируются лучше;
+- module boundaries ближе к product boundaries.
 
-**Коротко:** module dependency graph should be acyclic and layered; app wiring and DI connect modules without breaking boundaries.
+**Минусы:**
 
-### Cyclic dependencies
+- feature modules могут стать mini-monoliths;
+- shared logic может дублироваться или извлекаться слишком рано;
+- нужны понятные dependency rules;
+- navigation contracts и DI setup требуют больше внимания;
+- cross-feature flows требуют явной координации.
 
-Cyclic dependency возникает, когда module A зависит от module B, а B прямо или косвенно зависит от A.
+## Pragmatic hybrid approach
 
-Gradle обычно не позволяет прямые cycles, но архитектурные cycles могут появляться через shared modules, callbacks, navigation и неверное размещение interfaces.
+Для многих реальных Android-проектов лучший default - hybrid structure: feature modules для продуктовых областей, core modules для технической инфраструктуры и shared modules только там, где reuse действительно есть.
 
-Проблема cycles в том, что модули нельзя независимо собирать, тестировать и переиспользовать. Любое изменение тянет цепочку зависимостей назад и ломает смысл modularization.
+```text
+:app
 
-Решение: вынести общий contract в отдельный module, инвертировать зависимость через interface, использовать DI, event/navigation contract или app-level coordinator.
+:core:network
+:core:database
+:core:datetime
+:core:ui
+:core:analytics
 
-Пример: если feature A должна открыть feature B, A не должна зависеть от implementation B напрямую. Можно вынести Route/Navigation contract в shared module, а app module выполнит actual navigation.
+:shared:user
+:shared:payments
+:shared:offers
 
-**Коротко:** cyclic dependencies mean module boundaries are wrong; usually the cycle is broken by extracting a contract module or inverting the dependency.
+:feature:profile
+:feature:payments
+:feature:checkout
+:feature:settings
+```
+
+### `:app`
+
+`:app` module - application entry point. Он отвечает за startup logic, root navigation, app-level DI wiring, global configuration и сборку features.
+
+Он должен координировать приложение, а не содержать всю product logic.
+
+### `:core`
+
+`core` modules содержат переиспользуемую техническую инфраструктуру: network clients, database setup, logging, analytics, dispatchers, date/time, design system, common UI components и testing utilities.
+
+Хорошие `core` modules маленькие и сфокусированные. Не стоит заводить расплывчатый `core:utils`, который превращается в dumping ground для несвязанных helpers.
+
+### `:shared`
+
+`shared` modules содержат reusable business или domain capabilities, которые используются несколькими features: user, payments, offers, permissions, subscriptions.
+
+Их стоит создавать только при реальном reuse или стабильной boundary. Если код нужен только одной feature, обычно он должен оставаться внутри этой feature.
+
+### `:feature`
+
+Feature modules инкапсулируют продуктовую функциональность. Feature может содержать внутренние packages вроде `presentation`, `domain` и `data`:
+
+```text
+:feature:payments
+  presentation/
+  domain/
+  data/
+```
+
+Так Clean Architecture separation остаётся там, где она полезна, но каждый слой не обязательно становится отдельным Gradle module.
+
+Разделять внутренности feature на отдельные Gradle modules стоит только тогда, когда feature достаточно большая, переиспользуется независимо, имеет отдельный ownership или есть причина по build performance.
+
+## Как принять решение
+
+Используй отдельный Gradle module, когда:
+
+- код переиспользуется несколькими features;
+- boundary стабильна;
+- команда может владеть этим модулем независимо;
+- это улучшает build performance или isolation;
+- это предотвращает нежелательные dependencies;
+- код можно тестировать независимо;
+- у модуля есть понятный public API.
+
+Не стоит создавать отдельный Gradle module, когда:
+
+- он только повторяет folder или package;
+- он используется одной feature;
+- он добавляет Gradle boilerplate без isolation;
+- простые изменения начинают требовать правок во многих modules;
+- boundary ещё нестабильна;
+- module станет generic dumping ground.
+
+**Практический подход:** multi-module architecture полезна, когда проект достаточно большой, чтобы получить выгоду от isolation, ownership и build scalability. Не стоит делить всё приложение только по Clean Architecture layers вроде `data`, `domain` и `presentation`, потому что это может размазать features по техническим modules. Для больших Android-приложений лучше начинать с feature-based structure, сфокусированных `core` technical modules и `shared` domain modules там, где reuse реальный. Внутри feature можно сохранить разделение `presentation`, `domain` и `data` как packages, а выносить их в Gradle modules только при практической необходимости.
+
+## Dependency rules
+
+Хороший module graph направленный и скучный. Низкоуровневые shared modules не должны зависеть от высокоуровневых feature modules. Feature modules не должны хаотично зависеть друг от друга. `:app` module часто связывает features через navigation, DI и app-level coordination.
+
+Если появляется cycle, обычно boundary выбрана неверно. Нужно вынести общий contract в меньший module, инвертировать зависимость через interface или дать `:app` скоординировать взаимодействие.
+
+Пример: если `:feature:profile` должна открыть `:feature:payments`, profile не должна зависеть от implementation payments напрямую. Route или navigation contract может жить в shared contract module, а `:app` выполнит actual navigation.
+
+**Главная мысль:** feature-based modularization обычно лучше подходит как default direction для больших product apps, но layer separation всё равно важна. Часто ей место внутри features как packages, а отдельными Gradle modules она становится только тогда, когда reuse, ownership или build isolation оправдывают стоимость.
