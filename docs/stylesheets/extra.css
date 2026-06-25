@@ -63,7 +63,7 @@
  */
 .md-typeset table td,
 .md-typeset table th {
-    padding: 0.3rem 0.5rem;
+    padding: 0.0rem 0.0rem;
 }
 
 /* H2 heading spacing.
@@ -114,7 +114,6 @@
  * 76.25em. This handbook has compact top-level navigation, so the desktop layout
  * remains usable down to 60em.
  */
-/*
 @media screen and (min-width: 50em) and (max-width: 76.234375em) {
     .md-tabs {
         display: block;
@@ -190,4 +189,4 @@
         scroll-snap-type: none;
         touch-action: auto;
     }
-}*/
+}

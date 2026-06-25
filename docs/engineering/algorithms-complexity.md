@@ -70,4 +70,10 @@ Popular sorting algorithms: **bubble sort**, **insertion sort**, **merge sort**,
 | `HashMap` | Not indexed | Usually `O(1)` by key | Usually `O(1)` for `put()` | Usually `O(1)` for `remove()` | `hashCode()` and `equals()` quality directly affects performance. |
 | `HashSet` | Not indexed | Usually `O(1)` for `contains()` | Usually `O(1)` for `add()` | Usually `O(1)` for `remove()` | Useful when fast membership checks matter. |
 
+### Is HashMap thread-safe?
+
+`HashMap` is not thread-safe. Concurrent reads are safe only when no thread modifies the map; if at least one thread writes, external synchronization or a concurrent collection is required.
+
+Unsafe concurrent access can cause race conditions, lost updates, visibility issues, internal data corruption and `ConcurrentModificationException` during iteration. This is only a short warning for collection complexity; for practical concurrent maps, see [`ConcurrentHashMap`](../java/concurrency.md#concurrenthashmap).
+
 **Key idea:** `ArrayList` is usually better for sequential data and index access, `HashMap` / `HashSet` for fast lookup by key or membership checks, and `LinkedList` should be chosen only when there is a clear reason and the actual operations are known.

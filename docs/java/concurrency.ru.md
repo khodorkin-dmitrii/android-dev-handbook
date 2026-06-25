@@ -90,6 +90,42 @@ Atomic classes из `java.util.concurrent.atomic` дают lock-free thread-safe
 
 Но Atomic не заменяет полноценную синхронизацию для сложного состояния из нескольких полей. Если нужно атомарно менять несколько связанных значений, лучше использовать `synchronized`, `Lock` или другую модель state management.
 
+## ConcurrentHashMap
+
+### Предварительные темы
+
+- [HashMap complexity](../engineering/algorithms-complexity.md#collections-arraylist-linkedlist-hashmap-and-hashset-complexity)
+
+`ConcurrentHashMap` - thread-safe реализация `Map` для shared maps, которые читают и обновляют несколько threads.
+
+Обычный `HashMap` небезопасен при concurrent writes: один thread может увидеть stale data, перезаписать update другого thread или оставить map во внутренне неконсистентном состоянии. `Collections.synchronizedMap(...)` оборачивает каждую операцию одним общим lock, что просто, но часто снижает concurrency и всё равно требует ручной синхронизации во время итерации. `ConcurrentHashMap` обычно лучше подходит для активно разделяемых maps, потому что он спроектирован для concurrent access и даёт атомарные операции над map.
+
+Базовый пример:
+
+```java
+ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();
+
+counts.put("success", 1);
+counts.putIfAbsent("failure", 0);
+counts.merge("success", 1, Integer::sum);
+```
+
+**Важно:** отдельные операции thread-safe, но составные check-then-act sequences не становятся атомарными автоматически:
+
+```java
+if (!map.containsKey(key)) {
+    map.put(key, value);
+}
+```
+
+Между `containsKey()` и `put()` другой thread может обновить тот же key. Когда одно логическое обновление должно выполниться как единая операция, лучше использовать атомарные API: `putIfAbsent()`, `computeIfAbsent()`, `compute()` или `merge()`.
+
+### Связанные темы
+
+- `synchronized`
+- `volatile`
+- `ReadWriteLock`
+
 ### `java.util.concurrent`
 
 `java.util.concurrent` - пакет Java с high-level инструментами для многопоточности: `ExecutorService`, `Future`, `BlockingQueue`, `CountDownLatch`, `Semaphore`, `ConcurrentHashMap`, locks, atomic classes и др.

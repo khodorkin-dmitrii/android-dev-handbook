@@ -90,6 +90,42 @@ They are useful for simple counters, flags and compare-and-set logic. For exampl
 
 But atomic classes do not replace full synchronization for complex state made of several fields. If several related values need to change atomically, use `synchronized`, `Lock` or another state-management model.
 
+## ConcurrentHashMap
+
+### Prerequisites
+
+- [HashMap complexity](../engineering/algorithms-complexity.md#collections-arraylist-linkedlist-hashmap-and-hashset-complexity)
+
+`ConcurrentHashMap` is a thread-safe `Map` implementation for shared maps that are read and updated by multiple threads.
+
+Ordinary `HashMap` is unsafe for concurrent writes: one thread can observe stale data, overwrite another thread's update or leave the map in an inconsistent internal state. `Collections.synchronizedMap(...)` wraps every operation with one shared lock, which is simple but often reduces concurrency and still requires manual synchronization while iterating. `ConcurrentHashMap` is usually a better default for highly shared maps because it is designed for concurrent access and provides atomic map operations.
+
+Basic usage:
+
+```java
+ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();
+
+counts.put("success", 1);
+counts.putIfAbsent("failure", 0);
+counts.merge("success", 1, Integer::sum);
+```
+
+**Important:** individual operations are thread-safe, but compound check-then-act sequences are not automatically atomic:
+
+```java
+if (!map.containsKey(key)) {
+    map.put(key, value);
+}
+```
+
+Between `containsKey()` and `put()`, another thread can update the same key. Prefer atomic APIs such as `putIfAbsent()`, `computeIfAbsent()`, `compute()` or `merge()` when one logical update must happen as a single operation.
+
+### Related topics
+
+- `synchronized`
+- `volatile`
+- `ReadWriteLock`
+
 ### `java.util.concurrent`
 
 `java.util.concurrent` is a Java package with high-level concurrency tools: `ExecutorService`, `Future`, `BlockingQueue`, `CountDownLatch`, `Semaphore`, `ConcurrentHashMap`, locks, atomic classes and more.
