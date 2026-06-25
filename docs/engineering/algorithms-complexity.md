@@ -6,8 +6,6 @@ Algorithmic complexity helps estimate how code scales as input data grows. This 
 
 ## Big O
 
-### What is Big O?
-
 Big O is a way to describe how an algorithm's execution time or memory usage grows as input size increases.
 
 It is not exact time in milliseconds, but a scalability estimate. For example, `O(n)` means work grows roughly linearly with input size.

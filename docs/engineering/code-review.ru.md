@@ -1,6 +1,6 @@
 # Code Review
 
-Code review - это практика качества для проверки корректности, maintainability, shared ownership, knowledge sharing и снижения production risk. Это не поиск виноватого.
+Code review - это инженерная практика для проверки корректности, maintainability, shared ownership, knowledge sharing и снижения production risk. Это не поиск виноватого.
 
 Code review применяет многие идеи из [Code Quality](code-quality.md): readability, maintainability, code smells, unnecessary abstractions и safe refactoring.
 
@@ -11,6 +11,41 @@ Code review помогает команде находить проблемы д
 Хорошее review проверяет и behavior, и maintainability. Код может работать сегодня, но быть сложным для изменения завтра, если он прячет state, смешивает layers или добавляет premature abstractions.
 
 **Коротко:** code review снижает production risk и сохраняет ownership кода shared внутри команды.
+
+## Практический workflow code review
+
+Опытные инженеры обычно проверяют pull request в несколько проходов: от общего смысла и рисков к деталям реализации.
+
+1. Понять, что меняется
+    - Какую задачу решает этот PR?
+    - Соответствует ли scope поставленной задаче?
+    - Правильный ли подход выбран для этой задачи?
+
+2. Оценить дизайн
+    - Вписывается ли решение в существующую архитектуру проекта?
+    - Хорошо ли разделены ответственности?
+    - Подходящий ли уровень абстракции выбран?
+
+3. Проверить корректность
+    - Баги
+    - Edge cases
+    - Thread safety
+    - Lifecycle
+    - Error handling
+
+4. Оценить maintainability
+    - Readability
+    - Простота
+    - Testability
+    - Насколько легко будет менять этот код дальше
+
+5. Проверить стиль
+    - Naming
+    - Formatting
+    - Небольшие языковые идиомы
+    - Consistency
+
+**Главная мысль:** опытные reviewers большую часть усилий тратят на понимание задачи, проверку дизайна и уверенность в корректности решения. Вопросы стиля тоже важны, но обычно их стоит смотреть в конце, а многие из них лучше автоматически контролировать через форматтеры и static analysis tools.
 
 ## Что проверять в pull request?
 

@@ -126,7 +126,7 @@ if (!map.containsKey(key)) {
 - `volatile`
 - `ReadWriteLock`
 
-### `java.util.concurrent`
+## `java.util.concurrent`
 
 `java.util.concurrent` - пакет Java с high-level инструментами для многопоточности: `ExecutorService`, `Future`, `BlockingQueue`, `CountDownLatch`, `Semaphore`, `ConcurrentHashMap`, locks, atomic classes и др.
 

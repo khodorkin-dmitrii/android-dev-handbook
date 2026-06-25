@@ -12,6 +12,41 @@ A good review checks both behavior and maintainability. The code may work today 
 
 **In short:** code review reduces production risk and keeps code ownership shared across the team.
 
+## A practical code review workflow
+
+Experienced engineers usually review a pull request in several passes, moving from high-level concerns to implementation details.
+
+1. Understand the change
+    - What problem is being solved?
+    - Is the scope appropriate?
+    - Is this the right solution?
+
+2. Evaluate the design
+    - Does it fit the existing architecture?
+    - Are responsibilities well separated?
+    - Is the abstraction level appropriate?
+
+3. Verify correctness
+    - Bugs
+    - Edge cases
+    - Thread safety
+    - Lifecycle
+    - Error handling
+
+4. Evaluate maintainability
+    - Readability
+    - Simplicity
+    - Testability
+    - Ease of future modifications
+
+5. Review style
+    - Naming
+    - Formatting
+    - Minor language idioms
+    - Consistency
+
+**Key idea:** experienced reviewers spend most of their effort understanding the problem, validating the design and ensuring correctness. Style issues still matter, but they should usually be reviewed last, and many of them can be enforced automatically with formatting and static analysis tools.
+
 ## What to check in a pull request?
 
 A pull request should be reviewed from several angles:
