@@ -2,6 +2,8 @@
 
 Coroutines помогают писать асинхронный и конкурентный код в последовательном стиле, без callback hell и ручного управления большим количеством threads.
 
+**Примечание:** эта статья частично вдохновлена видео Phillipp Lackner про threads, coroutines, dispatchers, concurrency и parallelism. Видео хорошо дополняет статью, если хочется посмотреть объяснение в формате walkthrough: [Kotlin Coroutines, Threads, Dispatchers, Concurrency and Parallelism](https://www.youtube.com/watch?v=0Hv5LTxAutw).
+
 ## Coroutines basics
 
 ### Blocking code vs suspending code
@@ -11,22 +13,26 @@ Blocking code удерживает текущий thread занятым, пок�
 Например, CPU-heavy работа не "ставит программу на паузу". Она активно использует CPU, и текущий thread не может перейти к следующей инструкции, пока работа не закончится:
 
 ```kotlin
-fun blockingCpuWork() {
-    (1..50_000_000).map { number ->
-        number * number
+fun blockingCpuWork(): Long {
+    var result = 0L
+
+    repeat(50_000_000) { number ->
+        result += number.toLong() * number
     }
+
+    return result
 }
 
 fun main() {
     println("Start")
-    blockingCpuWork()
-    println("End")
+    val result = blockingCpuWork()
+    println("End: $result")
 }
 ```
 
 Здесь `End` печатается только после завершения `blockingCpuWork()`, потому что тот же thread занят вычислением.
 
-Suspending code работает иначе. Coroutine может suspend-иться в suspension point, не удерживая underlying thread занятым. Пока одна coroutine suspended, тот же thread может выполнять другие coroutines.
+Suspending code работает иначе. Coroutine может suspend-иться в suspension point, не удерживая thread, на котором она выполнялась, занятым. Пока одна coroutine suspended, тот же thread может выполнять другие coroutines.
 
 Типичные suspension points:
 
@@ -46,7 +52,7 @@ Thread - это независимый поток выполнения, кото
 
 Код внутри одного thread выполняется по порядку. Если thread запускает долгую blocking operation, вся последующая работа на этом же thread должна ждать.
 
-Запуск другого thread создаёт другой независимый flow of execution:
+Запуск другого thread создаёт другой независимый поток выполнения:
 
 ```kotlin
 fun main() {
@@ -67,7 +73,7 @@ fun main() {
 
 Threads мощные, но относительно дорогие: у каждого thread есть свой stack, overhead планирования OS и стоимость context switching. Слишком много threads расходуют memory и могут замедлить приложение вместо ускорения.
 
-**Коротко:** thread - это flow of execution; blocking work блокирует thread, на котором выполняется, а блокировка main thread блокирует UI.
+**Коротко:** thread - это поток выполнения; blocking work блокирует thread, на котором выполняется, а блокировка main thread блокирует UI.
 
 ### Concurrency vs parallelism
 
@@ -200,7 +206,7 @@ suspend fun calculateHashes(items: List<String>): List<Int> =
     }
 ```
 
-Suspension cooperative: coroutine suspend-ится только в suspension points. Если код CPU-bound и никогда не достигает suspension point, он удерживает thread занятым.
+Приостановка coroutine кооперативная: coroutine suspend-ится только в suspension points. Если код CPU-bound и никогда не достигает suspension point, он удерживает thread занятым.
 
 **Коротко:** `suspend` помечает функцию, которая может приостанавливать и продолжать coroutine; это не то же самое, что "запустить на background thread".
 
@@ -222,7 +228,7 @@ CPU-bound work удерживает CPU занятым:
 * вычисление hashes;
 * тяжёлый mapper по большой collection.
 
-Для CPU-bound work обычно подходит `Dispatchers.Default`. На JVM он использует shared pool, максимальный размер которого равен числу CPU cores, но не меньше двух threads. Это соответствует природе CPU work: если у device 8 CPU cores, запуск 80 CPU-heavy задач в одно и то же физическое время не сделает CPU в 10 раз быстрее. Задачи в основном будут конкурировать за те же cores.
+Для CPU-bound work обычно подходит `Dispatchers.Default`. На JVM он использует shared pool, parallelism которого привязан к числу CPU cores, а точные параметры зависят от реализации. Это соответствует природе CPU work: если у device 8 CPU cores, запуск 80 CPU-heavy задач в одно и то же физическое время не сделает CPU в 10 раз быстрее. Задачи в основном будут конкурировать за те же cores.
 
 I/O-bound work часто проводит время в ожидании:
 
@@ -232,9 +238,9 @@ I/O-bound work часто проводит время в ожидании:
 * использование blocking database driver;
 * вызов legacy blocking SDK code.
 
-Для blocking I/O обычно подходит `Dispatchers.IO`. На JVM он предназначен для offloading blocking I/O в shared pool, а default parallelism limit равен 64 threads или числу CPU cores, если cores больше. Такой больший лимит логичен, потому что I/O tasks часто ждут disk, network или server response, и CPU часто не может ускорить это ожидание.
+Для blocking I/O обычно подходит `Dispatchers.IO`. На JVM он предназначен для offloading blocking I/O в shared scheduler resources и может позволять больше concurrent blocking tasks, чем `Default`, в рамках лимитов конкретной реализации. Такой больший effective parallelism логичен, потому что I/O tasks часто ждут disk, network или server response, и CPU часто не может ускорить это ожидание.
 
-**Важно:** это не значит, что `Dispatchers.IO` заранее создаёт 64 threads для каждого app. Дополнительные threads создаются и завершаются по мере необходимости. Практическая идея в том, что `IO` может позволить большему числу blocking tasks ждать параллельно, чем `Default`, а `Default` намеренно ограничен для CPU-heavy work.
+**Важно:** это не значит, что `Dispatchers.IO` заранее создаёт фиксированный набор threads для каждого app или полностью отделён от coroutine scheduler. Практическая идея в том, что `IO` может позволить большему числу blocking tasks ждать параллельно, чем `Default`, а `Default` намеренно ограничен для CPU-heavy work.
 
 **Коротко:** используй `Default` для CPU work, `IO` для blocking waiting work и `Main` для UI work.
 
@@ -245,13 +251,13 @@ I/O-bound work часто проводит время в ожидании:
 Dispatcher обычно работает поверх thread или thread pool:
 
 * `Dispatchers.Main` - Android main thread, используется для UI work;
-* `Dispatchers.Default` - shared pool для CPU-bound work, на JVM ограничен числом CPU cores, но имеет минимум два threads;
-* `Dispatchers.IO` - shared pool для blocking I/O work, с default parallelism limit 64 threads или числом CPU cores, если оно больше;
+* `Dispatchers.Default` - shared pool для CPU-bound work, на JVM с parallelism, примерно привязанным к CPU cores;
+* `Dispatchers.IO` - shared resources для blocking I/O work, которые могут позволять больше ожидающих tasks, чем `Default`, в рамках лимитов конкретной реализации;
 * `Dispatchers.Unconfined` - special case, почти не используется в обычном Android production code.
 
-`Dispatchers.Default` оптимизирован для CPU-heavy work. Его parallelism ограничен, потому что CPU-bound work выигрывает от использования доступных CPU cores, а не от создания большого числа конкурирующих threads.
+`Dispatchers.Default` оптимизирован для CPU-heavy work. Его parallelism привязан к CPU capacity, потому что CPU-bound work выигрывает от использования доступных CPU cores, а не от создания большого числа конкурирующих threads.
 
-`Dispatchers.IO` оптимизирован для blocking I/O. Он может использовать больший pool, потому что многие I/O tasks большую часть времени ждут disk, network или external systems. Здесь больше threads могут быть полезны, потому что большинство из них часто ждут, а не активно используют CPU.
+`Dispatchers.IO` оптимизирован для blocking I/O. Он может позволять больше concurrent waiting work и делит implementation resources с coroutine scheduler, а не является простым отдельным fixed pool. Здесь больше threads могут быть полезны, потому что многие I/O tasks часто ждут, а не активно используют CPU.
 
 Упрощённое правило:
 
@@ -303,7 +309,7 @@ suspend fun loadImageBytes(path: String): ByteArray =
 
 `withContext` не предназначен для запуска нескольких задач параллельно. Он ждёт результат блока. Для параллельных независимых requests обычно используют `coroutineScope` с `async` / `await`.
 
-Хороший pattern - сделать suspend function безопасной для caller-а, перенеся нужную blocking или CPU-heavy работу внутрь функции:
+Хороший pattern - сделать suspend function безопасной для вызывающего кода, перенеся нужную blocking или CPU-heavy работу внутрь функции:
 
 ```kotlin
 suspend fun compressBitmap(bitmap: Bitmap): ByteArray =
@@ -312,7 +318,7 @@ suspend fun compressBitmap(bitmap: Bitmap): ByteArray =
     }
 ```
 
-Тогда callers не должны помнить, какой dispatcher корректен для этой implementation detail.
+Тогда вызывающий код не должен помнить, какой dispatcher корректен для этой детали реализации.
 
 **Коротко:** `withContext` меняет context для блока и ждёт результат; он полезен для dispatcher switching, а не для fire-and-forget работы.
 

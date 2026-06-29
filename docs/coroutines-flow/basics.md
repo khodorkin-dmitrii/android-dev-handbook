@@ -2,6 +2,8 @@
 
 Coroutines help write asynchronous and concurrent code in a sequential style, without callback hell and manual management of many threads.
 
+**Note:** This article was partly inspired by Phillipp Lackner’s video on threads, coroutines, dispatchers, concurrency and parallelism. The video is a good companion explanation if you prefer a visual walkthrough: [Kotlin Coroutines, Threads, Dispatchers, Concurrency and Parallelism](https://www.youtube.com/watch?v=0Hv5LTxAutw).
+
 ## Coroutines basics
 
 ### Blocking code vs suspending code
@@ -11,16 +13,20 @@ Blocking code keeps the current thread busy until the operation completes.
 For example, CPU-heavy work does not "pause" the program. It actively uses the CPU, and the current thread cannot continue with the next instruction until the work is finished:
 
 ```kotlin
-fun blockingCpuWork() {
-    (1..50_000_000).map { number ->
-        number * number
+fun blockingCpuWork(): Long {
+    var result = 0L
+
+    repeat(50_000_000) { number ->
+        result += number.toLong() * number
     }
+
+    return result
 }
 
 fun main() {
     println("Start")
-    blockingCpuWork()
-    println("End")
+    val result = blockingCpuWork()
+    println("End: $result")
 }
 ```
 
@@ -222,7 +228,7 @@ CPU-bound work keeps the CPU busy:
 * calculating hashes;
 * running a heavy mapper over a large collection.
 
-For CPU-bound work, `Dispatchers.Default` is usually the right choice. On JVM it is backed by a shared pool whose maximum size is equal to the number of CPU cores, but at least two threads. This matches the nature of CPU work: if the device has 8 CPU cores, running 80 CPU-heavy tasks at the same physical time will not make the CPU 10 times faster. The tasks mostly compete for the same cores.
+For CPU-bound work, `Dispatchers.Default` is usually the right choice. On JVM it is backed by a shared pool whose parallelism is tied to the number of CPU cores, with exact sizing left to implementation details. This matches the nature of CPU work: if the device has 8 CPU cores, running 80 CPU-heavy tasks at the same physical time will not make the CPU 10 times faster. The tasks mostly compete for the same cores.
 
 I/O-bound work often spends time waiting:
 
@@ -232,9 +238,9 @@ I/O-bound work often spends time waiting:
 * using a blocking database driver;
 * calling legacy blocking SDK code.
 
-For blocking I/O, `Dispatchers.IO` is usually the right choice. On JVM it is designed for offloading blocking I/O to a shared pool, and the default parallelism limit is 64 threads or the number of CPU cores, whichever is larger. This larger limit makes sense because I/O tasks often wait for disk, network or server response, and the CPU often cannot speed up that waiting period.
+For blocking I/O, `Dispatchers.IO` is usually the right choice. On JVM it is designed for offloading blocking I/O to shared scheduler resources and can allow more concurrent blocking tasks than `Default`, within implementation-defined limits. This larger effective parallelism makes sense because I/O tasks often wait for disk, network or server response, and the CPU often cannot speed up that waiting period.
 
-**Important:** this does not mean `Dispatchers.IO` pre-creates 64 threads for every app. Additional threads are created and shut down on demand. The practical idea is that `IO` can allow more blocking tasks to wait in parallel than `Default`, while `Default` is intentionally limited for CPU-heavy work.
+**Important:** this does not mean `Dispatchers.IO` pre-creates a fixed set of threads for every app or is completely separate from the coroutine scheduler. The practical idea is that `IO` can allow more blocking tasks to wait in parallel than `Default`, while `Default` is intentionally limited for CPU-heavy work.
 
 **In short:** use `Default` for CPU work, `IO` for blocking waiting work and `Main` for UI work.
 
@@ -245,13 +251,13 @@ For blocking I/O, `Dispatchers.IO` is usually the right choice. On JVM it is des
 A dispatcher usually works over a thread or thread pool:
 
 * `Dispatchers.Main` - Android main thread, used for UI work;
-* `Dispatchers.Default` - shared pool for CPU-bound work, limited to the number of CPU cores on JVM, but at least two threads;
-* `Dispatchers.IO` - shared pool for blocking I/O work, with default parallelism limited to 64 threads or the number of CPU cores, whichever is larger;
+* `Dispatchers.Default` - shared pool for CPU-bound work, with parallelism roughly tied to CPU cores on JVM;
+* `Dispatchers.IO` - shared resources for blocking I/O work, able to allow more waiting tasks than `Default` within implementation-defined limits;
 * `Dispatchers.Unconfined` - special case, almost never used in regular Android production code.
 
-`Dispatchers.Default` is optimized for CPU-heavy work. Its parallelism is limited because CPU-bound work benefits from using available CPU cores, not from creating many more competing threads.
+`Dispatchers.Default` is optimized for CPU-heavy work. Its parallelism is tied to CPU capacity because CPU-bound work benefits from using available CPU cores, not from creating many more competing threads.
 
-`Dispatchers.IO` is optimized for blocking I/O. It can use a larger pool because many I/O tasks spend most of their time waiting for disk, network or external systems. More threads can be useful here because most of those threads are often waiting, not actively using CPU.
+`Dispatchers.IO` is optimized for blocking I/O. It can allow more concurrent waiting work and shares implementation resources with the coroutine scheduler rather than being a simple fixed separate pool. More threads can be useful here because many I/O tasks are often waiting, not actively using CPU.
 
 A simplified rule:
 
