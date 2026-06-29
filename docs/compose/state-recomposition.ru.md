@@ -38,13 +38,13 @@ Compose нужен state, который он может наблюдать: н�
 var count by remember { mutableStateOf(0) }
 ```
 
-Compose отслеживает, где observable state был прочитан. Когда этот state меняется, Compose invalidates места чтения и может recomposition-ить затронутый UI.
+Compose отслеживает, где observable state был прочитан. Когда этот state меняется, Compose помечает места чтения как требующие обновления и может рекомпозировать затронутый UI.
 
 **Коротко:** state - это данные, которые влияют на то, что показывает UI; Compose может автоматически обновлять UI только тогда, когда эти данные доступны как observable state.
 
 ### Observable state и `mutableStateOf`
 
-`mutableStateOf` создаёт observable Compose `State`. Когда `value` меняется, Compose invalidates места, где этот state был прочитан, и может запустить recomposition.
+`mutableStateOf` создаёт observable Compose `State`. Когда `value` меняется, Compose помечает места, где этот state был прочитан, как требующие обновления и может запустить recomposition.
 
 Обычно `mutableStateOf` используют вместе с `remember`:
 
@@ -66,9 +66,9 @@ var items by remember { mutableStateOf<List<String>>(emptyList()) }
 items = items + "New item"
 ```
 
-Если локальная mutable collection state действительно нужна, используй snapshot-aware коллекции Compose, например `mutableStateListOf`. Для screen state из `ViewModel` лучше выбирать immutable models и immutable lists.
+Если локальная mutable collection state действительно нужна, используй snapshot-aware коллекции Compose, например `mutableStateListOf`. Для screen state из `ViewModel` лучше выбирать immutable models и immutable collections или read-only lists с контролируемым владением.
 
-**Коротко:** `mutableStateOf` - это observable state Compose; его изменение вызывает invalidation там, где state был прочитан, но ownership state всё равно важен.
+**Коротко:** `mutableStateOf` - это observable state Compose; при изменении Compose помечает места чтения как требующие обновления, но владелец state всё равно важен.
 
 ### Что такое recomposition?
 
@@ -150,7 +150,7 @@ fun SearchScreen() {
 
 Не всё состояние нужно hoist-ить до `ViewModel`. Локальный UI state, например `expanded` у dropdown или pressed/animation state, может оставаться внутри composable, если он не нужен другим слоям и не должен переживать screen recreation.
 
-**Коротко:** state hoisting отделяет ownership state от UI rendering; UI получает state и отправляет events, а owner решает, как state меняется.
+**Коротко:** state hoisting отделяет владение state от UI rendering; UI получает state и отправляет events, а owner решает, как state меняется.
 
 ## Stability и оптимизация
 
@@ -158,7 +158,7 @@ fun SearchScreen() {
 
 Stability в Compose помогает compiler/runtime понять, можно ли безопасно пропустить recomposition, если параметры composable не изменились.
 
-Стабильный тип имеет предсказуемый `equals()` / identity contract и сообщает Compose об изменениях так, чтобы UI мог быть обновлён корректно. Immutable data classes с `val` properties и immutable/read-only данными обычно проще для Compose, чем mutable objects с неявными изменениями.
+Стабильный тип имеет предсказуемый `equals()` / identity contract и сообщает Compose об изменениях так, чтобы UI мог быть обновлён корректно. Immutable data classes с `val` properties и immutable collections или read-only данными с контролируемым владением обычно проще для Compose, чем mutable objects с неявными изменениями.
 
 `data class` не становится глубоко immutable автоматически, если внутри есть mutable collections или mutable objects:
 
@@ -168,7 +168,7 @@ data class UiState(
 )
 ```
 
-Хотя `items` объявлен как `val`, содержимое списка всё равно может меняться. Compose может не отследить такие внутренние мутации корректно. Лучше использовать immutable state models:
+Хотя `items` объявлен как `val`, содержимое списка всё равно может меняться. Compose может не отследить такие внутренние мутации корректно. Лучше использовать state models, которые наружу отдают immutable collections или read-only lists с контролируемым владением:
 
 ```kotlin
 data class UiState(
@@ -211,6 +211,6 @@ val showScrollToTop by remember {
 }
 ```
 
-Не используй `derivedStateOf` для каждого computed value. Он добавляет сложность и наиболее полезен тогда, когда предотвращает лишнюю invalidation от часто меняющегося input state.
+Не используй `derivedStateOf` для каждого computed value. Он добавляет сложность и наиболее полезен тогда, когда предотвращает лишнюю invalidation из-за часто меняющегося input state.
 
 **Коротко:** оптимизируй recomposition через понимание, какой state где читается, затем уменьшай лишнюю invalidation и дорогую работу вместо того, чтобы вслепую добавлять `remember` везде.

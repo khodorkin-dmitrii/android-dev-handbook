@@ -66,7 +66,7 @@ var items by remember { mutableStateOf<List<String>>(emptyList()) }
 items = items + "New item"
 ```
 
-If local mutable collection state is intentional, use Compose snapshot-aware collections such as `mutableStateListOf`. For screen state from `ViewModel`, prefer immutable models and immutable lists.
+If local mutable collection state is intentional, use Compose snapshot-aware collections such as `mutableStateListOf`. For screen state from `ViewModel`, prefer immutable models and immutable collections or read-only lists with controlled ownership.
 
 **In short:** `mutableStateOf` is Compose-observable state; changing it triggers invalidation where it was read, but state ownership still matters.
 
@@ -158,7 +158,7 @@ Not all state needs to be hoisted to `ViewModel`. Local UI state, such as `expan
 
 Stability in Compose helps the compiler/runtime understand whether recomposition can be safely skipped when composable parameters have not changed.
 
-A stable type has a predictable `equals()` / identity contract and reports changes to Compose so UI can be updated correctly. Immutable data classes with `val` properties and immutable/read-only data are usually easier for Compose than mutable objects with implicit changes.
+A stable type has a predictable `equals()` / identity contract and reports changes to Compose so UI can be updated correctly. Immutable data classes with `val` properties and immutable collections or read-only data with controlled ownership are usually easier for Compose than mutable objects with implicit changes.
 
 A `data class` is not automatically deeply immutable if it contains mutable collections or mutable objects:
 
@@ -168,7 +168,7 @@ data class UiState(
 )
 ```
 
-Even though `items` is a `val`, the list contents can still change. Compose may not observe such internal mutations correctly. Prefer immutable state models:
+Even though `items` is a `val`, the list contents can still change. Compose may not observe such internal mutations correctly. Prefer state models that expose immutable collections or read-only lists whose ownership is controlled:
 
 ```kotlin
 data class UiState(
