@@ -28,6 +28,7 @@ A personal Android development handbook focused on practical engineering notes, 
 
 * GitHub: [github.com/khodorkin-dmitrii](https://github.com/khodorkin-dmitrii)
 * LinkedIn: [linkedin.com/in/khodorkin-dmitrii](https://www.linkedin.com/in/dmitrii-khodorkin-33268585)
+* Handbook repository: [khodorkin-dmitrii/android-dev-handbook](https://github.com/khodorkin-dmitrii/android-dev-handbook)
 
 <!-- BEGIN GENERATED HANDBOOK STATS -->
 ## Handbook stats
