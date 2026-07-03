@@ -10,12 +10,12 @@ The initial priority order is based on `pages_review_priority.txt`.
 ## Current snapshot
 1. Last tracker update: 2026-07-03
 1. Total articles tracked: 71
-1. Updated: 6
+1. Updated: 7
 1. TODO: 65
 
 | Priority | Total | Updated | TODO |
-|---|---:|---:|---:|
-| P0 | 26 | 3 | 23 |
+|---|---|---|---|
+| P0 | 26 | 4 | 23 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
