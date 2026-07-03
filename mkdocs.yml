@@ -107,6 +107,7 @@ plugins:
             RxJava: RxJava
 
 markdown_extensions:
+  - md_in_html
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -119,6 +120,9 @@ hooks:
 
 extra_css:
   - stylesheets/extra.css
+
+not_in_nav: |
+  pages-review-tracker.md
 
 nav:
   - Home: index.md

@@ -17,6 +17,10 @@ TECHNICAL_DIRS = {
     "stylesheets",
 }
 
+SERVICE_PAGES = {
+    "pages-review-tracker.md",
+}
+
 BEGIN_MARKER = "<!-- BEGIN GENERATED HANDBOOK STATS -->"
 END_MARKER = "<!-- END GENERATED HANDBOOK STATS -->"
 
@@ -39,7 +43,11 @@ class LanguageStats:
 
 def is_content_path(path: Path) -> bool:
     relative_parts = path.relative_to(DOCS_DIR).parts
-    return not any(part.startswith(".") or part in TECHNICAL_DIRS for part in relative_parts)
+    relative_path = path.relative_to(DOCS_DIR).as_posix()
+    return (
+        relative_path not in SERVICE_PAGES
+        and not any(part.startswith(".") or part in TECHNICAL_DIRS for part in relative_parts)
+    )
 
 
 def content_markdown_files() -> list[Path]:
