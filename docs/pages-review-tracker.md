@@ -4,14 +4,14 @@ It is intentionally kept as an unlisted service page: available by direct URL, b
 The initial priority order is based on `pages_review_priority.txt`.
 
 ## Status legend
-- `TODO` - the article has not passed the focused review/update pass yet.
-- `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
+1. `TODO` 1. the article has not passed the focused review/update pass yet.
+1. `UPDATED` 1. the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-- Last tracker update: 2026-07-03
-- Total articles tracked: 71
-- Updated: 6
-- TODO: 65
+1. Last tracker update: 2026-07-03
+1. Total articles tracked: 71
+1. Updated: 6
+1. TODO: 65
 
 | Priority | Total | Updated | TODO |
 |---|---:|---:|---:|
@@ -21,74 +21,74 @@ The initial priority order is based on `pages_review_priority.txt`.
 
 ## Tracker
 
-- P0 - 01, UPDATED, State & Recomposition, `compose/state-recomposition.md`, 2026-07-03, Expanded Compose state basics, mutableStateOf, state ownership, state hoisting, model stability, derivedStateOf, and practical recomposition reduction techniques.
-- P0 - 02, UPDATED, Coroutines Basics, `coroutines-flow/basics.md`, 2026-07-03, Expanded coroutine fundamentals: blocking vs suspending, threads, concurrency vs parallelism, suspend, CPU-bound vs I/O-bound work, dispatchers, withContext, launch vs async, builders, and runBlocking.
-- P0 - 03, TODO, Compose Basics, `compose/basics.md` 
-- P0 - 04, TODO, Side Effects, `compose/side-effects.md` 
-- P0 - 05, TODO, Compose Performance, `compose/performance.md` 
-- P0 - 06, TODO, Coroutine Scopes & Cancellation, `coroutines-flow/scopes-cancellation.md` 
-- P0 - 07, TODO, Flow Basics, `coroutines-flow/flow-basics.md` 
-- P0 - 08, TODO, Flow Operators, `coroutines-flow/flow-operators.md` 
-- P0 - 09, TODO, StateFlow & SharedFlow, `coroutines-flow/stateflow-sharedflow.md` 
-- P0, 10, TODO, Lifecycle-aware Collection, `coroutines-flow/lifecycle-aware-collection.md` 
-- P0, 11, TODO, Architecture Basics, `architecture/basics.md` 
-- P0, 12, UPDATED, UI State Architecture, `architecture/ui-state.md`, 2026-07-03, Added state restoration guidance: state ownership, lifecycle boundaries, SavedStateHandle, repository/storage, temporary UI scopes, and feature design restoration decisions.
-- P0, 13, TODO, MV* Patterns, `architecture/mv-patterns.md` 
-- P0, 14, TODO, Multi-module Architecture, `architecture/multi-module.md` 
-- P0, 15, TODO, Activity, Fragment & Lifecycle, `android/activity-fragment-lifecycle.md` 
-- P0, 16, TODO, Android Components, `android/components.md` 
-- P0, 17, TODO, View System / XML UI, `android/view-system-xml-ui.md` 
-- P0, 18, TODO, Background Work & System Behavior, `android/background-work-system-behavior.md` 
-- P0, 19, TODO, Gradle & Build System, `android/gradle-build-system.md` 
-- P0, 20, TODO, Performance & Memory, `android/performance-memory.md` 
-- P0, 21, TODO, DI Basics, `di/basics.md` 
-- P0, 22, TODO, Dagger / Hilt, `di/dagger-hilt.md` 
-- P0, 23, TODO, Koin, `di/koin.md` 
-- P0, 24, TODO, Testing Strategy, `testing/strategy.md` 
-- P0, 25, TODO, ViewModel Testing, `testing/viewmodel-testing.md` 
-- P0, 26, TODO, Coroutines & Flow Testing, `testing/coroutines-flow-testing.md` 
-- P1, 27, TODO, Kotlin Basics, `kotlin/basics.md` 
-- P1, 28, TODO, Kotlin vs Java, `kotlin/kotlin-vs-java.md` 
-- P1, 29, TODO, Classes & Types, `kotlin/classes-and-types.md` 
-- P1, 30, TODO, Collections, `kotlin/collections.md` 
-- P1, 31, TODO, Functions, `kotlin/functions.md` 
-- P1, 32, TODO, Generics, `kotlin/generics.md` 
-- P1, 33, TODO, Java Core, `java/core.md` 
-- P1, 34, TODO, Java Concurrency, `java/concurrency.md` 
-- P1, 35, TODO, Java Exceptions, `java/exceptions.md` 
-- P1, 36, TODO, JVM / Android Runtime, `java/jvm-android-runtime.md` 
-- P1, 37, TODO, Storage, `android/storage.md` 
-- P1, 38, TODO, Context & Resources, `android/context-resources.md` 
-- P1, 39, UPDATED, HTTP / REST, `networking/http-rest.md`, 2026-07-03, Expanded HTTP/REST fundamentals: HTTP methods, safe/idempotent semantics, GET vs POST, status codes table, headers/body, and Android error mapping.
-- P1, 40, UPDATED, Retrofit / OkHttp, `networking/retrofit-okhttp.md`, 2026-07-03, Expanded Retrofit/OkHttp: service API examples, Response<T>, OkHttp setup, interceptors, auth interceptor, serialization pitfalls, NetworkResult, request debugging, logging, common mistakes, and production recommendations.
-- P1, 41, TODO, GraphQL, `networking/graphql.md` 
-- P1, 42, TODO, gRPC / Protobuf, `networking/grpc-protobuf.md` 
-- P1, 43, TODO, Android UI Testing, `testing/android-ui-testing.md` 
-- P1, 44, TODO, Code Quality, `engineering/code-quality.md` 
-- P1, 45, TODO, Code Review, `engineering/code-review.md` 
-- P1, 46, TODO, OOP, `engineering/oop.md` 
-- P1, 47, TODO, SOLID, `engineering/solid.md` 
-- P1, 48, TODO, Design Patterns, `engineering/design-patterns.md` 
-- P1, 49, TODO, Algorithms & Complexity, `engineering/algorithms-complexity.md` 
-- P1, 50, TODO, Memory & Runtime Basics, `engineering/memory-runtime-basics.md` 
-- P1, 51, TODO, Legacy & Refactoring, `architecture/legacy-refactoring.md` 
-- P1, 52, TODO, Legacy DI, `di/legacy-di.md` 
-- P1, 53, TODO, RxJava, `legacy/rxjava.md` 
-- P2, 54, UPDATED, Home, `index.md`, 2026-07-03, Added GitHub repository link to the author/support block.
-- P2, 55, TODO, Android Overview, `android/index.md` 
-- P2, 56, TODO, Kotlin Overview, `kotlin/index.md` 
-- P2, 57, TODO, Compose Overview, `compose/index.md` 
-- P2, 58, TODO, Coroutines & Flow Overview, `coroutines-flow/index.md` 
-- P2, 59, TODO, Architecture Overview, `architecture/index.md` 
-- P2, 60, TODO, Java Overview, `java/index.md` 
-- P2, 61, TODO, DI Overview, `di/index.md` 
-- P2, 62, TODO, Networking Overview, `networking/index.md` 
-- P2, 63, TODO, Testing Overview, `testing/index.md` 
-- P2, 64, TODO, Engineering Overview, `engineering/index.md` 
-- P2, 65, TODO, Legacy Overview, `legacy/index.md` 
-- P2, 66, TODO, Compose Testing, `compose/testing.md` 
-- P2, 67, TODO, Android Canvas, `android/canvas.md` 
-- P2, 68, TODO, OpenGL ES, `android/opengl-es.md` 
-- P2, 69, TODO, Vulkan, `android/vulkan.md` 
-- P2, 70, TODO, Google Filament, `android/google-filament.md` 
-- P2, 71, TODO, 2D and 3D Rendering, `android/2d-3d-rendering.md` 
+1. P0, **UPDATED**, 2026-06-29, `compose/state-recomposition.md`, State & Recomposition, Expanded Compose state basics, mutableStateOf, state ownership, state hoisting, model stability, derivedStateOf, and practical recomposition reduction techniques.
+1. P0, **UPDATED**, 2026-06-29, `coroutines-flow/basics.md`, Coroutines Basics, Expanded coroutine fundamentals: blocking vs suspending, threads, concurrency vs parallelism, suspend, CPU-bound vs I/O-bound work, dispatchers, withContext, launch vs async, builders, and runBlocking.
+1. P0, **UPDATED**, 2026-07-03, `compose/basics.md`, Compose Basics, Expanded Compose basics with Compose vs View System comparison, state-driven UI example, clearer recomposition wording, composable anti-patterns, and related topic links.
+1. P0, **TODO**, , `compose/side-effects.md`, Side Effects
+1. P0, **TODO**, , `compose/performance.md`, Compose Performance
+1. P0, **TODO**, , `coroutines-flow/scopes-cancellation.md`, Coroutine Scopes & Cancellation
+1. P0, **TODO**, , `coroutines-flow/flow-basics.md`, Flow Basics
+1. P0, **TODO**, , `coroutines-flow/flow-operators.md`, Flow Operators
+1. P0, **TODO**, , `coroutines-flow/stateflow-sharedflow.md`, StateFlow & SharedFlow
+1. P0, **TODO**, , `coroutines-flow/lifecycle-aware-collection.md`, Lifecycle-aware Collection
+1. P0, **TODO**, , `architecture/basics.md`, Architecture Basics
+1. P0, **UPDATED**, 2026-07-03, `architecture/ui-state.md`, UI State Architecture, Added state restoration guidance: state ownership, lifecycle boundaries, SavedStateHandle, repository/storage, temporary UI scopes, and feature design restoration decisions.
+1. P0, **TODO**, , `architecture/mv-patterns.md`, MV* Patterns
+1. P0, **TODO**, , `architecture/multi-module.md`, Multi-module Architecture
+1. P0, **TODO**, , `android/activity-fragment-lifecycle.md`, Activity, Fragment & Lifecycle
+1. P0, **TODO**, , `android/components.md`, Android Components
+1. P0, **TODO**, , `android/view-system-xml-ui.md`, View System / XML UI
+1. P0, **TODO**, , `android/background-work-system-behavior.md`, Background Work & System Behavior
+1. P0, **TODO**, , `android/gradle-build-system.md`, Gradle & Build System
+1. P0, **TODO**, , `android/performance-memory.md`, Performance & Memory
+1. P0, **TODO**, , `di/basics.md`, DI Basics
+1. P0, **TODO**, , `di/dagger-hilt.md`, Dagger / Hilt
+1. P0, **TODO**, , `di/koin.md`, Koin
+1. P0, **TODO**, , `testing/strategy.md`, Testing Strategy
+1. P0, **TODO**, , `testing/viewmodel-testing.md`, ViewModel Testing
+1. P0, **TODO**, , `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing
+1. P1, **TODO**, , `kotlin/basics.md`, Kotlin Basics
+1. P1, **TODO**, , `kotlin/kotlin-vs-java.md`, Kotlin vs Java
+1. P1, **TODO**, , `kotlin/classes-and-types.md`, Classes & Types
+1. P1, **TODO**, , `kotlin/collections.md`, Collections
+1. P1, **TODO**, , `kotlin/functions.md`, Functions
+1. P1, **TODO**, , `kotlin/generics.md`, Generics
+1. P1, **TODO**, , `java/core.md`, Java Core
+1. P1, **TODO**, , `java/concurrency.md`, Java Concurrency
+1. P1, **TODO**, , `java/exceptions.md`, Java Exceptions
+1. P1, **TODO**, , `java/jvm-android-runtime.md`, JVM / Android Runtime
+1. P1, **TODO**, , `android/storage.md`, Storage
+1. P1, **TODO**, , `android/context-resources.md`, Context & Resources
+1. P1, **UPDATED**, 2026-06-30, `networking/http-rest.md`, HTTP / REST, Expanded HTTP/REST fundamentals: HTTP methods, safe/idempotent semantics, GET vs POST, status codes table, headers/body, and Android error mapping.
+1. P1, **UPDATED**, 2026-06-30, `networking/retrofit-okhttp.md`, Retrofit / OkHttp, Expanded Retrofit/OkHttp: service API examples, Response<T>, OkHttp setup, interceptors, auth interceptor, serialization pitfalls, NetworkResult, request debugging, logging, common mistakes, and production recommendations.
+1. P1, **TODO**, , `networking/graphql.md`, GraphQL
+1. P1, **TODO**, , `networking/grpc-protobuf.md`, gRPC / Protobuf
+1. P1, **TODO**, , `testing/android-ui-testing.md`, Android UI Testing
+1. P1, **TODO**, , `engineering/code-quality.md`, Code Quality
+1. P1, **TODO**, , `engineering/code-review.md`, Code Review
+1. P1, **TODO**, , `engineering/oop.md`, OOP
+1. P1, **TODO**, , `engineering/solid.md`, SOLID
+1. P1, **TODO**, , `engineering/design-patterns.md`, Design Patterns
+1. P1, **TODO**, , `engineering/algorithms-complexity.md`, Algorithms & Complexity
+1. P1, **TODO**, , `engineering/memory-runtime-basics.md`, Memory & Runtime Basics
+1. P1, **TODO**, , `architecture/legacy-refactoring.md`, Legacy & Refactoring
+1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
+1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
+1. P2, **UPDATED**, 2026-06-30, `index.md`, Home, Added GitHub repository link to the author/support block.
+1. P2, **TODO**, , `android/index.md`, Android Overview
+1. P2, **TODO**, , `kotlin/index.md`, Kotlin Overview
+1. P2, **TODO**, , `compose/index.md`, Compose Overview
+1. P2, **TODO**, , `coroutines-flow/index.md`, Coroutines & Flow Overview
+1. P2, **TODO**, , `architecture/index.md`, Architecture Overview
+1. P2, **TODO**, , `java/index.md`, Java Overview
+1. P2, **TODO**, , `di/index.md`, DI Overview
+1. P2, **TODO**, , `networking/index.md`, Networking Overview
+1. P2, **TODO**, , `testing/index.md`, Testing Overview
+1. P2, **TODO**, , `engineering/index.md`, Engineering Overview
+1. P2, **TODO**, , `legacy/index.md`, Legacy Overview
+1. P2, **TODO**, , `compose/testing.md`, Compose Testing
+1. P2, **TODO**, , `android/canvas.md`, Android Canvas
+1. P2, **TODO**, , `android/opengl-es.md`, OpenGL ES
+1. P2, **TODO**, , `android/vulkan.md`, Vulkan
+1. P2, **TODO**, , `android/google-filament.md`, Google Filament
+1. P2, **TODO**, , `android/2d-3d-rendering.md`, 2D and 3D Rendering
