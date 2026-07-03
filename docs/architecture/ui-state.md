@@ -1,6 +1,6 @@
 # UI State Architecture
 
-UI state architecture describes who owns screen state, how UI receives data, and how one-off effects are separated from durable state.
+UI state architecture describes who owns screen state, how UI receives data, how state is restored, and how one-off effects are separated from durable state.
 
 ## UI state
 
@@ -81,6 +81,71 @@ An alternative is an event wrapper/consumable state, but it can easily complicat
 
 **In short:** one-off events should be separated from persistent UI state, but event delivery must be lifecycle-aware to avoid duplicates or lost events.
 
+### State ownership and restoration
+
+A `ViewModel` is a good screen-level state holder, but it is not persistent storage. It survives common configuration changes, such as rotation, but it does not automatically survive process death.
+
+This means `MutableStateFlow` inside a `ViewModel` is enough for many normal screen updates, but it is not enough for state that would be painful or dangerous to lose: long forms, onboarding progress, checkout steps, unsaved drafts or important user input.
+
+When designing UI state, decide what should survive each lifecycle boundary:
+
+- recomposition;
+- temporary disappearance from composition;
+- configuration change;
+- navigation away and back;
+- process death;
+- app restart.
+
+Different state needs different owners.
+
+Small local UI state can live in `remember` or `rememberSaveable`. Screen-level state usually belongs to `ViewModel`. Small restorable screen state can be stored with `SavedStateHandle`. Important durable progress should usually be stored in a repository, database, DataStore or backend draft, not only in memory.
+
+A useful rule:
+
+```text
+remember              -> survives recomposition
+rememberSaveable      -> survives recomposition and simple recreation
+ViewModel             -> survives configuration change
+SavedStateHandle      -> restores small state after process death
+Repository / storage  -> persists important state beyond the screen lifecycle
+```
+
+For example, a profile screen can reload data from repository by `profileId`, so the whole loaded profile does not necessarily need to be saved in `SavedStateHandle`. But a search query, selected tab, draft comment or current onboarding step may be worth saving.
+
+```kotlin
+@HiltViewModel
+class SearchViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private var query: String
+        get() = savedStateHandle["query"] ?: ""
+        set(value) {
+            savedStateHandle["query"] = value
+        }
+
+    private val _uiState = MutableStateFlow(
+        SearchUiState(query = query)
+    )
+    val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+
+    fun onQueryChanged(newQuery: String) {
+        query = newQuery
+        _uiState.update { it.copy(query = newQuery) }
+    }
+}
+```
+
+Do not put everything into `SavedStateHandle`. It is better for small, serializable restoration state, not for large lists, bitmaps, complex object graphs or data that should be the responsibility of the data layer.
+
+Temporary UI scopes are a separate case. Some UI state should not survive at all. For example, a bottom sheet search session, temporary dialog state or local picker state may be intentionally cleared when that UI disappears.
+
+In Compose, this means state ownership should follow the UI lifetime. If state belongs to the whole screen, keep it in the screen `ViewModel`. If it belongs only to a temporary UI element, keep it local to that element or use a shorter-lived state holder.
+
+In newer Compose APIs, this can also be expressed by scoping a `ViewModelStoreOwner` to a temporary composable subtree, but the architectural decision is still the same: the state owner should match the intended lifetime of the UI state.
+
+**In short:** `ViewModel` holds screen state during the screen lifecycle, but restoration is a separate design decision. Choose the state owner based on how long the state should live and how bad it is if the state is lost.
+
 ## Feature design
 
 ### How to design a feature flow from scratch?
@@ -95,4 +160,14 @@ Separate state from effects early: content/loading/error should be part of `UiSt
 
 Also consider lifecycle, process death, retry, offline/cache, error mapping, analytics, testing and module boundaries. A small screen does not need ideal Clean Architecture, but layer responsibilities should be clear.
 
-**In short:** start from the UI contract and user actions, model durable `UiState` and one-off effects, then decide which logic belongs to `ViewModel`, domain/use cases, repositories and data sources.
+The state restoration decision should be part of feature design, not an afterthought. For each important piece of state, decide whether it is derived from data sources, stored in memory, saved in `SavedStateHandle`, persisted locally or synchronized with backend.
+
+For example:
+
+- screen data loaded by id can usually be reloaded from repository;
+- search query, selected tab or current step can often be restored from `SavedStateHandle`;
+- long draft input or checkout/onboarding progress may need local storage or backend draft;
+- snackbar/navigation effects should usually not be restored as state;
+- temporary sheet/dialog state may intentionally disappear when the UI element is dismissed.
+
+**In short:** start from the UI contract and user actions, model durable `UiState` and one-off effects, decide how state should be restored, then choose which logic belongs to `ViewModel`, domain/use cases, repositories and data sources.
