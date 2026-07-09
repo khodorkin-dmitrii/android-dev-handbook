@@ -4,8 +4,8 @@ It is intentionally kept as an unlisted service page: available by direct URL, b
 The initial priority order is based on `pages_review_priority.txt`.
 
 ## Status legend
-1. `TODO` 1. the article has not passed the focused review/update pass yet.
-1. `UPDATED` 1. the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
+1. `TODO` - the article has not passed the focused review/update pass yet.
+1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
 1. Last tracker update: 2026-07-03

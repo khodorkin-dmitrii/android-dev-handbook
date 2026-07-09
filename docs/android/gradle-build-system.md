@@ -117,6 +117,104 @@ android {
 
 Variants are powerful, but too many flavors multiply build complexity. Use them when the product really needs different builds, not as a replacement for runtime configuration.
 
+## APK, AAB and app size
+
+### What is an APK?
+
+APK (Android Package) is an installable Android application package.
+
+It is the artifact that Android can install on a device. An APK usually contains:
+
+- compiled app code as `.dex` files;
+- Android resources and assets;
+- `AndroidManifest.xml`;
+- native libraries, if the app uses them;
+- signing metadata.
+
+APK is convenient for local testing, CI artifacts, internal sharing and direct installation with `adb install`. For example, debug builds are commonly produced as APKs and can be installed directly on an emulator or a physical device.
+
+### What is an AAB?
+
+AAB (Android App Bundle) is a publishing format, not a directly installable package.
+
+An app bundle contains the app's compiled code and resources, but APK generation is deferred to Google Play. When a user installs the app, Google Play generates and serves optimized APKs for that user's device configuration.
+
+In practice, this means the user does not need to download every possible resource variant that exists in the app.
+
+### APK vs AAB
+
+The main difference is where the final installable APK is produced.
+
+With a traditional APK, the developer builds and distributes one installable package. If that APK is universal, it may contain resources and native libraries for many device configurations: different ABIs, screen densities and languages.
+
+With an AAB, the developer uploads a bundle to Google Play. Google Play then produces a set of optimized APKs for a specific device. The installed app may be composed from a base APK plus configuration APKs and, optionally, feature APKs.
+
+A short way to remember it:
+
+- APK is an installable package;
+- AAB is a publishing package used to generate optimized APKs.
+
+### Why can AAB reduce app size?
+
+AAB can reduce download size because Google Play can deliver only the code and resources needed by a particular device.
+
+Common split dimensions include:
+
+- CPU architecture / ABI, such as `arm64-v8a`;
+- screen density, such as `xxhdpi`;
+- language resources;
+- optional dynamic feature modules.
+
+For example, a device does not need to download native libraries for every CPU architecture or image resources for every screen density. It only needs the parts that match its configuration.
+
+This is especially useful for large apps with many resources, translations, native libraries or optional features.
+
+### Dynamic features and asset delivery
+
+App bundles also support more advanced delivery models.
+
+Dynamic feature modules allow some features to be delivered only when they are needed, or only for devices that match certain conditions. This can keep the initial install smaller and move rarely used functionality out of the base module.
+
+For games or apps with large media content, Play Asset Delivery can be used to deliver large assets more flexibly.
+
+This does not mean every app should be split into many modules. Dynamic delivery is useful when a feature is large, optional or used only by part of the audience. For a small app, it may add unnecessary complexity.
+
+### Limitations and practical notes
+
+AAB is the preferred publishing format for Google Play, but it is not a direct replacement for APK in every workflow.
+
+Important practical points:
+
+- an AAB cannot be installed directly with `adb install`;
+- for local testing from an AAB, use generated APKs or `bundletool`;
+- internal testing and sideloading are often simpler with APKs;
+- non-Google app stores may still require APK or have their own bundle support;
+- Play App Signing becomes part of the standard Google Play publishing flow.
+
+### App size optimization
+
+AAB helps reduce delivered size, but it does not replace normal app size optimization.
+
+Important techniques include:
+
+- enable R8 for release builds;
+- remove unused code and resources;
+- enable resource shrinking;
+- avoid unnecessary dependencies;
+- keep native libraries only for supported ABIs;
+- avoid shipping unused assets, languages or large raw resources;
+- move large optional functionality into dynamic feature modules only when the product really benefits from it.
+
+R8 is especially important because it can remove unreachable code, optimize bytecode, shorten names and reduce DEX size. Resource shrinking helps remove resources that are no longer reachable from the app.
+
+### Interview answer
+
+APK is the installable Android package. It contains compiled code, resources, assets, manifest, native libraries and signing information.
+
+AAB is a publishing format used by Google Play. The developer uploads an app bundle, and Google Play generates optimized APKs for each device configuration. This can reduce download size because the user receives only the required ABI, density, language resources and optional feature modules.
+
+In real projects, APK is still useful for local testing and direct installation, while AAB is the standard format for Google Play distribution.
+
 ## Source sets
 
 Source sets let a project provide different code and resources for different variants.

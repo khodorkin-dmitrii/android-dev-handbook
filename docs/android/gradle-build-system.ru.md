@@ -117,6 +117,104 @@ android {
 
 Variants мощные, но слишком большое количество flavors умножает build complexity. Используй их, когда продукту действительно нужны разные builds, а не как замену runtime configuration.
 
+## APK, AAB and app size
+
+### Что такое APK?
+
+APK (Android Package) - устанавливаемый пакет Android-приложения.
+
+Это artifact, который Android может установить на устройство. Обычно APK содержит:
+
+- скомпилированный код приложения в виде `.dex` файлов;
+- Android resources и assets;
+- `AndroidManifest.xml`;
+- native libraries, если приложение их использует;
+- signing metadata.
+
+APK удобен для local testing, CI artifacts, внутреннего распространения и прямой установки через `adb install`. Например, debug builds часто собираются как APK и устанавливаются напрямую на emulator или физическое устройство.
+
+### Что такое AAB?
+
+AAB (Android App Bundle) - publishing format, а не пакет, который можно установить напрямую.
+
+App bundle содержит скомпилированный код и resources приложения, но генерация APK откладывается до Google Play. Когда пользователь устанавливает приложение, Google Play генерирует и отдаёт optimized APKs под configuration конкретного устройства.
+
+На практике это значит, что пользователю не нужно скачивать все возможные варианты resources, которые есть в приложении.
+
+### APK vs AAB
+
+Главное отличие - где создаётся финальный устанавливаемый APK.
+
+При традиционном APK разработчик собирает и распространяет один installable package. Если это universal APK, внутри могут быть resources и native libraries для разных device configurations: разных ABIs, screen densities и languages.
+
+При AAB разработчик загружает bundle в Google Play. Google Play затем создаёт набор optimized APKs для конкретного устройства. Установленное приложение может состоять из base APK, configuration APKs и, при необходимости, feature APKs.
+
+Коротко:
+
+- APK - устанавливаемый пакет;
+- AAB - publishing package, из которого генерируются optimized APKs.
+
+### Почему AAB может уменьшить размер приложения?
+
+AAB может уменьшить download size, потому что Google Play доставляет только код и resources, нужные конкретному устройству.
+
+Частые split dimensions:
+
+- CPU architecture / ABI, например `arm64-v8a`;
+- screen density, например `xxhdpi`;
+- language resources;
+- optional dynamic feature modules.
+
+Например, устройству не нужно скачивать native libraries для всех CPU architectures или изображения для всех screen densities. Ему нужны только части, которые соответствуют его configuration.
+
+Это особенно полезно для крупных приложений с большим количеством resources, translations, native libraries или optional features.
+
+### Dynamic features and asset delivery
+
+App bundles также поддерживают более гибкие delivery models.
+
+Dynamic feature modules позволяют доставлять часть функциональности только тогда, когда она нужна, или только для устройств, которые подходят под определённые условия. Это помогает уменьшить initial install и вынести редко используемые возможности из base module.
+
+Для games или приложений с крупным media content можно использовать Play Asset Delivery, чтобы доставлять большие assets гибче.
+
+Но это не значит, что любое приложение нужно дробить на множество modules. Dynamic delivery полезен, когда feature большая, optional или нужна только части аудитории. Для маленького приложения это может добавить лишнюю сложность.
+
+### Ограничения и практические заметки
+
+AAB - предпочтительный publishing format для Google Play, но он не заменяет APK во всех workflow.
+
+Важные практические моменты:
+
+- AAB нельзя установить напрямую через `adb install`;
+- для local testing из AAB нужны generated APKs или `bundletool`;
+- internal testing и sideloading часто проще делать через APK;
+- non-Google app stores могут всё ещё требовать APK или поддерживать собственный bundle format;
+- Play App Signing становится частью стандартного Google Play publishing flow.
+
+### App size optimization
+
+AAB помогает уменьшить delivered size, но не заменяет обычную оптимизацию размера приложения.
+
+Важные техники:
+
+- включай R8 для release builds;
+- удаляй unused code и resources;
+- включай resource shrinking;
+- избегай unnecessary dependencies;
+- оставляй native libraries только для поддерживаемых ABIs;
+- не поставляй unused assets, languages или большие raw resources;
+- выноси крупную optional functionality в dynamic feature modules только когда продукт реально выигрывает от этой сложности.
+
+R8 особенно важен, потому что он может удалять unreachable code, оптимизировать bytecode, сокращать names и уменьшать DEX size. Resource shrinking помогает удалить resources, которые больше не reachable из приложения.
+
+### Коротко
+
+APK - устанавливаемый Android package. Он содержит compiled code, resources, assets, manifest, native libraries и signing information.
+
+AAB - publishing format, который используется в Google Play. Разработчик загружает app bundle, а Google Play генерирует optimized APKs под configuration конкретного устройства. Это может уменьшить download size, потому что пользователь получает только нужные ABI, density, language resources и optional feature modules.
+
+В реальных проектах APK всё ещё полезен для local testing и direct installation, а AAB является стандартным форматом для распространения через Google Play.
+
 ## Source sets
 
 `source sets` позволяют проекту предоставлять разный code и resources для разных variants.
