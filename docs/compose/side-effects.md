@@ -1,67 +1,384 @@
 # Side Effects
 
-Side effects in Compose are needed for work that goes beyond describing UI: coroutine, subscriptions, listeners, analytics, snackbar, navigation events and adapting external state sources.
+Side effects in Compose are work that happens outside pure UI description: launching coroutines, showing a snackbar, sending analytics, registering listeners, collecting events, scrolling, navigation and adapting external state sources.
 
-## Effect APIs
+Composable functions should ideally stay side-effect free. They can recompose many times, skip recomposition, restart with different keys or leave Composition. Effect APIs make side effects explicit and tie them to the lifecycle of a composable call site.
 
-### `LaunchedEffect`
+## Core rule
+
+Do not start work directly from the composable body:
+
+```kotlin
+@Composable
+fun ProfileScreen(userId: String) {
+    // Bad: can run on every recomposition.
+    viewModel.loadUser(userId)
+
+    ProfileContent()
+}
+```
+
+Use an effect when work must happen because a composable entered Composition, because a key changed or because a callback needs a composition-aware scope.
+
+```kotlin
+@Composable
+fun ProfileScreen(
+    userId: String,
+    viewModel: ProfileViewModel
+) {
+    LaunchedEffect(userId) {
+        viewModel.loadUser(userId)
+    }
+
+    ProfileContent()
+}
+```
+
+In regular Android architecture, durable screen work usually belongs to `ViewModel`. Compose effects should mostly coordinate UI-related work: collect one-off UI events, show snackbars, scroll, bridge lifecycle listeners or publish state to non-Compose APIs.
+
+## Which API to use
+
+| Need | API |
+|---|---|
+| Run suspend work when a composable enters Composition or when a key changes | `LaunchedEffect` |
+| Launch a coroutine from a user event callback | `rememberCoroutineScope` |
+| Register something and clean it up | `DisposableEffect` |
+| Publish Compose state to non-Compose code after recomposition | `SideEffect` |
+| Keep the latest lambda or value inside a long-running effect without restarting it | `rememberUpdatedState` |
+| Convert external async state into Compose `State` | `produceState` |
+| Convert Compose state reads into a `Flow` | `snapshotFlow` |
+| Cache derived state when the derived result changes less often than inputs | `derivedStateOf` |
+
+## `LaunchedEffect`
 
 `LaunchedEffect` starts a coroutine tied to the lifecycle of a specific composable call site.
 
 When `LaunchedEffect` enters Composition, the coroutine starts. When it leaves Composition, the coroutine is canceled. If keys change, the current coroutine is canceled and the effect starts again with new keys.
 
-It is used for suspend side effects: initial load, one-off navigation/event collection, animation, delay, scroll, snackbar flow collection, analytics from `snapshotFlow`.
+```kotlin
+@Composable
+fun UserScreen(
+    userId: String,
+    viewModel: UserViewModel
+) {
+    LaunchedEffect(userId) {
+        viewModel.load(userId)
+    }
 
-Keys matter: a key should include values whose changes require restarting the effect. If a fresh lambda/value is needed without restart, use `rememberUpdatedState`.
+    UserContent()
+}
+```
 
-**Important:** `LaunchedEffect(Unit)` or `LaunchedEffect(true)` means an effect for the lifetime of the call site. This is acceptable, but requires a clear understanding of why restart is not needed.
+Use it for suspend side effects:
 
-**In short:** `LaunchedEffect` runs suspend side effects scoped to composition and restarts when its keys change.
+- initial UI-related work;
+- snackbar display;
+- scroll or animation;
+- collecting one-off UI events;
+- navigation events emitted from UI state or event streams;
+- analytics based on Compose state through `snapshotFlow`.
 
-### `rememberCoroutineScope`
+Keys matter. A key should include values whose changes require restarting the effect.
 
-`rememberCoroutineScope` returns a `CoroutineScope` tied to the call site in Composition. The scope is automatically canceled when this call site leaves Composition.
+```kotlin
+LaunchedEffect(userId) {
+    viewModel.load(userId)
+}
+```
 
-It is used when a coroutine should not start immediately on entering composition, but from an event handler: `onClick`, `onDismiss`, swipe callback. For example, to show a `Snackbar`, start an animation or perform a short UI-related action from a user event.
+If a value or lambda must stay fresh inside a long-running effect, but should not restart that effect, use `rememberUpdatedState`.
 
-Do not launch a coroutine directly in the composable body. For automatic launch when a composable appears, prefer `LaunchedEffect`; for launch from an event, use `rememberCoroutineScope`.
+```kotlin
+@Composable
+fun Timeout(onTimeout: () -> Unit) {
+    val latestOnTimeout by rememberUpdatedState(onTimeout)
+
+    LaunchedEffect(Unit) {
+        delay(1_000)
+        latestOnTimeout()
+    }
+}
+```
+
+`LaunchedEffect(Unit)` or `LaunchedEffect(true)` means "run for the lifetime of this call site". This is valid for cases like collecting a stable event stream, but it should be intentional.
+
+```kotlin
+LaunchedEffect(Unit) {
+    viewModel.events.collect { event ->
+        when (event) {
+            is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
+            is UiEvent.NavigateBack -> navController.popBackStack()
+        }
+    }
+}
+```
+
+**In short:** `LaunchedEffect` runs suspend side effects scoped to Composition and restarts when its keys change.
+
+## `rememberCoroutineScope`
+
+`rememberCoroutineScope` returns a `CoroutineScope` tied to the current call site in Composition. The scope is canceled when this call site leaves Composition.
+
+Use it when a coroutine should start from an event handler, not automatically when the composable appears.
+
+```kotlin
+@Composable
+fun SaveButton(snackbarHostState: SnackbarHostState) {
+    val scope = rememberCoroutineScope()
+
+    Button(
+        onClick = {
+            scope.launch {
+                snackbarHostState.showSnackbar("Saved")
+            }
+        }
+    ) {
+        Text("Save")
+    }
+}
+```
+
+Good use cases:
+
+- `onClick`;
+- `onDismiss`;
+- swipe callbacks;
+- local snackbar;
+- short UI-related animation or scroll action.
+
+Do not use it to hide business logic inside UI. If work must survive configuration changes or belong to screen state, move it to `ViewModel`.
 
 **In short:** `rememberCoroutineScope` gives a composition-aware scope for launching coroutines from callbacks and UI events.
 
-### `DisposableEffect`
+## `DisposableEffect`
 
 `DisposableEffect` is used for side effects that need cleanup when leaving Composition or when keys change.
 
-Typical scenarios: registering a listener/observer/broadcast callback, subscribing to lifecycle events, connecting an external imperative API and reliably unsubscribing in `onDispose`.
+Typical scenarios:
 
-`DisposableEffect` must end with an `onDispose` block. If cleanup is empty, check whether `LaunchedEffect` or `SideEffect` fits better.
+- register and unregister a listener;
+- observe lifecycle events;
+- connect to an imperative API;
+- subscribe to a callback source.
 
-Keys should describe effect dependencies. If a listener depends on `lifecycleOwner`, `lifecycleOwner` should be a key so the old observer is removed and the new one is registered.
+```kotlin
+@Composable
+fun LifecycleAnalytics(
+    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+    analytics: Analytics
+) {
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                analytics.trackScreenVisible()
+            }
+        }
 
-**In short:** `DisposableEffect` is for effects with setup and cleanup, like registering and unregistering observers.
+        lifecycleOwner.lifecycle.addObserver(observer)
 
-### `SideEffect`
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+}
+```
 
-`SideEffect` is used to run a non-suspending side effect after successful recomposition.
+`DisposableEffect` must end with `onDispose`. If cleanup is empty, check whether `LaunchedEffect` or `SideEffect` fits better.
 
-A typical scenario is passing current Compose state to an external object not managed by Compose: analytics, logging, imperative controller, system object or legacy API.
+Keys should describe dependencies. If a listener depends on `lifecycleOwner`, then `lifecycleOwner` should be a key so the old observer is removed and the new one is registered.
 
-`SideEffect` runs after every successful recomposition, so it is not used for suspend work, subscriptions or cleanup. Coroutine work needs `LaunchedEffect`; register/unregister work needs `DisposableEffect`.
+**In short:** `DisposableEffect` is for effects with setup and cleanup.
 
-**In short:** `SideEffect` publishes Compose state to non-Compose code after a successful recomposition.
+## `SideEffect`
 
-### `produceState` / `derivedStateOf`
+`SideEffect` runs a non-suspending side effect after every successful recomposition.
 
-`produceState` - an effect API that turns an external data source into Compose `State`. It starts a coroutine scoped to Composition, returns `State<T>` and updates `value` from the producer block.
+Use it to publish current Compose state to non-Compose code:
 
-It is used when non-Compose state needs to be adapted to Compose: suspend loading, callback/subscription API, `Flow` / `LiveData` / RxJava-like source or custom observer.
+- analytics user properties;
+- logging;
+- imperative controller state;
+- legacy UI integration;
+- external object not managed by Compose.
 
-When the composable leaves Composition, the producer is canceled. If keys change, the producer restarts. For callback-based sources, cleanup can be done through `awaitDispose`.
+```kotlin
+@Composable
+fun ProfileContent(
+    user: User,
+    analytics: Analytics
+) {
+    SideEffect {
+        analytics.setUserType(user.type)
+    }
 
-In regular Android architecture, `Flow` from `ViewModel` is usually collected through `collectAsStateWithLifecycle()`, while `produceState` is useful for custom adapters and local integrations.
+    Text(user.name)
+}
+```
 
-`derivedStateOf` creates derived Compose `State` and is needed when input state changes more often than UI should actually update. For example, scroll index changes constantly, but a "scroll to top" button should appear only when crossing a threshold.
+`SideEffect` runs after every successful recomposition. Do not use it for suspend work, subscriptions, cleanup or expensive operations. Coroutine work belongs to `LaunchedEffect`; setup and cleanup belong to `DisposableEffect`.
 
-**Important:** `derivedStateOf` should not be used for ordinary string concatenation or simple calculations that should update as often as inputs. It is overhead, not a universal optimization.
+**In short:** `SideEffect` publishes Compose state to non-Compose code after successful recomposition.
 
-**In short:** `produceState` converts external async state into Compose `State`, while `derivedStateOf` reduces recomposition only when derived result changes less often than its inputs.
+## `produceState`
+
+`produceState` converts external async state into Compose `State`.
+
+It starts a coroutine scoped to Composition, returns `State<T>` and updates `value` from the producer block. When the composable leaves Composition, the producer is canceled. If keys change, the producer restarts.
+
+```kotlin
+@Composable
+fun rememberUserState(
+    userId: String,
+    repository: UserRepository
+): State<Result<User>> {
+    return produceState<Result<User>>(
+        initialValue = Result.Loading,
+        key1 = userId
+    ) {
+        value = repository.loadUser(userId)
+    }
+}
+```
+
+For callback-based sources, use `awaitDispose` for cleanup.
+
+```kotlin
+@Composable
+fun rememberNetworkState(
+    monitor: NetworkMonitor
+): State<Boolean> {
+    return produceState(initialValue = monitor.isOnline) {
+        val listener = NetworkListener { isOnline ->
+            value = isOnline
+        }
+
+        monitor.addListener(listener)
+
+        awaitDispose {
+            monitor.removeListener(listener)
+        }
+    }
+}
+```
+
+In regular Android apps, `Flow` from `ViewModel` is usually collected with `collectAsStateWithLifecycle()`. Use `produceState` mostly for custom adapters, local integrations or non-standard callback sources.
+
+**In short:** `produceState` converts external async or callback-based state into Compose `State`.
+
+## `snapshotFlow`
+
+`snapshotFlow` converts reads of Compose state inside its block into a cold `Flow`.
+
+It is useful when Compose state changes should drive Flow operators, analytics or event-like processing.
+
+```kotlin
+@Composable
+fun ScrollAnalytics(
+    listState: LazyListState,
+    analytics: Analytics
+) {
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex }
+            .map { index -> index > 0 }
+            .distinctUntilChanged()
+            .collect { hasScrolled ->
+                if (hasScrolled) analytics.trackListScrolled()
+            }
+    }
+}
+```
+
+Use it when you need Flow operators over Compose state. Do not use it for ordinary UI rendering; Compose can read state directly.
+
+**In short:** `snapshotFlow` bridges Compose snapshot state into `Flow`.
+
+## `derivedStateOf`
+
+`derivedStateOf` creates derived Compose `State`.
+
+Use it when input state changes more often than the UI should update, and the derived result changes less frequently.
+
+```kotlin
+@Composable
+fun MessagesList(listState: LazyListState) {
+    val showScrollToTop by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0
+        }
+    }
+
+    if (showScrollToTop) {
+        ScrollToTopButton()
+    }
+}
+```
+
+Do not use `derivedStateOf` for ordinary cheap calculations that should update whenever inputs update.
+
+```kotlin
+// Usually unnecessary.
+val fullName by remember {
+    derivedStateOf { "$firstName $lastName" }
+}
+```
+
+That is overhead, not an optimization.
+
+**In short:** `derivedStateOf` reduces unnecessary recomposition only when the derived result changes less often than its inputs.
+
+## Common mistakes
+
+### Launching work from the composable body
+
+```kotlin
+@Composable
+fun BadScreen(viewModel: VM) {
+    viewModel.load() // Bad
+}
+```
+
+Use `LaunchedEffect` or move the trigger to `ViewModel`.
+
+### Wrong keys
+
+```kotlin
+LaunchedEffect(Unit) {
+    viewModel.load(userId)
+}
+```
+
+If `userId` changes while the same call site stays in Composition, this effect will not restart. Prefer:
+
+```kotlin
+LaunchedEffect(userId) {
+    viewModel.load(userId)
+}
+```
+
+### Restarting too often
+
+```kotlin
+LaunchedEffect(onEvent) {
+    delay(1_000)
+    onEvent()
+}
+```
+
+If `onEvent` is recreated often, the effect restarts often. Prefer `rememberUpdatedState` when restart is not intended.
+
+### Empty cleanup
+
+```kotlin
+DisposableEffect(Unit) {
+    onDispose { }
+}
+```
+
+This is usually a sign that another effect API fits better.
+
+## Related topics
+
+- [State & Recomposition](state-recomposition.md)
+- [Compose Performance](performance.md)
+- [UI State Architecture](../architecture/ui-state.md)
+- [Lifecycle-aware Collection](../coroutines-flow/lifecycle-aware-collection.md)

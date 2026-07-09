@@ -207,7 +207,7 @@ Important techniques include:
 
 R8 is especially important because it can remove unreachable code, optimize bytecode, shorten names and reduce DEX size. Resource shrinking helps remove resources that are no longer reachable from the app.
 
-### Interview answer
+### In short
 
 APK is the installable Android package. It contains compiled code, resources, assets, manifest, native libraries and signing information.
 
