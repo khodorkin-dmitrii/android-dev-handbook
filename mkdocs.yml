@@ -123,6 +123,8 @@ extra_css:
 
 not_in_nav: |
   pages-review-tracker.md
+  shorts.md
+  shorts.ru.md
 
 nav:
   - Home: index.md

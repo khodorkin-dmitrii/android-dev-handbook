@@ -108,6 +108,18 @@
     text-indent: 0.4em;
 }
 
+/* Compact entry points to pages intentionally omitted from the main navigation. */
+.md-typeset .handbook-hidden-link {
+    color: var(--md-default-fg-color--lighter);
+    text-decoration: none;
+}
+
+.md-typeset .handbook-hidden-link:focus-visible {
+    border-radius: 0.1rem;
+    outline: 0.1rem solid currentColor;
+    outline-offset: 0.15rem;
+}
+
 /* Keep Material's desktop navigation layout until the content reaches tablet width.
  *
  * Material normally moves top tabs and the primary sidebar into the drawer below

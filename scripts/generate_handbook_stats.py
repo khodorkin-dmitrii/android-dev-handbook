@@ -18,7 +18,11 @@ TECHNICAL_DIRS = {
 }
 
 SERVICE_PAGES = {
+    "index.md",
+    "index.ru.md",
     "pages-review-tracker.md",
+    "shorts.md",
+    "shorts.ru.md",
 }
 
 BEGIN_MARKER = "<!-- BEGIN GENERATED HANDBOOK STATS -->"
@@ -146,9 +150,26 @@ def render_stats_block(
     language: str,
     has_missing: bool,
 ) -> str:
+    tracker_link = (
+        '<a class="handbook-hidden-link" href="../en/pages-review-tracker/" '
+        'aria-label="Pages Review Tracker">▤</a>'
+    )
+    if language == "ru":
+        shorts_label = "Короткие ответы"
+        last_updated = "_Последнее обновление: {{LAST_UPDATED}}_"
+    else:
+        shorts_label = "Short answers"
+        last_updated = "_Last updated: {{LAST_UPDATED}}_"
+    shorts_link = (
+        f'<a class="handbook-hidden-link" href="shorts/" '
+        f'aria-label="{shorts_label}">⚡︎</a>'
+    )
+
     return "\n".join(
         [
-            "## Handbook stats",
+            f"## Handbook stats  {tracker_link}  {shorts_link}",
+            "",
+            last_updated,
             "",
             "| Metric | English | Russian |",
             "|---|---:|---:|",
