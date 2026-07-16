@@ -96,6 +96,14 @@ plugins:
             Retrofit / OkHttp: Retrofit / OkHttp
             GraphQL: GraphQL
             gRPC / Protobuf: gRPC / Protobuf
+            Tools Overview: Обзор инструментов
+            In-App Debug Menus: In-App Debug Menus
+            Logging and Diagnostic Data: Logging and Diagnostic Data
+            Network Inspection: Network Inspection
+            Memory Leak Detection: Memory Leak Detection
+            Performance Profiling and Benchmarking: Performance Profiling and Benchmarking
+            Crash Reporting and Production Monitoring: Crash Reporting and Production Monitoring
+            QA-Friendly Debug Builds: QA-Friendly Debug Builds
             Testing Strategy: Стратегия тестирования
             ViewModel Testing: ViewModel Testing
             Coroutines & Flow Testing: Coroutines & Flow Testing
@@ -193,6 +201,15 @@ nav:
       - Retrofit / OkHttp: networking/retrofit-okhttp.md
       - GraphQL: networking/graphql.md
       - gRPC / Protobuf: networking/grpc-protobuf.md
+  - Tools:
+      - Tools Overview: tools/overview.md
+      - In-App Debug Menus: tools/in-app-debug-menus.md
+      - Logging and Diagnostic Data: tools/logging-diagnostics.md
+      - Network Inspection: tools/network-inspection.md
+      - Memory Leak Detection: tools/memory-leaks.md
+      - Performance Profiling and Benchmarking: tools/performance-profiling.md
+      - Crash Reporting and Production Monitoring: tools/crash-monitoring.md
+      - QA-Friendly Debug Builds: tools/qa-debug-builds.md
   - Testing:
       - Overview: testing/index.md
       - Testing Strategy: testing/strategy.md

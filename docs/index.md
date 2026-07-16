@@ -14,6 +14,7 @@ The goal of the project is to collect practical explanations, compact notes, imp
 * [Java](java/index.md) - Java core, collections, exceptions, concurrency, JVM and Android Runtime specifics.
 * [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules and dependency graph.
 * [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC and Protocol Buffers.
+* [Tools](tools/overview.md) - debugging, diagnostics, profiling, benchmarking, production monitoring and QA-friendly internal builds.
 * [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso and Compose UI tests.
 * [Engineering](engineering/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory and runtime concepts.
 * [Legacy](legacy/index.md) - older but still common Android/Java/Kotlin approaches and libraries: RxJava, RxAndroid, legacy patterns and migration to a modern stack.
@@ -37,9 +38,9 @@ _Last updated: {{LAST_UPDATED}}_
 
 | Metric | English | Russian |
 |---|---:|---:|
-| Domains | 11 | 11 |
-| Pages | 71 | 71 |
-| Sections | 159 | 159 |
-| Topics | 330 | 330 |
-| Words | 49583 | 44497 |
+| Domains | 12 | 12 |
+| Pages | 79 | 79 |
+| Sections | 194 | 194 |
+| Topics | 333 | 333 |
+| Words | 52669 | 47436 |
 <!-- END GENERATED HANDBOOK STATS -->

@@ -259,6 +259,8 @@ Request и response bodies часто содержат sensitive information и 
 
 ### Production recommendations
 
+On-device inspectors, IDE tooling, proxies, request correlation и безопасность payloads разобраны в [Network Inspection](../tools/network-inspection.md).
+
 По возможности держи network logging выключенным в production builds.
 
 Никогда не логируй sensitive information:

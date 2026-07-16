@@ -66,6 +66,8 @@ Profiler лучше использовать вместе с реальными 
 
 **Коротко:** Android Profiler helps verify performance hypotheses instead of guessing; it shows CPU, memory, network and energy behavior under real app usage.
 
+Практический workflow, разделяющий investigation и repeatable measurement, описан в [Performance Profiling and Benchmarking](../tools/performance-profiling.md). Работа с утечками разобрана в [Memory Leak Detection](../tools/memory-leaks.md).
+
 ### LeakCanary
 
 LeakCanary - библиотека для автоматического обнаружения memory leaks в Android debug builds.

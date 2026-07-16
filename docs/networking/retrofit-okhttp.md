@@ -259,6 +259,8 @@ Typical problems in Android projects include:
 
 ### Production recommendations
 
+For on-device inspectors, IDE tooling, proxies, request correlation, and payload-safety trade-offs, see [Network Inspection](../tools/network-inspection.md).
+
 Keep network logging disabled in production builds whenever possible.
 
 Never log sensitive information such as:
