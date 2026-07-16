@@ -8,7 +8,6 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_DIR = ROOT / "docs"
-INCLUDES_DIR = DOCS_DIR / "includes"
 
 TECHNICAL_DIRS = {
     "assets",
@@ -231,10 +230,6 @@ def main() -> int:
 
     en_block = render_stats_block(english, russian, language="en", has_missing=has_missing)
     ru_block = render_stats_block(english, russian, language="ru", has_missing=has_missing)
-
-    INCLUDES_DIR.mkdir(parents=True, exist_ok=True)
-    (INCLUDES_DIR / "handbook-stats.md").write_text(en_block, encoding="utf-8", newline="\n")
-    (INCLUDES_DIR / "handbook-stats.ru.md").write_text(ru_block, encoding="utf-8", newline="\n")
 
     replace_marked_block(DOCS_DIR / "index.md", en_block)
     replace_marked_block(DOCS_DIR / "index.ru.md", ru_block)

@@ -70,6 +70,7 @@ plugins:
             Compose Basics: Основы Compose
             State & Recomposition: State & Recomposition
             Side Effects: Side Effects
+            Compose Navigation: Compose Navigation
             Compose Performance: Performance Compose
             Compose Testing: Testing Compose
             Coroutines Basics: Основы Coroutines
@@ -156,6 +157,7 @@ nav:
       - Compose Basics: compose/basics.md
       - State & Recomposition: compose/state-recomposition.md
       - Side Effects: compose/side-effects.md
+      - Compose Navigation: compose/navigation.md
       - Compose Performance: compose/performance.md
       - Compose Testing: compose/testing.md
   - Coroutines & Flow:
