@@ -96,6 +96,11 @@ plugins:
             Retrofit / OkHttp: Retrofit / OkHttp
             GraphQL: GraphQL
             gRPC / Protobuf: gRPC / Protobuf
+            Android Security Basics: Основы безопасности Android
+            HTTPS, TLS and Certificates: HTTPS, TLS и сертификаты
+            Certificate Pinning: Certificate Pinning
+            Android Keystore and Secure Storage: Android Keystore и безопасное хранение
+            OAuth 2.0, PKCE and Token Management: OAuth 2.0, PKCE и управление токенами
             Tools Overview: Обзор инструментов
             In-App Debug Menus: In-App Debug Menus
             Logging and Diagnostic Data: Logging and Diagnostic Data
@@ -201,6 +206,12 @@ nav:
       - Retrofit / OkHttp: networking/retrofit-okhttp.md
       - GraphQL: networking/graphql.md
       - gRPC / Protobuf: networking/grpc-protobuf.md
+  - Security:
+      - Android Security Basics: security/index.md
+      - HTTPS, TLS and Certificates: security/https-tls-certificates.md
+      - Certificate Pinning: security/certificate-pinning.md
+      - Android Keystore and Secure Storage: security/keystore-secure-storage.md
+      - OAuth 2.0, PKCE and Token Management: security/oauth-pkce-token-management.md
   - Tools:
       - Tools Overview: tools/overview.md
       - In-App Debug Menus: tools/in-app-debug-menus.md
