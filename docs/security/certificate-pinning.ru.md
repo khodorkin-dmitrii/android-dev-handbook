@@ -10,7 +10,7 @@ Pinning не заменяет chain validation и hostname verification. OkHttp 
 
 ## Certificate pinning и public-key pinning
 
-Приложение концептуально может закрепить точный сертификат или его public key. Pin точного сертификата меняется при каждой его замене, даже если новый сертификат использует прежний ключ. Public-key pinning хеширует Subject Public Key Info (SPKI), поэтому обновленный сертификат может продолжить соответствовать pin при сохранении ключа.
+Приложение концептуально может закрепить точный сертификат или его public key. Pin точного сертификата меняется при каждой его замене, даже если новый сертификат использует прежний ключ. Public-key pinning хранит хеш Subject Public Key Info (SPKI) сертификата, поэтому обновленный сертификат может продолжить соответствовать pin при сохранении ключа.
 
 OkHttp `CertificatePinner` использует SPKI hashes. Это дает больше свободы при renewal, однако бесконечное повторное использование ключа увеличивает ущерб от его компрометации. Команде всё равно нужны запланированная rotation и backup pins. Browser HPKP - deprecated web mechanism; application-level конфигурация OkHttp работает в другом контексте deployment и recovery, хотя формат хеша связан с HPKP.
 
@@ -76,6 +76,8 @@ Server configuration меняется за минуты, но mobile release т�
 Interception proxy предъявляет свою certificate chain, поэтому pinned production host обычно ее отклоняет, даже когда debug app доверяет proxy CA. Глобальное отключение pinning или пользовательский switch делают production behavior неопределенным.
 
 Если нужна инспекция трафика, используйте отдельный контролируемый debug variant с отдельным созданием client или trust configuration. Release variants обязаны сохранять production pinning. Автоматические проверки должны подтверждать, что debug exceptions, proxy CAs и bypass configuration отсутствуют в release artifacts.
+
+При использовании declarative pins из Network Security Configuration Android может обходить их для цепочек, которым доверяет через `debug-overrides`. Это не отключает автоматически отдельно настроенный OkHttp `CertificatePinner`.
 
 ## Тестирование pinning
 

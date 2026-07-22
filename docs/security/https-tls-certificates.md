@@ -29,7 +29,7 @@ Modern TLS configurations normally use ephemeral key agreement and provide forwa
 
 An X.509 server certificate binds a public key to identities and includes an issuer, validity period, extensions, and a CA signature. DNS identities are carried in the Subject Alternative Name extension. The requested host must appear there according to hostname-matching rules; the legacy subject common name is not a substitute for a correct SAN configuration.
 
-A certificate being within its validity period is not enough. Its signature and usage must be valid, its chain must reach an accepted trust anchor, it must match the hostname, and relevant revocation or platform policy checks must succeed. The server also needs to present the leaf certificate and required intermediate certificates in the correct order.
+A certificate being within its validity period is not enough. Its signature and usage must be valid, its chain must reach an accepted trust anchor, it must match the hostname, and the chain must satisfy the security policies enforced by the active platform TLS stack. Handling of available revocation information depends on that TLS implementation and platform behavior. The server also needs to present the leaf certificate and required intermediate certificates in the correct order.
 
 ## Certificate authorities
 
@@ -86,7 +86,7 @@ Reference the configuration from the manifest:
     ... />
 ```
 
-The following production baseline disables cleartext. The debug override adds user-installed CAs only while `android:debuggable` is true, which supports a deliberately configured inspection proxy without changing release trust:
+The following production baseline disables cleartext. The debug override adds one bundled development CA only while `android:debuggable` is true, which supports a deliberately configured inspection proxy without changing release trust:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -95,7 +95,7 @@ The following production baseline disables cleartext. The debug override adds us
 
     <debug-overrides>
         <trust-anchors>
-            <certificates src="user" />
+            <certificates src="@raw/debug_cas" />
         </trust-anchors>
     </debug-overrides>
 </network-security-config>
@@ -105,9 +105,9 @@ The following production baseline disables cleartext. The debug override adds us
 
 ## Debug certificates and local proxy tools
 
-Charles, Proxyman, mitmproxy, and similar tools terminate the device's TLS connection and present a certificate issued by a locally installed proxy CA. Inspection works only when the debug application trusts that CA. Release builds should keep normal production trust and should be tested separately.
+Charles, Proxyman, mitmproxy, and similar tools terminate the device's TLS connection and present a certificate issued by a proxy CA. Inspection works only when the debug application trusts that CA. Bundle only the controlled development CA in `@raw/debug_cas`; do not place it in production resources or trust anchors. Release builds should keep normal production trust and should be tested separately.
 
-Certificate pinning adds another check and may still reject a proxy connection. If a project needs inspection of pinned endpoints, use explicit build-variant separation controlled by the team. Do not add a runtime switch or global bypass that can reach production.
+Pinning behavior depends on where it is configured. Android Network Security Configuration does not enforce its declarative pins when a connection chains to a debug-only trust anchor declared through `debug-overrides`. A separate OkHttp `CertificatePinner`, however, remains an application-level check and may still reject the proxy certificate. If a project needs inspection of such endpoints, use explicit build-variant separation controlled by the team. Do not add a runtime switch or global bypass that can reach production.
 
 ## Common unsafe implementations
 

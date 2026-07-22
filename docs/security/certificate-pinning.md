@@ -10,7 +10,7 @@ Pinning does not replace chain validation or hostname verification. OkHttp evalu
 
 ## Certificate pinning vs public-key pinning
 
-An application can conceptually pin an exact certificate or its public key. Exact-certificate pinning changes whenever that certificate is replaced, even if the replacement uses the same key. Public-key pinning hashes the certificate's Subject Public Key Info (SPKI), so a renewed certificate can continue to match when it reuses the key.
+An application can conceptually pin an exact certificate or its public key. Exact-certificate pinning changes whenever that certificate is replaced, even if the replacement uses the same key. Public-key pinning stores a hash of the certificate's Subject Public Key Info (SPKI), so a renewed certificate can continue to match when it reuses the key.
 
 OkHttp's `CertificatePinner` uses SPKI hashes. This gives more renewal flexibility, but indefinite key reuse increases the impact of key compromise. Teams still need planned key rotation and backup pins. Browser HPKP is a deprecated web mechanism; application-level OkHttp configuration has different deployment and recovery constraints even though the hash format is related.
 
@@ -76,6 +76,8 @@ Avoid pinning third-party endpoints unless the provider explicitly supports it a
 An interception proxy presents its own certificate chain, so a pinned production host normally rejects it even when the debug app trusts the proxy CA. Disabling pinning globally or through a user-accessible switch makes production behavior ambiguous.
 
 If traffic inspection is required, use an explicitly controlled debug variant with separate client construction or trust configuration. Release variants must preserve production pinning. Automated checks should prove that debug exceptions, proxy CAs, and bypass configuration are absent from release artifacts.
+
+When declarative Network Security Configuration pins are used, Android can bypass those pins for chains trusted through `debug-overrides`. This does not automatically bypass a separately configured OkHttp `CertificatePinner`.
 
 ## Testing pinning
 

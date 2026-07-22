@@ -26,7 +26,7 @@ Sensitive data includes more than passwords. Common examples are:
 - personal, health, location, and financial data;
 - encryption and signing keys;
 - cached backend responses and local documents;
-- internal identifiers, feature flags, and diagnostic data;
+- internal identifiers, security-sensitive feature configuration, and diagnostic data;
 - logs, analytics events, screenshots, and crash reports containing user context.
 
 Not every identifier is a secret. A public client ID or record identifier may be visible by design, but it can still be private, enable correlation, or help an attacker enumerate resources. Classify data by the consequence of disclosure or modification rather than by its name.

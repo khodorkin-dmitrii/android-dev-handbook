@@ -94,7 +94,7 @@ fun decrypt(value: EncryptedValue): String {
 }
 ```
 
-Production code still needs versioned serialization, optional authenticated associated data, atomic writes, size limits, background execution, corruption and authentication-error mapping, key invalidation recovery, and tests. Never reuse a fixed IV or continue after authentication-tag verification fails.
+Production code still needs synchronization of concurrent first-time key creation, versioned serialization, optional authenticated associated data, atomic writes, size limits, background execution, migration and rotation, corruption and authentication-error mapping, key invalidation recovery, and tests. Never reuse a fixed IV or continue after authentication-tag verification fails.
 
 ## Hardware-backed keys
 
@@ -154,7 +154,7 @@ Account-specific records must not be decrypted or reused for another account. In
 
 ## App reinstall and data clearing
 
-Clearing application data removes app-private files and should be treated as loss of the application's Keystore entries. Uninstalling also removes app-specific Keystore credentials. Product logic should therefore treat uninstall/reinstall or clear-data as loss of app-local encrypted state and require restoration from an authoritative service or a new sign-in.
+Clearing app data or uninstalling the application must be treated by product logic as loss of app-local encrypted state. App-private ciphertext is removed, and app-scoped Keystore keys must not be assumed to remain usable across that lifecycle. Recovery should use an authoritative service or require a new sign-in.
 
 Backup or device transfer can restore ciphertext without the original key. Such data is intentionally undecryptable and must be detected and discarded or replaced, not retried until the application crashes. Do not promise that app-local encrypted state survives reinstall unless an explicit, tested recovery architecture provides new credentials or separately recoverable keys.
 
@@ -194,6 +194,8 @@ Use the backend to hold true service credentials and enforce authorization. Give
 ## Jetpack Security and convenience APIs
 
 As of AndroidX Security Crypto 1.1.0, its crypto convenience APIs, including `EncryptedSharedPreferences`, `EncryptedFile`, and `MasterKey`, are deprecated in favor of existing platform APIs and direct Android Keystore use. Do not introduce them as the default modern storage architecture.
+
+Direct platform APIs do not mean inventing a custom storage format for every project. Prefer a small, reviewed implementation or a maintained library when it matches the threat model, and keep cryptographic code isolated and heavily tested.
 
 Existing applications do not need an unplanned destructive rewrite. Assess their threat model, backup exclusions, migration cost, and library support, then design a versioned transition if needed. Replacing `EncryptedSharedPreferences` with plain preferences is not a security migration when confidentiality is still required.
 

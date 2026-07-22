@@ -79,7 +79,7 @@ Encryption снижает риск простого extraction и offline inspec
 
 ## Добавление авторизации в запросы
 
-Application interceptor может добавлять актуальный token только к запросам точного API host. Нельзя навсегда кешировать один token или отправлять credentials при redirects и на посторонние origins:
+Application interceptor может добавлять актуальный token только к запросам точного API HTTPS origin. Нельзя навсегда кешировать один token или отправлять credentials при redirects и на посторонние origins:
 
 ```kotlin
 interface TokenStore {
@@ -90,16 +90,25 @@ interface TokenStore {
 
 data class TokenSet(
     val accessToken: String,
-    val refreshToken: String,
+    val refreshToken: String?,
 )
 
+private fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean =
+    scheme == other.scheme &&
+        host == other.host &&
+        port == other.port
+
 class AccessTokenInterceptor(
-    private val apiHost: String,
+    private val apiOrigin: HttpUrl,
     private val tokenStore: TokenStore,
 ) : Interceptor {
+    init {
+        require(apiOrigin.isHttps) { "API origin must use HTTPS" }
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        if (request.url.host != apiHost || request.header("Authorization") != null) {
+        if (!request.url.hasSameOrigin(apiOrigin) || request.header("Authorization") != null) {
             return chain.proceed(request)
         }
 
@@ -115,7 +124,9 @@ class AccessTokenInterceptor(
 }
 ```
 
-`TokenStore` должен предоставлять thread-safe snapshots и atomic replacement. Logging interceptors обязаны скрывать `Authorization`. Refresh orchestration находится вне этого interceptor, чтобы обычные requests не запускали независимые refresh calls.
+Bearer tokens нужно ограничивать предназначенным HTTPS origin - scheme, host и port, а не только совпадающим hostname. Такая проверка нужна даже при наличии application-wide cleartext policy.
+
+`TokenStore.current()` обычно должен возвращать быстрый thread-safe snapshot из памяти. Encrypted persistent storage должен загружать и атомарно обновлять этот snapshot, а не расшифровывать данные с диска для каждого HTTP request. Logging interceptors обязаны скрывать `Authorization`. Refresh orchestration находится вне этого interceptor, чтобы обычные requests не запускали независимые refresh calls.
 
 ## Обновление токенов
 
@@ -137,14 +148,15 @@ Refresh - это переход состояния сессии:
 Single-flight coordinator допускает только один refresh одновременно. После входа в critical section он проверяет, не заменил ли другой request уже отклоненный token. В примере используется JVM monitor, потому что OkHttp `Authenticator` синхронный и работает не на main thread:
 
 ```kotlin
-sealed interface RefreshResult {
-    data class Success(val tokens: TokenSet) : RefreshResult
-    data object Rejected : RefreshResult
-    data object TransientFailure : RefreshResult
+sealed interface RefreshOutcome {
+    data class Refreshed(val tokens: TokenSet) : RefreshOutcome
+    data object SessionRejected : RefreshOutcome
+    data object TemporarilyUnavailable : RefreshOutcome
+    data object NotRefreshable : RefreshOutcome
 }
 
 interface AuthApi {
-    fun refresh(refreshToken: String): RefreshResult
+    fun refresh(refreshToken: String): RefreshOutcome
 }
 
 class TokenRefreshCoordinator(
@@ -153,46 +165,55 @@ class TokenRefreshCoordinator(
 ) {
     private val lock = Any()
 
-    fun refreshAfter(failedAccessToken: String): TokenSet? {
+    fun refreshAfter(failedAccessToken: String): RefreshOutcome {
         return synchronized(lock) {
-            val current = tokenStore.current() ?: return@synchronized null
+            val current = tokenStore.current()
+                ?: return@synchronized RefreshOutcome.NotRefreshable
 
             if (current.accessToken != failedAccessToken) {
-                return@synchronized current
+                return@synchronized RefreshOutcome.Refreshed(current)
             }
 
-            when (val result = authApi.refresh(current.refreshToken)) {
-                is RefreshResult.Success -> {
+            val refreshToken = current.refreshToken
+                ?: return@synchronized RefreshOutcome.NotRefreshable
+
+            when (val result = authApi.refresh(refreshToken)) {
+                is RefreshOutcome.Refreshed -> {
                     tokenStore.replace(result.tokens)
-                    result.tokens
+                    result
                 }
-                RefreshResult.Rejected -> {
+                RefreshOutcome.SessionRejected -> {
                     tokenStore.clear()
-                    null
+                    result
                 }
-                RefreshResult.TransientFailure -> null
+                RefreshOutcome.TemporarilyUnavailable,
+                RefreshOutcome.NotRefreshable -> result
             }
         }
     }
 }
 ```
 
-`AuthApi` должен использовать client без этого authenticator, иначе возникнет recursion. Production code должен передавать различие между rejection и transient failure в session/UI state, поддерживать cancellation и timeouts, делать persistence атомарным и не удерживать посторонние locks во время network I/O. Coroutine-first architecture может реализовать то же single-flight правило через `Mutex` или shared `Deferred` вне синхронного OkHttp callback.
+`AuthApi` должен использовать client без этого authenticator, иначе возникнет recursion. Явный outcome сохраняет различие между отклоненной сессией, временным сбоем, при котором нельзя очищать сохраненные credentials, и сессией без refresh token. Этот пример с monitor намеренно блокирует ожидающие callers, пока выполняется один refresh. В production in-flight refresh можно представить как общий result или future, чтобы callers ожидали одну операцию, не связывая с тем же monitor постороннюю работу сессии. Реализация также должна поддерживать cancellation и timeouts и обеспечивать atomic persistence.
 
 ## OkHttp interceptor и authenticator
 
-**Interceptor** изменяет исходящие requests и подходит для добавления текущего authorization header к известному host. Он не должен безусловно выполнять refresh и повторять calls.
+**Interceptor** изменяет исходящие requests и подходит для добавления текущего authorization header к известному HTTPS origin. Он не должен безусловно выполнять refresh и повторять calls.
 
 **Authenticator** реагирует на server authentication challenges, например `401`, и может построить follow-up request. OkHttp способен вызывать его конкурентно, поэтому необходимы loop prevention и общий refresh coordinator.
 
 ```kotlin
 class AccessTokenAuthenticator(
-    private val apiHost: String,
+    private val apiOrigin: HttpUrl,
     private val tokenStore: TokenStore,
     private val refreshCoordinator: TokenRefreshCoordinator,
 ) : Authenticator {
+    init {
+        require(apiOrigin.isHttps) { "API origin must use HTTPS" }
+    }
+
     override fun authenticate(route: Route?, response: Response): Request? {
-        if (response.request.url.host != apiHost || responseCount(response) >= 2) {
+        if (!response.request.url.hasSameOrigin(apiOrigin) || responseCount(response) >= 2) {
             return null
         }
 
@@ -200,11 +221,11 @@ class AccessTokenAuthenticator(
         val failedToken = authorization.removePrefix("Bearer ")
         if (failedToken == authorization) return null
 
-        val current = tokenStore.current() ?: return null
-        val tokens = if (current.accessToken != failedToken) {
-            current
-        } else {
-            refreshCoordinator.refreshAfter(failedToken) ?: return null
+        val tokens = when (val outcome = refreshCoordinator.refreshAfter(failedToken)) {
+            is RefreshOutcome.Refreshed -> outcome.tokens
+            RefreshOutcome.SessionRejected,
+            RefreshOutcome.TemporarilyUnavailable,
+            RefreshOutcome.NotRefreshable -> return null
         }
 
         return response.request.newBuilder()
@@ -224,13 +245,13 @@ class AccessTokenAuthenticator(
 }
 ```
 
-Этот сокращенный sample повторяет authenticated request не более одного раза, использует token, уже обновленный другим call, и возвращает `null`, если challenge нельзя удовлетворить. Здесь опущены provider-specific errors, non-repeatable request bodies, cancellation, metrics, account switching, persistence implementation и UI session events. Безопасность повторного выполнения каждой API operation нужно проверять отдельно.
+Этот сокращенный sample повторяет authenticated request не более одного раза, сравнивает отклоненный token с актуальным snapshot перед refresh, использует token, уже обновленный другим call, и возвращает `null`, если challenge нельзя удовлетворить. Сессия без refresh token не подлежит refresh. Rejected credentials очищают сессию, а transient failure сохраняет ее. Здесь опущены provider-specific errors, non-repeatable request bodies, cancellation, metrics, account switching, persistence implementation и UI session events. Безопасность повторного выполнения каждой API operation нужно проверять отдельно.
 
 ## Обработка `401 Unauthorized`
 
 Конечный decision flow предотвращает loops:
 
-1. Проверить, что неуспешный request действительно использовал access token для ожидаемого host.
+1. Проверить, что неуспешный request действительно использовал access token для ожидаемого HTTPS origin.
 2. Остановиться, если request уже повторялся.
 3. Использовать более новый token, если другой request уже обновил сессию.
 4. Выполнять refresh только при наличии refreshable session.

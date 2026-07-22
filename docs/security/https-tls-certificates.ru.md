@@ -29,7 +29,7 @@ HTTPS не доказывает корректность backend, не авто�
 
 Серверный X.509 certificate связывает public key с идентификаторами и содержит issuer, срок действия, extensions и подпись CA. DNS-идентификаторы указываются в Subject Alternative Name. Запрошенный host должен присутствовать там согласно hostname-matching rules; устаревший subject common name не заменяет корректный SAN.
 
-Одного действующего срока недостаточно. Подпись, назначение и цепочка до принятого trust anchor должны быть корректны, сертификат должен совпадать с hostname, а применимые проверки revocation и platform policy - проходить. Сервер также должен отправлять leaf certificate и необходимые intermediate certificates в правильном порядке.
+Одного действующего срока недостаточно. Подпись, назначение и цепочка до принятого trust anchor должны быть корректны, сертификат должен совпадать с hostname, а цепочка - соответствовать security policies активного platform TLS stack. Обработка доступной информации о revocation зависит от реализации TLS и поведения платформы. Сервер также должен отправлять leaf certificate и необходимые intermediate certificates в правильном порядке.
 
 ## Центры сертификации
 
@@ -86,7 +86,7 @@ OkHttp делегирует проверку certificate chain и hostname ин�
     ... />
 ```
 
-Следующий production baseline запрещает cleartext. Debug override добавляет user-installed CAs только при `android:debuggable=true`, позволяя использовать контролируемый inspection proxy без изменения release trust:
+Следующий production baseline запрещает cleartext. Debug override добавляет один bundled development CA только при `android:debuggable=true`, позволяя использовать контролируемый inspection proxy без изменения release trust:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -95,7 +95,7 @@ OkHttp делегирует проверку certificate chain и hostname ин�
 
     <debug-overrides>
         <trust-anchors>
-            <certificates src="user" />
+            <certificates src="@raw/debug_cas" />
         </trust-anchors>
     </debug-overrides>
 </network-security-config>
@@ -105,9 +105,9 @@ OkHttp делегирует проверку certificate chain и hostname ин�
 
 ## Debug-сертификаты и локальные proxy-инструменты
 
-Charles, Proxyman, mitmproxy и похожие инструменты завершают TLS-соединение устройства и предъявляют сертификат, подписанный локально установленным proxy CA. Инспекция работает, только если debug application доверяет этому CA. Release builds должны сохранять обычное production trust и тестироваться отдельно.
+Charles, Proxyman, mitmproxy и похожие инструменты завершают TLS-соединение устройства и предъявляют сертификат, подписанный proxy CA. Инспекция работает, только если debug application доверяет этому CA. В `@raw/debug_cas` следует включать только контролируемый development CA и не добавлять его в production resources или trust anchors. Release builds должны сохранять обычное production trust и тестироваться отдельно.
 
-Certificate pinning добавляет еще одну проверку и может по-прежнему отклонять proxy connection. Если проекту нужна инспекция pinned endpoints, используйте явное разделение build variants под контролем команды. Не добавляйте runtime switch или глобальный bypass, способный попасть в production.
+Поведение pinning зависит от места его настройки. Android Network Security Configuration не применяет declarative pins, когда цепочка проходит через debug-only trust anchor из `debug-overrides`. Отдельно настроенный OkHttp `CertificatePinner` остается application-level проверкой и может отклонить proxy certificate. Если проекту нужна инспекция таких endpoints, используйте явное разделение build variants под контролем команды. Не добавляйте runtime switch или глобальный bypass, способный попасть в production.
 
 ## Распространенные небезопасные реализации
 

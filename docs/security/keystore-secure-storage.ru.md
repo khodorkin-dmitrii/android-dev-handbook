@@ -94,7 +94,7 @@ fun decrypt(value: EncryptedValue): String {
 }
 ```
 
-Production code также требует versioned serialization, при необходимости authenticated associated data, atomic writes, size limits, background execution, mapping ошибок corruption и authentication, recovery после key invalidation и tests. Нельзя повторно использовать фиксированный IV или продолжать работу после ошибки проверки authentication tag.
+Production code также требует синхронизации конкурентного первого создания ключа, versioned serialization, при необходимости authenticated associated data, atomic writes, size limits, background execution, migration и rotation, mapping ошибок corruption и authentication, recovery после key invalidation и tests. Нельзя повторно использовать фиксированный IV или продолжать работу после ошибки проверки authentication tag.
 
 ## Hardware-backed keys
 
@@ -154,7 +154,7 @@ Account-specific records нельзя расшифровывать или пов
 
 ## Переустановка приложения и очистка данных
 
-Очистка данных удаляет app-private files и должна рассматриваться как потеря Keystore entries приложения. Uninstall также удаляет app-specific Keystore credentials. Поэтому после uninstall/reinstall или clear-data продукт должен считать app-local encrypted state потерянным и восстанавливать его из авторитетного сервиса либо требовать новый sign-in.
+После очистки данных или uninstall продукта логика приложения должна считать app-local encrypted state потерянным. App-private ciphertext удаляется, а app-scoped keys из Android Keystore нельзя считать пригодными для использования после такого lifecycle. Для восстановления нужен авторитетный сервис или новый sign-in.
 
 Backup или device transfer могут восстановить ciphertext без исходного key. Такие данные намеренно невозможно расшифровать, поэтому их нужно обнаружить и удалить либо заменить, а не повторять попытку до постоянного crash. Не обещайте сохранение app-local encrypted state после reinstall без явно спроектированной и проверенной recovery architecture с новыми credentials или отдельно восстанавливаемыми keys.
 
@@ -194,6 +194,8 @@ Backup или device transfer могут восстановить ciphertext б�
 ## Jetpack Security и convenience APIs
 
 Начиная с AndroidX Security Crypto 1.1.0, его crypto convenience APIs, включая `EncryptedSharedPreferences`, `EncryptedFile` и `MasterKey`, deprecated в пользу существующих platform APIs и прямой работы с Android Keystore. Не следует вводить их как современную storage architecture по умолчанию.
+
+Прямая работа с platform APIs не означает, что каждому проекту нужен собственный storage format. Предпочитайте небольшую проверенную реализацию или поддерживаемую библиотеку, если она соответствует threat model, а криптографический код изолируйте и тщательно тестируйте.
 
 Существующим приложениям не нужна незапланированная разрушительная переделка. Сначала оцените threat model, backup exclusions, стоимость migration и поддержку библиотеки, затем спроектируйте versioned transition. Замена `EncryptedSharedPreferences` на plain preferences не является security migration, если конфиденциальность всё еще нужна.
 
