@@ -1,6 +1,6 @@
 # Android Keystore и безопасное хранение
 
-Проектирование безопасного локального хранения начинается с решения о жизненном цикле данных, а не с выбора encryption API. Android Keystore усложняет извлечение криптографических ключей, но приложение по-прежнему отвечает за объем и срок хранения данных, корректное шифрование, сохранение ciphertext и metadata, а также восстановление при недоступности ключа или данных.
+Проектирование безопасного локального хранения начинается с определения жизненного цикла данных, а не с выбора API шифрования. Android Keystore усложняет извлечение криптографических ключей, но приложение по-прежнему отвечает за то, какие данные хранить и как долго, за корректное шифрование, сохранение ciphertext и metadata, а также восстановление при недоступности ключа или данных.
 
 ## Начните с решения о хранении
 
@@ -51,7 +51,7 @@ private fun getOrCreateKey(): SecretKey {
 }
 ```
 
-Поддержка algorithms, key sizes, authentication options и hardware properties зависит от Android version и устройства. Проверяйте обязательные capabilities и определите fallback либо unsupported-device policy на уровне продукта.
+Поддержка algorithms, key sizes, authentication options и hardware properties зависит от версии Android и устройства. Проверяйте необходимые capabilities и заранее определяйте fallback или политику для неподдерживаемых устройств.
 
 ## Ключевой материал и зашифрованные данные приложения
 
@@ -62,9 +62,9 @@ private fun getOrCreateKey(): SecretKey {
 3. Сохранить ciphertext и несекретные metadata, например IV и версию формата.
 4. Получить handle ключа и расшифровать данные при необходимости.
 
-Ciphertext и IV не обязаны быть секретными как ключ, но их нельзя случайно обрезать или перепутать между записями. В GCM значение IV не должно повторяться с одним ключом. Authentication tag, входящий в результат Java cipher, обнаруживает подмену; шифрования без контроля целостности для большинства данных недостаточно.
+Ciphertext и IV, в отличие от ключа, не обязаны быть секретными, но их нельзя случайно обрезать или перепутать между записями. В GCM значение IV не должно повторяться с одним ключом. Authentication tag, входящий в результат Java cipher, обнаруживает подмену; шифрования без контроля целостности для большинства данных недостаточно.
 
-В этом компактном примере provider создает новый IV для каждой операции encryption:
+В этом компактном примере криптографический provider создает новый IV для каждой операции encryption:
 
 ```kotlin
 data class EncryptedValue(
@@ -94,31 +94,31 @@ fun decrypt(value: EncryptedValue): String {
 }
 ```
 
-Production code также требует синхронизации конкурентного первого создания ключа, versioned serialization, при необходимости authenticated associated data, atomic writes, size limits, background execution, migration и rotation, mapping ошибок corruption и authentication, recovery после key invalidation и tests. Нельзя повторно использовать фиксированный IV или продолжать работу после ошибки проверки authentication tag.
+В production также нужны синхронизация конкурентного первого создания ключа, versioned serialization, при необходимости authenticated associated data, атомарная запись, ограничения размера, выполнение в background, migration и rotation, преобразование ошибок повреждения данных и аутентификации в понятные состояния приложения, recovery после key invalidation и тесты. Нельзя повторно использовать фиксированный IV или продолжать работу после ошибки проверки authentication tag.
 
 ## Hardware-backed keys
 
-На поддерживаемых устройствах key material и операции могут находиться в Trusted Execution Environment или Secure Element. Это снижает риск extraction, но не переносит приложение и plaintext в secure hardware. Данные для encryption и plaintext после decryption по-прежнему доступны процессу приложения.
+На поддерживаемых устройствах key material и операции могут находиться в Trusted Execution Environment или Secure Element. Это снижает риск extraction, но не переносит код приложения или plaintext в secure hardware. Данные для encryption и plaintext после decryption по-прежнему доступны процессу приложения.
 
-Нельзя определять hardware backing по модели устройства или API level. Проверяйте `KeyInfo`; в современных Android значение `securityLevel` различает software, trusted environment и StrongBox security levels. Attestation может дать более сильные удаленно проверяемые гарантии для специализированных систем, но требует backend verification и отдельной threat model.
+Нельзя судить о наличии hardware backing только по модели устройства или API level. Проверяйте `KeyInfo`; в современных Android значение `securityLevel` различает software, trusted environment и StrongBox security levels. Attestation может дать более сильные удаленно проверяемые гарантии для специализированных систем, но требует backend verification и отдельной threat model.
 
 Скомпрометированный код с полномочиями приложения всё равно может использовать hardware-backed key. Non-exportability ограничивает извлечение key material, но не доказывает легитимность каждой запрошенной операции.
 
 ## StrongBox на высоком уровне
 
-StrongBox использует отдельный secure hardware component на поддерживаемых устройствах и может обеспечить более сильную изоляцию, чем обычный TEE. Он доступен не везде и может иметь ограничения algorithms, performance, throughput и storage. Запрашивайте StrongBox только тогда, когда threat model оправдывает стоимость совместимости и UX.
+StrongBox использует отдельный secure hardware component на поддерживаемых устройствах и может обеспечить более сильную изоляцию, чем обычный TEE. Он доступен не везде и может иметь ограничения algorithms, performance, throughput и storage. Запрашивайте StrongBox только тогда, когда threat model оправдывает связанные с этим ограничения совместимости и UX.
 
 `setIsStrongBoxBacked(true)` может завершиться `StrongBoxUnavailableException`. Продукту нужен явный вариант поведения: fallback на обычный Keystore key, отключение чувствительной функции или отказ в поддержке устройства согласно требованиям. Молчаливое предположение не является стратегией.
 
 ## Шифрование локальных данных
 
-Подходящий storage envelope зависит от формы данных:
+Способ хранения зашифрованных данных зависит от их формы:
 
 - Небольшие значения можно сериализовать в versioned encrypted record.
 - Файлы можно шифровать authenticated chunks или целиком, если позволяет размер.
 - Room columns могут хранить ciphertext для отдельных чувствительных полей.
 - Full-database encryption - отдельное архитектурное решение со своей моделью key, migration, queries и performance.
-- Кешированные responses иногда безопаснее удалить и загрузить заново, чем переносить между версиями keys.
+- Кешированные ответы иногда безопаснее удалить и загрузить заново, чем переносить между версиями keys.
 
 Android Keystore защищает ключи. Приложение отвечает за serialization, хранение IV, привязку записи, schema versions, key rotation, обработку corruption, atomic persistence, deletion и backup policy. Не создавайте собственный cryptographic container, если требованиям соответствует проверенный формат или библиотека.
 
@@ -126,7 +126,7 @@ Android Keystore защищает ключи. Приложение отвеча�
 
 Keystore key может требовать недавнюю device authentication или authentication для каждого использования в зависимости от API level и configuration ключа. `BiometricPrompt` способен разрешить `CryptoObject` для auth-per-use key. Биометрия управляет доступом к ключу, но не является алгоритмом шифрования.
 
-Такая политика меняет UX и recovery. Authentication можно отменить, может сработать lockout, device credentials могут измениться, biometric enrollment способен инвалидировать key при соответствующей настройке, а пользователь может удалить secure lock screen. До создания ключа решите, нужна ли invalidation и должно ли приложение повторно аутентифицироваться через backend, удалить локальные данные или предложить другой recovery path.
+Такая политика меняет UX и recovery. Authentication можно отменить, может сработать lockout, device credentials могут измениться, добавление или изменение биометрии может инвалидировать key при соответствующей настройке, а пользователь может удалить secure lock screen. До создания ключа решите, нужна ли invalidation и должно ли приложение повторно аутентифицироваться через backend, удалить локальные данные или предложить другой recovery path.
 
 Не используйте biometric-bound key только ради показа prompt. Он оправдан, когда каждая криптографическая операция действительно требует локального присутствия пользователя. Тестируйте device-credential fallback и прерывания lifecycle.
 
@@ -138,7 +138,7 @@ Keystore key может требовать недавнюю device authenticatio
 
 ## Жизненный цикл хранилища
 
-Storage design требует состояний и переходов, а не только `encrypt()` и `decrypt()`:
+При проектировании хранилища нужно продумать состояния и переходы, а не только `encrypt()` и `decrypt()`:
 
 - создать или найти versioned key;
 - атомарно записать ciphertext и metadata;
@@ -148,7 +148,7 @@ Storage design требует состояний и переходов, а не 
 - удалять данные и ключи при logout, account switch или завершении retention period;
 - безопасно восстанавливаться после частичной migration или process death.
 
-Rotation часто требует прочитать данные старым ключом и повторно зашифровать новым. Оба aliases нужно сохранять до успешного commit migration. Для re-fetchable data удаление и загрузка после authentication могут быть безопаснее сложной migration.
+Rotation часто требует прочитать данные старым ключом и повторно зашифровать новым. Оба aliases нужно сохранять до успешного завершения migration. Для re-fetchable data удаление и загрузка после authentication могут быть безопаснее сложной migration.
 
 Account-specific records нельзя расшифровывать или повторно использовать для другого account. Когда это защищает от подмены records, добавляйте account и format context как authenticated associated data.
 
@@ -156,7 +156,7 @@ Account-specific records нельзя расшифровывать или пов
 
 После очистки данных или uninstall продукта логика приложения должна считать app-local encrypted state потерянным. App-private ciphertext удаляется, а app-scoped keys из Android Keystore нельзя считать пригодными для использования после такого lifecycle. Для восстановления нужен авторитетный сервис или новый sign-in.
 
-Backup или device transfer могут восстановить ciphertext без исходного key. Такие данные намеренно невозможно расшифровать, поэтому их нужно обнаружить и удалить либо заменить, а не повторять попытку до постоянного crash. Не обещайте сохранение app-local encrypted state после reinstall без явно спроектированной и проверенной recovery architecture с новыми credentials или отдельно восстанавливаемыми keys.
+Backup или device transfer могут восстановить ciphertext без исходного key. Такие данные намеренно невозможно расшифровать, поэтому их нужно обнаружить и удалить либо заменить, а не повторять попытку до постоянного падения приложения. Не обещайте сохранение app-local encrypted state после reinstall без явно спроектированной и проверенной recovery architecture с новыми credentials или отдельно восстанавливаемыми keys.
 
 ## Backups и перенос на другое устройство
 
@@ -186,7 +186,7 @@ Backup или device transfer могут восстановить ciphertext б�
 - R8 и obfuscation увеличивают трудоемкость reverse engineering, но не создают secret storage.
 - Base64 - обратимое encoding, а не encryption.
 - Native library скрывает строку от простого поиска, но всё равно доставляет ее атакующему.
-- Hardcoded API key может быть публичным identifier, защищенным server-side ограничениями package, signing, quota или API. Его нельзя считать confidential credential.
+- Hardcoded API key может быть публичным идентификатором, защищенным server-side ограничениями package, signing, quota или API. Его нельзя считать confidential credential.
 - Постоянный OAuth client secret внутри native application не является конфиденциальным.
 
 Настоящие service credentials должны храниться на backend, который также контролирует authorization. Мобильный клиент должен получать только необходимые scoped и revocable capabilities.

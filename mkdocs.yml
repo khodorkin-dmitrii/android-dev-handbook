@@ -67,6 +67,11 @@ plugins:
             Collections: Collections
             Functions: Functions
             Generics: Generics
+            KMP vs KMM vs Compose Multiplatform: KMP, KMM и Compose Multiplatform
+            Project Structure and Source Sets: Структура проекта и Source Sets
+            Shared vs Platform-Specific Code: Общий и платформенный код
+            Architecture and UI Strategies: Архитектура и стратегии UI
+            KMP Adoption and Trade-offs: Внедрение KMP и компромиссы
             Compose Basics: Основы Compose
             State & Recomposition: State & Recomposition
             Side Effects: Side Effects
@@ -165,6 +170,13 @@ nav:
       - Collections: kotlin/collections.md
       - Functions: kotlin/functions.md
       - Generics: kotlin/generics.md
+  - KMP:
+      - Overview: kotlin-multiplatform/overview.md
+      - KMP vs KMM vs Compose Multiplatform: kotlin-multiplatform/kmp-kmm-compose.md
+      - Project Structure and Source Sets: kotlin-multiplatform/project-structure.md
+      - Shared vs Platform-Specific Code: kotlin-multiplatform/shared-platform-code.md
+      - Architecture and UI Strategies: kotlin-multiplatform/architecture-ui.md
+      - KMP Adoption and Trade-offs: kotlin-multiplatform/adoption-tradeoffs.md
   - Compose:
       - Overview: compose/index.md
       - Compose Basics: compose/basics.md
