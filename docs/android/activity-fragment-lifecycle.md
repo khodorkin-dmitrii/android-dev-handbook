@@ -8,6 +8,52 @@ Lifecycle in Android describes how components are created, become visible, move 
 
 ![Activity lifecycle](../assets/images/android/activity-lifecycle.png)
 
+The same lifecycle can be represented as a maintainable diagram:
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 20}}}%%
+flowchart TB
+    launched(["Activity<br/>launched"])
+    create["onCreate()"]
+    start["onStart()"]
+    resume["onResume()"]
+    running(["Activity<br/>running"])
+    pause["onPause()"]
+    stop["onStop()"]
+    destroy["onDestroy()"]
+    shutdown(["Activity<br/>shut down"])
+
+    killed(["App process<br/>killed"])
+    restart["onRestart()"]
+
+    launched --> create
+    create --> start
+    start --> resume
+    resume --> running
+
+    running -->|"Another activity<br/>comes into the<br/>foreground"| pause
+    pause -->|"The activity is<br/>no longer visible"| stop
+    stop -->|"The activity is finishing<br/>or being destroyed<br/>by the system"| destroy
+    destroy --> shutdown
+
+    pause -->|"User returns<br/>to the activity"| resume
+    stop -->|"User navigates<br/>to the activity"| restart
+    restart --> start
+
+    stop -->|"Apps with higher<br/>priority need<br/>memory"| killed
+    killed -->|"User navigates<br/>to the activity"| create
+
+    classDef callback fill:#f5f5f5,stroke:#9e9e9e,color:#111111
+    classDef initial fill:#9fc5ff,stroke:#568ee7,color:#111111,font-weight:bold
+    classDef active fill:#b7dc55,stroke:#89ad29,color:#111111,font-weight:bold
+    classDef terminal fill:#ffa36c,stroke:#dd7043,color:#111111,font-weight:bold
+
+    class create,start,resume,pause,stop,destroy,restart callback
+    class launched initial
+    class running active
+    class killed,shutdown terminal
+```
+
 `Activity` lifecycle describes how a screen moves through creation, visibility, user interaction, backgrounding and destruction.
 
 The basic callback sequence is `onCreate()` -> `onStart()` -> `onResume()` -> `onPause()` -> `onStop()` -> `onDestroy()`. When returning between `onStop()` and `onStart()`, `onRestart()` may be called.

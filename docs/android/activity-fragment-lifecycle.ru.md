@@ -8,6 +8,52 @@ Lifecycle в Android описывает, как компоненты созда�
 
 ![Activity lifecycle](../assets/images/android/activity-lifecycle.png)
 
+Тот же lifecycle можно представить в виде поддерживаемой диаграммы:
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 20}}}%%
+flowchart TB
+    launched(["Activity<br/>запущена"])
+    create["onCreate()"]
+    start["onStart()"]
+    resume["onResume()"]
+    running(["Activity<br/>активна"])
+    pause["onPause()"]
+    stop["onStop()"]
+    destroy["onDestroy()"]
+    shutdown(["Activity<br/>завершена"])
+
+    killed(["Процесс приложения<br/>уничтожен"])
+    restart["onRestart()"]
+
+    launched --> create
+    create --> start
+    start --> resume
+    resume --> running
+
+    running -->|"Другая Activity<br/>выходит на<br/>передний план"| pause
+    pause -->|"Activity больше<br/>не видна"| stop
+    stop -->|"Activity завершается<br/>или уничтожается<br/>системой"| destroy
+    destroy --> shutdown
+
+    pause -->|"Пользователь возвращается<br/>к Activity"| resume
+    stop -->|"Пользователь переходит<br/>к Activity"| restart
+    restart --> start
+
+    stop -->|"Приложениям с более<br/>высоким приоритетом<br/>нужна память"| killed
+    killed -->|"Пользователь переходит<br/>к Activity"| create
+
+    classDef callback fill:#f5f5f5,stroke:#9e9e9e,color:#111111
+    classDef initial fill:#9fc5ff,stroke:#568ee7,color:#111111,font-weight:bold
+    classDef active fill:#b7dc55,stroke:#89ad29,color:#111111,font-weight:bold
+    classDef terminal fill:#ffa36c,stroke:#dd7043,color:#111111,font-weight:bold
+
+    class create,start,resume,pause,stop,destroy,restart callback
+    class launched initial
+    class running active
+    class killed,shutdown terminal
+```
+
 `Activity` lifecycle описывает, как экран проходит состояния создания, видимости, взаимодействия с пользователем, ухода в фон и уничтожения.
 
 Базовая последовательность callbacks: `onCreate()` -> `onStart()` -> `onResume()` -> `onPause()` -> `onStop()` -> `onDestroy()`. Между `onStop()` и `onStart()` при возврате может быть вызван `onRestart()`.
