@@ -206,6 +206,10 @@ With a normal configuration change, the old `Activity` goes through `onPause()` 
 
 The main methods are `onMeasure()` for calculating sizes and `onLayout()` for positioning child views. `onDraw()` is needed only when the container draws its own content.
 
+### How does RecyclerView work?
+
+`RecyclerView` coordinates a `LayoutManager`, `Recycler`, `Adapter`, and `ViewHolder`. The `LayoutManager` decides which item positions are needed and where their views should be placed. It requests views through the `Recycler`, which reuses an existing `ViewHolder` when possible or asks the `Adapter` to create and bind one: `RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder`.
+
 ### What is the difference between ViewBinding and DataBinding?
 
 ViewBinding provides type-safe access to views with very little runtime complexity. DataBinding additionally supports expressions in XML, two-way binding, and BindingAdapters, but it makes builds more complex.

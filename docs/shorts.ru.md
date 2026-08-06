@@ -206,6 +206,10 @@ Explicit Intent указывает конкретный компонент, ко
 
 Главные методы - `onMeasure()` для расчёта размеров и `onLayout()` для размещения дочерних View. `onDraw()` нужен только если контейнер рисует собственный контент.
 
+### Как работает RecyclerView?
+
+`RecyclerView` координирует работу `LayoutManager`, `Recycler`, `Adapter` и `ViewHolder`. `LayoutManager` определяет, какие позиции сейчас нужны и где разместить их `View`. Он запрашивает элементы через `Recycler`, который по возможности переиспользует существующий `ViewHolder`, а при необходимости просит `Adapter` создать и привязать его: `RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder`.
+
 ### Чем ViewBinding отличается от DataBinding?
 
 ViewBinding даёт типобезопасный доступ к View и почти не добавляет runtime-сложности. DataBinding дополнительно поддерживает выражения в XML, two-way binding и BindingAdapters, но усложняет сборку.

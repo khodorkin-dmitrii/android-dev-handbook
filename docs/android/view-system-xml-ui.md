@@ -46,6 +46,36 @@ In practice, `DialogFragment` is more convenient when the dialog is tied to navi
 
 **In short:** `Dialog` is just a window, `DialogFragment` manages that dialog through Fragment lifecycle and `FragmentManager`.
 
+## Lists and recycling
+
+### How RecyclerView works
+
+`RecyclerView` efficiently displays large data sets by creating and keeping only the item `View`s needed for the visible area and a small working set around it. Its main components have separate responsibilities:
+
+- `RecyclerView` is the `ViewGroup` container that coordinates layout, scrolling and recycling.
+- `LayoutManager` decides which item positions are needed, measures and places their `View`s, and implements the spatial behavior of scrolling.
+- `RecyclerView.Recycler` obtains a suitable `View` for a requested position. It reuses an existing `ViewHolder` when possible and involves the `Adapter` when a holder must be created or bound.
+- `Adapter` provides the item count, creates `ViewHolder`s and binds data to them.
+- `ViewHolder` wraps an item `View` and keeps references used during binding.
+
+A useful conceptual request chain is:
+
+```text
+RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder
+```
+
+This is a collaboration flow, not an ownership hierarchy. During layout, the `LayoutManager` requests the `View`s required for the current viewport through the `Recycler`. During scrolling, it moves the attached children, recycles those that are no longer needed and requests `View`s for newly visible positions. The `Recycler` can reuse a compatible holder; otherwise the `Adapter` creates one, and it binds the holder when required.
+
+The standard implementations cover most layouts:
+
+- `LinearLayoutManager` - a vertical or horizontal list.
+- `GridLayoutManager` - a grid with a fixed number of spans.
+- `StaggeredGridLayoutManager` - a staggered grid where items may have different sizes.
+
+The `LayoutManager` does not own the data or define item content. The `Adapter` describes how data is represented, while the `LayoutManager` determines where and when item `View`s appear.
+
+**In short:** `RecyclerView` coordinates the list, `LayoutManager` controls placement and scrolling, `Recycler` reuses item views, `Adapter` creates and binds holders, and `ViewHolder` stores an individual item `View`.
+
 ## Binding, performance and styling
 
 ### ViewBinding vs DataBinding
