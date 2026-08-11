@@ -1,97 +1,273 @@
 # Coroutine Scopes & Cancellation
 
-Coroutine scope defines the lifecycle of asynchronous work, and cancellation allows safely stopping work when the owner is no longer needed.
+Coroutine scope defines the lifetime of asynchronous work. Cancellation stops that work when its owner is gone, or when a newer operation replaces it.
 
-## Scopes
+In Android, the key question is not just “how do I launch a coroutine?”, but “who owns this work, and when should it stop?”
 
-### Structured concurrency
+## Choose scope by owner
 
-Structured concurrency means coroutines are launched inside `CoroutineScope` and tied to its lifecycle. Parent scope knows about child coroutines, waits for their completion and can cancel them together.
+A coroutine should run in a scope that matches the lifetime of the work:
 
-The idea is that async work should not "leak" into nowhere: if a screen, request or use case is finished, related coroutines should also complete or be canceled.
+- `viewModelScope` - screen state and user actions owned by a `ViewModel`;
+- `lifecycleScope` - work owned by an `Activity` or `Fragment`;
+- `repeatOnLifecycle` / lifecycle-aware collection - UI collection that should start and stop with lifecycle state;
+- `coroutineScope` - child work owned by the current suspend operation;
+- `WorkManager` - deferrable work that must outlive the UI.
 
-In Android, this is especially important for `ViewModel`, lifecycle-aware UI collection and long-running operations. `GlobalScope` is usually considered a smell because the coroutine lives outside a clear owner and is harder to cancel and test.
-
-**In short:** structured concurrency keeps coroutines scoped, cancellable and tied to a clear lifecycle instead of launching unmanaged background work.
-
-### `coroutineScope` vs `supervisorScope`
-
-`coroutineScope` creates a new scope inside a suspend function and suspends until all child coroutines complete. If one child fails with an exception, the scope cancels the other children and propagates the error upward.
-
-`supervisorScope` is similar, but isolates child failures: failure of one child coroutine does not automatically cancel siblings. This is useful when tasks are independent and UI can show partial result.
-
-`coroutineScope` fits when an all-or-nothing result is needed. `supervisorScope` fits when screen blocks or independent requests can complete separately.
+Avoid choosing a scope just because it is easy to access. The owner determines the lifetime.
 
 ```kotlin
-coroutineScope {
+class ProfileViewModel(
+    private val repository: ProfileRepository,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ProfileUiState())
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    fun loadProfile(userId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            try {
+                val profile = repository.loadProfile(userId)
+                _uiState.update {
+                    it.copy(isLoading = false, profile = profile)
+                }
+            } catch (e: IOException) {
+                _uiState.update {
+                    it.copy(isLoading = false, error = UiError.Network)
+                }
+            }
+        }
+    }
+}
+```
+
+Here the work belongs to the `ViewModel`. When the `ViewModel` is cleared, the running coroutine is cancelled.
+
+## Structured concurrency
+
+Structured concurrency means child coroutines are launched inside a parent scope. The parent can wait for them, cancel them, and propagate failures in a predictable way.
+
+This prevents asynchronous work from leaking outside its owner. If a screen, request, or use case is finished, related child work should also finish or be cancelled.
+
+```kotlin
+suspend fun loadDashboard(): Dashboard = coroutineScope {
     val user = async { api.getUser() }
     val cards = async { api.getCards() }
 
-    UiState(
+    Dashboard(
         user = user.await(),
-        cards = cards.await()
+        cards = cards.await(),
     )
 }
 ```
 
-If `getUser()` fails, `getCards()` will be canceled. For independent blocks, use `supervisorScope` and handle errors of each `async` separately.
+With `coroutineScope`, if one child fails, sibling coroutines are cancelled and the error is propagated upward. This is usually correct for all-or-nothing work.
 
-**In short:** `coroutineScope` fails fast and cancels siblings, `supervisorScope` lets sibling coroutines fail independently.
+`GlobalScope` is usually a smell in Android code because the coroutine has no clear owner. It is harder to cancel, test, and reason about.
 
-### `viewModelScope`
+## `Job` and cancellation hierarchy
 
-`viewModelScope` - a `CoroutineScope` tied to `ViewModel`. It is automatically canceled when `ViewModel` receives `onCleared()`.
+A `Job` represents cancellable coroutine work. A scope contains a `Job`, and child coroutines form a hierarchy under it.
 
-It is used for screen-level async work: loading data, handling user actions, updating `StateFlow` / `SharedFlow`, launching repository calls and orchestrating UI state.
+When a parent `Job` is cancelled, its children are cancelled too.
 
-**Important:** `viewModelScope` does not survive `ViewModel` destruction on process death and is not suitable for guaranteed background work. For deferrable reliable background work, prefer `WorkManager`.
+```kotlin
+val job = viewModelScope.launch {
+    repository.sync()
+}
 
-Inside `viewModelScope`, Main dispatcher is used by default, so heavy CPU/I/O work should be moved to repository/use case or switch dispatcher intentionally.
+job.cancel()
+```
 
-**In short:** `viewModelScope` is the lifecycle-aware scope for `ViewModel` work; it is cancelled when the `ViewModel` is cleared.
+Manual `Job` tracking is useful when a new user action replaces an old operation:
 
-## Cancellation
+```kotlin
+private var searchJob: Job? = null
 
-### Cancellation
+fun onQueryChanged(query: String) {
+    searchJob?.cancel()
 
-Cancellation in coroutines is cooperative: a coroutine is not "killed" instantly at an arbitrary point. It must reach a suspension point or check `isActive` / `ensureActive()` itself.
+    searchJob = viewModelScope.launch {
+        val result = repository.search(query)
+        _uiState.update { it.copy(result = result) }
+    }
+}
+```
 
-Regular suspend functions like `delay()`, `withContext()`, Flow collection and many network/database APIs can react to cancellation. A CPU-heavy loop without suspension points can keep running until it checks cancellation manually.
+For Flow-based search, `flatMapLatest` often expresses the same replacement behavior more cleanly.
 
-When a parent `Job` is canceled, child coroutines also receive cancellation. This is the basis of structured concurrency and the reason work should be launched in the right scope.
+## `coroutineScope` vs `supervisorScope`
 
-Typical pitfalls: launching work in `GlobalScope`, catching `Exception` and swallowing cancellation, not canceling an old `Job` on a new user action, making an infinite loop without `isActive`.
+Use `coroutineScope` when child tasks belong to one all-or-nothing operation. Failure of one child cancels the others.
 
-**In short:** coroutine cancellation is cooperative; cancellation propagates through the `Job` hierarchy and works best when code reaches suspension points or checks `isActive`.
+Use `supervisorScope` when child tasks are independent and partial success is valid.
 
-### `CancellationException`
+```kotlin
+suspend fun loadBlocks(): Blocks = supervisorScope {
+    val news = async { runCatching { api.getNews() } }
+    val banners = async { runCatching { api.getBanners() } }
 
-`CancellationException` - a special exception used by coroutines to signal normal cancellation.
+    Blocks(
+        news = news.await().getOrDefault(emptyList()),
+        banners = banners.await().getOrDefault(emptyList()),
+    )
+}
+```
 
-It should not be handled like a regular error or shown to the user as failure. If `catch` catches `Exception`, avoid accidentally swallowing `CancellationException`.
+`supervisorScope` does not mean “ignore exceptions”. It only changes failure propagation between children. Each failing child still needs explicit handling if the error should not be lost.
+
+`SupervisorJob` has similar supervision semantics at the `Job` level. Android `viewModelScope` uses supervision internally, so failure of one launched child coroutine should not cancel the whole `ViewModel` scope. It still does not replace proper error handling.
+
+## `viewModelScope`
+
+`viewModelScope` is tied to a `ViewModel` and is cancelled when `onCleared()` is called.
+
+Use it for screen-level asynchronous work:
+
+- loading screen data;
+- handling user actions;
+- updating `StateFlow` and `SharedFlow`;
+- calling repositories or use cases;
+- coordinating UI state.
+
+`viewModelScope` does not survive process death and is not a tool for guaranteed background execution. Use `WorkManager` for reliable deferrable work that must continue outside the UI lifetime.
+
+`viewModelScope` uses the main dispatcher by default. Heavy CPU or I/O work should switch dispatcher inside the appropriate repository or use case:
+
+```kotlin
+suspend fun parseLargeFile(file: File): ParsedData =
+    withContext(Dispatchers.Default) {
+        parser.parse(file)
+    }
+```
+
+## Cooperative cancellation
+
+Coroutine cancellation is cooperative. A coroutine is not killed immediately at an arbitrary instruction. It must reach a cancellable suspension point or check cancellation explicitly.
+
+Common cancellable points include:
+
+- `delay()`;
+- `withContext()`;
+- Flow collection and operators;
+- many network/database calls when the library supports cancellation;
+- `withTimeout()`.
+
+CPU-heavy loops should check cancellation manually:
+
+```kotlin
+suspend fun calculate(items: List<Item>): Result =
+    withContext(Dispatchers.Default) {
+        val builder = ResultBuilder()
+
+        for (item in items) {
+            ensureActive()
+            builder.add(process(item))
+        }
+
+        builder.build()
+    }
+```
+
+Typical mistakes:
+
+- using `GlobalScope` for regular app work;
+- catching `Exception` and swallowing `CancellationException`;
+- running a long CPU loop without `ensureActive()` or suspension points;
+- not cancelling old work when a newer user action replaces it;
+- showing cancellation as a user-visible error.
+
+## `CancellationException`
+
+`CancellationException` is the normal control signal for coroutine cancellation. Do not treat it as a regular failure.
+
+If you catch `Exception`, rethrow `CancellationException` first:
 
 ```kotlin
 try {
     repository.load()
 } catch (e: CancellationException) {
     throw e
+} catch (e: IOException) {
+    showNetworkError()
 } catch (e: Exception) {
-    handleError(e)
+    showUnexpectedError()
 }
 ```
 
-This is especially important in Flow/coroutines chains: swallowed cancellation can break structured concurrency and leave work in an incorrect state.
+The same rule applies to Flow:
 
-**In short:** `CancellationException` is a normal control signal for coroutine cancellation and should usually be rethrown, not mapped to a user-facing error.
+```kotlin
+flow
+    .catch { e ->
+        if (e is CancellationException) throw e
+        emit(UiState.Error)
+    }
+    .collect { state ->
+        render(state)
+    }
+```
 
-### Timeout
+Swallowing cancellation can break structured concurrency and keep work alive longer than expected.
 
-Timeout limits coroutine execution time. Main APIs: `withTimeout()` and `withTimeoutOrNull()`.
+## Cleanup and timeout
 
-`withTimeout()` throws `TimeoutCancellationException`, which is a `CancellationException`. `withTimeoutOrNull()` returns `null` instead of an exception.
+Use `try/finally` when resources must be closed or temporary UI state must be reset after cancellation.
 
-Timeout is useful for network/database/remote operations that should not hang forever. But timeout does not replace a normal error handling strategy and retry policy.
+```kotlin
+viewModelScope.launch {
+    _uiState.update { it.copy(isLoading = true) }
 
-Do not blindly retry all operations: retry fits temporary technical errors, but not business errors such as invalid credentials or validation error. Critical operations need idempotency or status verification.
+    try {
+        repository.refresh()
+    } finally {
+        _uiState.update { it.copy(isLoading = false) }
+    }
+}
+```
 
-**In short:** timeout cancels a coroutine if it takes too long; `withTimeout()` throws, `withTimeoutOrNull()` returns `null`, and timeout should be combined with thoughtful error and retry handling.
+If cleanup itself must call a suspend function after cancellation, wrap only that small cleanup part with `NonCancellable`:
+
+```kotlin
+try {
+    uploadFile()
+} finally {
+    withContext(NonCancellable) {
+        repository.markUploadFinished()
+    }
+}
+```
+
+Use `NonCancellable` carefully. It delays cancellation and should not keep ordinary business work alive after the owner was cancelled.
+
+Use `withTimeout()` or `withTimeoutOrNull()` to limit execution time:
+
+```kotlin
+val config = withTimeoutOrNull(10_000) {
+    repository.fetchRemoteConfig()
+}
+```
+
+`withTimeout()` throws `TimeoutCancellationException`, a subtype of `CancellationException`. Timeout should be combined with clear error mapping and a careful retry policy. Do not blindly retry validation errors, payments, or operations that may create duplicate effects.
+
+## Practical Android rules
+
+- Choose the scope by the lifetime of the work owner.
+- Use `viewModelScope` for `ViewModel`-owned screen work.
+- Use lifecycle-aware APIs for UI collection.
+- Use `WorkManager` for reliable deferrable background work.
+- Use `coroutineScope` for all-or-nothing parallel work.
+- Use `supervisorScope` for independent child tasks with partial success.
+- Avoid `GlobalScope` in regular app code.
+- Rethrow `CancellationException`.
+- Add cancellation checks to CPU-heavy loops.
+- Keep cleanup small and explicit.
+
+## Related topics
+
+- [Coroutines Basics](basics.md)
+- [Flow Basics](flow-basics.md)
+- [Lifecycle-aware Collection](lifecycle-aware-collection.md)
+- [UI State Architecture](../architecture/ui-state.md)

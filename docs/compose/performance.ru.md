@@ -1,53 +1,157 @@
 # Compose Performance
 
-Compose performance нужно анализировать по фазам: Composition, Layout и Drawing. Проблема может быть не только в recomposition, но и в дорогом layout, draw, allocations или main-thread work.
+Производительность Compose - это не только recomposition. Медленный кадр может быть связан с composition, layout, drawing, allocations, image loading или другой работой на main thread.
+
+Цель не в том, чтобы убрать каждую recomposition. Нужно измерить bottleneck и уменьшить лишнюю работу именно в той фазе, которая реально тормозит.
+
+## Сначала измеряйте
+
+Не оптимизируйте Compose performance только по debug build. Debug-сборки и инструменты могут искажать recomposition и frame timings.
+
+Предпочтительны:
+
+- release или release-like builds;
+- реальные устройства с реалистичными данными;
+- Layout Inspector и recomposition counters для локальной диагностики;
+- System Trace / Perfetto для анализа работы кадра;
+- Macrobenchmark для startup, scroll и navigation scenarios.
+
+Практичный порядок диагностики:
+
+1. Воспроизвести медленный экран или interaction.
+2. Понять, где затраты: composition, layout, drawing, allocations, image loading или main-thread work.
+3. Сделать одно сфокусированное изменение.
+4. Повторить измерение на том же сценарии.
 
 ## Lazy layouts
 
 ### LazyColumn performance
 
-`LazyColumn`, `LazyRow` и lazy grids эффективно compose-ят только видимые элементы и переиспользуют compositions, но performance всё равно зависит от identity элементов, стоимости item UI и организации state.
+`LazyColumn`, `LazyRow` и lazy grids compose-ят только видимые элементы и ближайший контент, но performance всё равно зависит от identity элементов, стоимости item и организации state.
 
-Для списков с insert/remove/reorder нужно задавать stable unique keys: `key = { item.id }`. Без keys Compose привязывает item state к позиции, поэтому при перемещении элементов можно потерять `remember` state и получить лишние recompositions.
+Для списков с insert, remove, reorder или sorting используйте stable unique keys:
 
-Для списков с разными типами элементов полезен `contentType`. Он помогает Compose переиспользовать compositions только между элементами похожей структуры, а не пытаться переиспользовать item одного типа как item другого типа.
+```kotlin
+LazyColumn {
+    items(
+        items = messages,
+        key = { message -> message.id },
+    ) { message ->
+        MessageRow(message)
+    }
+}
+```
 
-Item composable должен быть лёгким: не сортировать и не фильтровать большие коллекции внутри item, не делать I/O, не создавать тяжёлые объекты и не выполнять дорогой image/formatting work на каждую recomposition. Для больших или удалённых данных лучше использовать Paging.
+Без keys identity элемента в основном привязана к позиции. После reorder remembered state может оказаться у другого logical item, а Compose может сделать больше работы, чем нужно.
 
-**Коротко:** `LazyColumn` is lazy by rendering only visible items, but real performance depends on stable keys, lightweight item content, correct state ownership and avoiding heavy work during composition.
+Для списков с разными типами элементов задавайте `contentType`:
+
+```kotlin
+items(
+    items = feedItems,
+    key = { item -> item.id },
+    contentType = { item -> item.type },
+) { item ->
+    FeedRow(item)
+}
+```
+
+`contentType` помогает Compose переиспользовать compositions только между структурно похожими rows.
+
+Item content должен быть лёгким. Не сортируйте и не фильтруйте всю коллекцию внутри item, не выполняйте I/O, не декодируйте bitmaps синхронно и не создавайте дорогие formatter-объекты на каждую recomposition. Для больших или удалённых datasets лучше использовать Paging.
 
 ### Stable keys
 
-Stable keys в lazy layouts - это стабильные уникальные identifiers, которые помогают Compose сохранить identity элемента при изменении dataset.
+Правильный key должен быть стабильным для одного logical item: database id, server id, UUID или другой persistent identifier. Не используйте текущий index, если порядок списка может меняться.
 
-По умолчанию identity элемента фактически связана с его позицией. Это плохо для списков, где элементы добавляются, удаляются, сортируются или перемещаются: item state может "переехать" не туда, а Compose может сделать больше работы, чем нужно.
-
-Правильный key должен быть стабильным для одного и того же logical item: database id, server id, UUID или другой устойчивый identifier. Index использовать опасно, если порядок списка может меняться.
-
-Если внутри item используется `rememberSaveable`, key должен быть совместим с `Bundle`, например primitive, enum или `Parcelable`, чтобы state мог восстановиться после recreation или после ухода item за пределы viewport.
-
-**Коротко:** stable keys keep item identity across list changes, preserving item state and helping Compose avoid unnecessary recomposition.
+Если внутри item используется `rememberSaveable`, key должен быть совместим с Android saved state, например primitive, `String`, enum или `Parcelable`.
 
 ## Performance pitfalls
 
-### Heavy work inside composable
+### Heavy work inside a composable
 
-Composable body может выполняться много раз, быть skipped или перезапускаться при изменении state. Поэтому тяжёлая работа внутри composable быстро превращается в performance problem.
+Composable body может выполняться много раз. Дорогая работа внутри него быстро становится performance problem:
 
-Типичные ошибки: сортировать/фильтровать большой список прямо в composable, парсить данные, создавать formatter на каждую recomposition, выполнять I/O, синхронно декодировать bitmap, делать сложные вычисления или запускать side effects прямо из body.
+```kotlin
+@Composable
+fun UsersScreen(users: List<User>) {
+    val sortedUsers = users.sortedBy(User::name) // Не повторяем это в UI без причины
+    UsersList(sortedUsers)
+}
+```
 
-Лучше подготовить данные заранее во `ViewModel` / domain layer и передать в UI готовую UI model. Если локальное вычисление действительно относится к UI и зависит от конкретных inputs, его можно кэшировать через `remember(inputs)`, но `remember` не должен прятать business logic.
+Долгоживущие UI-данные лучше готовить во `ViewModel` или domain layer. Если небольшое UI-only вычисление действительно принадлежит UI, его можно закэшировать с правильными keys:
 
-Для suspend work и callback/subscription API нужны controlled side effects: `LaunchedEffect`, `produceState` или `DisposableEffect`, а не прямой запуск работы из composable body.
+```kotlin
+val sortedUsers = remember(users) {
+    users.sortedBy(User::name)
+}
+```
 
-**Коротко:** composables should describe UI, not perform heavy work; move expensive work out of composition or cache it with the right keys.
+`remember` - это composition cache, а не место для business logic, I/O или дорогой подготовки данных.
 
-### Compose UI performance pitfalls
+Side effects тоже не должны запускаться напрямую из composable body. Используйте `LaunchedEffect`, `produceState` или `DisposableEffect`, когда работа должна быть привязана к Composition.
 
-Частые pitfalls: читать часто меняющийся state слишком высоко в дереве, передавать mutable/unstable models, забывать stable keys в lazy lists, делать heavy work в composable, создавать лишние allocations, запускать side effects в body, использовать nested scroll/lazy layouts без ограничений размера, делать backwards writes и обновлять state после того, как он уже был прочитан в composition.
+### Часто меняющийся state
 
-`derivedStateOf` полезен, когда input state меняется часто, а UI должен обновляться только при изменении derived result. Но он не нужен для обычных дешёвых вычислений, которые должны обновляться так же часто, как inputs.
+Если читать fast-changing state слишком высоко в дереве, можно invalidated больше UI, чем нужно. Держите чтение state ближе к месту, где значение реально используется.
 
-Оптимизировать нужно после измерений: debug build может искажать картину. Лучше смотреть release/R8 build, Layout Inspector, recomposition highlights/counters, Android Profiler, tracing/Perfetto, Macrobenchmark и реальные user scenarios.
+Для значений, которые нужны только на layout или drawing phase, lambda-based modifiers иногда позволяют отложить чтение на более позднюю фазу:
 
-**Коротко:** Compose performance is not about avoiding recomposition blindly; it is about measuring the bottleneck and reducing unnecessary work in composition, layout, drawing and the main thread.
+```kotlin
+Modifier.offset {
+    IntOffset(x = 0, y = scrollOffset())
+}
+```
+
+Используйте это только когда profiling показывает, что чтение state создаёт лишнюю composition work.
+
+### `derivedStateOf`
+
+`derivedStateOf` полезен, когда input state меняется часто, а UI должен обновиться только при изменении derived result:
+
+```kotlin
+val showScrollToTop by remember {
+    derivedStateOf {
+        listState.firstVisibleItemIndex > 0
+    }
+}
+```
+
+Не оборачивайте каждое вычисление в `derivedStateOf`. Для дешёвых значений, которые должны обновляться при изменении inputs, прямое вычисление проще и часто лучше.
+
+### Stability и backwards writes
+
+Stable immutable UI models помогают Compose пропускать лишнюю работу, но stability annotations - это contracts. Не добавляйте `@Stable` или `@Immutable` только ради исчезновения warning.
+
+Избегайте backwards writes: обновления state после его чтения в том же composition path. Это может постоянно планировать recomposition или создать бесконечный loop.
+
+```kotlin
+@Composable
+fun BadCounter() {
+    var count by remember { mutableIntStateOf(0) }
+
+    Text("Count: $count")
+    count++ // Неправильно
+}
+```
+
+State должен меняться из user events, effects, ViewModel или другого явного state owner.
+
+## Частые ошибки
+
+- Считать каждую recomposition багом.
+- Измерять только debug builds.
+- Читать часто меняющийся state слишком высоко в UI tree.
+- Делать sorting, parsing, I/O или bitmap decoding во время composition.
+- Использовать list index как key для reorderable data.
+- Передавать mutable models, изменения которых Compose не наблюдает.
+- Добавлять `remember`, `derivedStateOf` или stability annotations без измеренной причины.
+- Оптимизировать composition, когда реальная проблема в layout, drawing, image loading или main-thread work.
+
+## Связанные темы
+
+- [State & Recomposition](state-recomposition.md)
+- [Side Effects](side-effects.md)
+- [Performance Profiling and Benchmarking](../tools/performance-profiling.md)
+- [Android Performance & Memory](../android/performance-memory.md)

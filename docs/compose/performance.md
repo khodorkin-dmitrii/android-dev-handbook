@@ -1,53 +1,157 @@
 # Compose Performance
 
-Compose performance should be analyzed by phases: Composition, Layout and Drawing. The problem may be not only recomposition, but also expensive layout, draw, allocations or main-thread work.
+Compose performance is not only about recomposition. A slow frame can be caused by composition, layout, drawing, allocations, image loading, or other main-thread work.
+
+The goal is not to avoid every recomposition. The goal is to measure the bottleneck and reduce unnecessary work in the phase that is actually slow.
+
+## Measure first
+
+Do not optimize Compose performance only from a debug build. Debug builds and tooling can distort recomposition and frame timings.
+
+Prefer:
+
+- release or release-like builds;
+- real devices with realistic data;
+- Layout Inspector and recomposition counters for local investigation;
+- System Trace / Perfetto for frame work;
+- Macrobenchmark for startup, scroll and navigation scenarios.
+
+A useful investigation order:
+
+1. Reproduce the slow screen or interaction.
+2. Check whether the cost is composition, layout, drawing, allocation, image loading or main-thread work.
+3. Make one focused change.
+4. Measure the same scenario again.
 
 ## Lazy layouts
 
 ### LazyColumn performance
 
-`LazyColumn`, `LazyRow` and lazy grids efficiently compose only visible items and reuse compositions, but performance still depends on item identity, item UI cost and state organization.
+`LazyColumn`, `LazyRow` and lazy grids compose only visible items and nearby content, but performance still depends on item identity, item cost and state organization.
 
-For lists with insert/remove/reorder, set stable unique keys: `key = { item.id }`. Without keys, Compose ties item state to position, so moving items can lose `remember` state and cause unnecessary recompositions.
+For lists with insert, remove, reorder or sorting, use stable unique keys:
 
-For lists with different item types, `contentType` is useful. It helps Compose reuse compositions only between items with similar structure, instead of trying to reuse an item of one type as an item of another type.
+```kotlin
+LazyColumn {
+    items(
+        items = messages,
+        key = { message -> message.id },
+    ) { message ->
+        MessageRow(message)
+    }
+}
+```
 
-Item composable should be lightweight: do not sort or filter large collections inside an item, do not do I/O, do not create heavy objects and do not perform expensive image/formatting work on every recomposition. For large or remote data, prefer Paging.
+Without keys, item identity is tied mostly to position. After a reorder, remembered state may move to the wrong logical item and Compose may do more work than needed.
 
-**In short:** `LazyColumn` is lazy by rendering only visible items, but real performance depends on stable keys, lightweight item content, correct state ownership and avoiding heavy work during composition.
+For lists with different item types, provide `contentType`:
+
+```kotlin
+items(
+    items = feedItems,
+    key = { item -> item.id },
+    contentType = { item -> item.type },
+) { item ->
+    FeedRow(item)
+}
+```
+
+`contentType` helps Compose reuse compositions only between structurally similar rows.
+
+Keep item content lightweight. Do not sort or filter the whole collection inside an item, perform I/O, decode bitmaps synchronously, or create expensive formatters on every recomposition. For large or remote datasets, prefer Paging.
 
 ### Stable keys
 
-Stable keys in lazy layouts are stable unique identifiers that help Compose preserve item identity when the dataset changes.
+A correct key should be stable for the same logical item: database id, server id, UUID or another persistent identifier. Avoid using the current index when list order can change.
 
-By default, item identity is effectively tied to its position. This is bad for lists where items are added, removed, sorted or moved: item state can "move" to the wrong item, and Compose can do more work than needed.
-
-A correct key should be stable for the same logical item: database id, server id, UUID or another persistent identifier. Using index is dangerous if list order can change.
-
-If `rememberSaveable` is used inside an item, the key must be compatible with `Bundle`, for example primitive, enum or `Parcelable`, so state can be restored after recreation or after the item leaves the viewport.
-
-**In short:** stable keys keep item identity across list changes, preserving item state and helping Compose avoid unnecessary recomposition.
+If `rememberSaveable` is used inside an item, the key must be compatible with Android saved state, for example a primitive, `String`, enum or `Parcelable`.
 
 ## Performance pitfalls
 
 ### Heavy work inside a composable
 
-Composable body can run many times, be skipped or restart when state changes. Therefore heavy work inside a composable quickly becomes a performance problem.
+A composable body can run many times. Expensive work inside it quickly becomes a performance problem:
 
-Typical mistakes: sorting/filtering a large list directly in a composable, parsing data, creating a formatter on every recomposition, doing I/O, synchronously decoding bitmap, performing complex calculations or launching side effects directly from the body.
+```kotlin
+@Composable
+fun UsersScreen(users: List<User>) {
+    val sortedUsers = users.sortedBy(User::name) // Avoid repeated work here
+    UsersList(sortedUsers)
+}
+```
 
-It is better to prepare data ahead of time in `ViewModel` / domain layer and pass a ready UI model to UI. If a local calculation truly belongs to UI and depends on specific inputs, it can be cached with `remember(inputs)`, but `remember` should not hide business logic.
+Prefer preparing durable UI data in `ViewModel` or the domain layer. If a small UI-only calculation really belongs in UI, cache it with correct keys:
 
-Suspend work and callback/subscription APIs need controlled side effects: `LaunchedEffect`, `produceState` or `DisposableEffect`, not direct work launch from the composable body.
+```kotlin
+val sortedUsers = remember(users) {
+    users.sortedBy(User::name)
+}
+```
 
-**In short:** composables should describe UI, not perform heavy work; move expensive work out of composition or cache it with the right keys.
+`remember` is a composition cache, not a place to hide business logic, I/O or expensive data preparation.
 
-### Compose UI performance pitfalls
+Side effects should also not start directly from the composable body. Use `LaunchedEffect`, `produceState` or `DisposableEffect` when work must be tied to Composition.
 
-Common pitfalls: reading frequently changing state too high in the tree, passing mutable/unstable models, forgetting stable keys in lazy lists, doing heavy work in a composable, creating unnecessary allocations, launching side effects in the body, using nested scroll/lazy layouts without size constraints, doing backwards writes and updating state after it has already been read in composition.
+### Frequently changing state
 
-`derivedStateOf` is useful when input state changes often, but UI should update only when the derived result changes. But it is not needed for ordinary cheap calculations that should update as often as inputs.
+Reading fast-changing state too high in the tree can invalidate more UI than necessary. Keep state reads close to the place where the value is used.
 
-Optimize after measurement: debug build can distort the picture. Prefer release/R8 build, Layout Inspector, recomposition highlights/counters, Android Profiler, tracing/Perfetto, Macrobenchmark and real user scenarios.
+For values used only by layout or drawing, lambda-based modifiers can sometimes defer the read to a later phase:
 
-**In short:** Compose performance is not about avoiding recomposition blindly; it is about measuring the bottleneck and reducing unnecessary work in composition, layout, drawing and the main thread.
+```kotlin
+Modifier.offset {
+    IntOffset(x = 0, y = scrollOffset())
+}
+```
+
+Use this only when profiling shows that the state read causes unnecessary composition work.
+
+### `derivedStateOf`
+
+`derivedStateOf` is useful when input state changes often, but the UI should update only when the derived result changes:
+
+```kotlin
+val showScrollToTop by remember {
+    derivedStateOf {
+        listState.firstVisibleItemIndex > 0
+    }
+}
+```
+
+Do not wrap every calculation in `derivedStateOf`. For cheap values that should update whenever inputs change, direct calculation is simpler and often better.
+
+### Stability and backwards writes
+
+Stable immutable UI models help Compose skip unnecessary work, but stability annotations are contracts. Do not add `@Stable` or `@Immutable` just to silence tooling.
+
+Avoid backwards writes: updating state after reading it in the same composition path. This can schedule repeated recompositions or create an endless loop.
+
+```kotlin
+@Composable
+fun BadCounter() {
+    var count by remember { mutableIntStateOf(0) }
+
+    Text("Count: $count")
+    count++ // Wrong
+}
+```
+
+State should change from user events, effects, ViewModel, or another explicit state owner.
+
+## Common mistakes
+
+- Treating every recomposition as a bug.
+- Measuring only debug builds.
+- Reading frequently changing state too high in the UI tree.
+- Doing sorting, parsing, I/O or bitmap decoding during composition.
+- Using list indexes as keys for reorderable data.
+- Passing mutable models whose changes Compose cannot observe.
+- Adding `remember`, `derivedStateOf` or stability annotations without a measured reason.
+- Optimizing composition while the real problem is layout, drawing, image loading or main-thread work.
+
+## Related topics
+
+- [State & Recomposition](state-recomposition.md)
+- [Side Effects](side-effects.md)
+- [Performance Profiling and Benchmarking](../tools/performance-profiling.md)
+- [Android Performance & Memory](../android/performance-memory.md)

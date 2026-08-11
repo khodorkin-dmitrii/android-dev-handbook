@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-07-09
+1. Last tracker update: 2026-08-11
 1. Total articles tracked: 71
-1. Updated: 8
-1. TODO: 64
+1. Updated: 10
+1. TODO: 61
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 5 | 22 |
+| P0 | 26 | 7 | 19 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -25,8 +25,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-06-29, `coroutines-flow/basics.md`, Coroutines Basics, Expanded coroutine fundamentals: blocking vs suspending, threads, concurrency vs parallelism, suspend, CPU-bound vs I/O-bound work, dispatchers, withContext, launch vs async, builders, and runBlocking.
 1. P0, **UPDATED**, 2026-07-03, `compose/basics.md`, Compose Basics, Expanded Compose basics with Compose vs View System comparison, state-driven UI example, clearer recomposition wording, composable anti-patterns, and related topic links.
 1. P0, **UPDATED**, 2026-07-09, `compose/side-effects.md`, Side Effects, Expanded side-effect guidance with an API selection table, Kotlin examples, `rememberUpdatedState`, `snapshotFlow`, common mistakes, and related topic links.
-1. P0, **TODO**, , `compose/performance.md`, Compose Performance
-1. P0, **TODO**, , `coroutines-flow/scopes-cancellation.md`, Coroutine Scopes & Cancellation
+1. P0, **UPDATED**, 2026-08-11, `compose/performance.md`, Compose Performance, Expanded measurement guidance, lazy list identity and reuse, composition work, frequently changing state, `derivedStateOf`, stability, backwards writes, and common performance mistakes.
+1. P0, **UPDATED**, 2026-08-11, `coroutines-flow/scopes-cancellation.md`, Coroutine Scopes & Cancellation, Expanded scope ownership, structured concurrency, Job hierarchy, supervision, cooperative cancellation, cleanup, timeout handling, and practical Android lifecycle guidance.
 1. P0, **TODO**, , `coroutines-flow/flow-basics.md`, Flow Basics
 1. P0, **TODO**, , `coroutines-flow/flow-operators.md`, Flow Operators
 1. P0, **TODO**, , `coroutines-flow/stateflow-sharedflow.md`, StateFlow & SharedFlow
