@@ -146,6 +146,75 @@ Temporary UI scopes - отдельный случай. Некоторый UI sta
 
 **Коротко:** `ViewModel` хранит screen state во время жизненного цикла экрана, но restoration - это отдельное проектное решение. Выбирайте owner состояния по тому, как долго state должен жить и насколько плохо будет, если он потеряется.
 
+### Восстановление state и порядок инициализации
+
+Сохранение state - только половина восстановления. Пересозданный `ViewModel` также должен инициализироваться так, чтобы сразу не перезаписать восстановленные значения.
+
+Типичная ошибка возникает, когда `SavedStateHandle` восстанавливает пользовательский ввод или current step, но `init` запускает загрузку данных и публикует новый `UiState` с default values. Приложение не падает, однако восстановленный progress незаметно исчезает.
+
+```kotlin
+private val _uiState = MutableStateFlow(
+    OnboardingUiState(
+        currentStep = savedStateHandle["current_step"] ?: 0,
+        email = savedStateHandle["email"] ?: ""
+    )
+)
+
+init {
+    viewModelScope.launch {
+        val options = repository.loadOptions()
+
+        // Неверно: восстановленные поля заменяются значениями по умолчанию.
+        _uiState.value = OnboardingUiState(options = options)
+    }
+}
+```
+
+При восстановлении нужно определить, какой источник владеет каждой частью state:
+
+- `SavedStateHandle` может владеть небольшими restorable values, например пользовательским вводом, filters или current step;
+- repository или backend должны владеть application data и durable drafts;
+- default values следует использовать, только если нет ни восстановленных, ни persistent data;
+- свежие данные должны обновлять принадлежащие им поля, а не заменять несвязанный с ними восстановленный state.
+
+Один из вариантов - собирать screen state из его источников вместо хранения ещё одной независимо инициализируемой mutable-копии:
+
+```kotlin
+private val currentStep =
+    savedStateHandle.getStateFlow("current_step", 0)
+
+private val email =
+    savedStateHandle.getStateFlow("email", "")
+
+val uiState: StateFlow<OnboardingUiState> =
+    combine(
+        currentStep,
+        email,
+        repository.observeOptions()
+    ) { step, restoredEmail, options ->
+        OnboardingUiState(
+            currentStep = step,
+            email = restoredEmail,
+            options = options
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = OnboardingUiState(
+            currentStep = savedStateHandle["current_step"] ?: 0,
+            email = savedStateHandle["email"] ?: ""
+        )
+    )
+
+fun onEmailChanged(value: String) {
+    savedStateHandle["email"] = value
+}
+```
+
+Если используется mutable `UiState`, результаты asynchronous operations следует объединять с текущим state через `update { it.copy(...) }`, а не создавать весь state заново из default values. Reducer или state machine могут упорядочить restoration и loading events, но не отменяют необходимости правильно определить ownership и precedence.
+
+**Коротко:** восстановление должно быть частью инициализации. Сначала прочитайте восстановленные значения, определите owner каждого поля и объединяйте результаты asynchronous loading с восстановленным state вместо его сброса.
+
 ## Feature design
 
 ### Как проектировать feature flow с нуля?

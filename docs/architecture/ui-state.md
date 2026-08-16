@@ -146,6 +146,75 @@ In newer Compose APIs, this can also be expressed by scoping a `ViewModelStoreOw
 
 **In short:** `ViewModel` holds screen state during the screen lifecycle, but restoration is a separate design decision. Choose the state owner based on how long the state should live and how bad it is if the state is lost.
 
+### Restored state and initialization order
+
+Saving state is only half of restoration. A recreated `ViewModel` must also initialize itself without immediately overwriting the restored values.
+
+A common failure happens when `SavedStateHandle` restores user input or the current step, but the `init` block starts loading data and publishes a new default `UiState`. The application does not crash, but the restored progress silently disappears.
+
+```kotlin
+private val _uiState = MutableStateFlow(
+    OnboardingUiState(
+        currentStep = savedStateHandle["current_step"] ?: 0,
+        email = savedStateHandle["email"] ?: ""
+    )
+)
+
+init {
+    viewModelScope.launch {
+        val options = repository.loadOptions()
+
+        // Incorrect: replaces the restored fields with defaults.
+        _uiState.value = OnboardingUiState(options = options)
+    }
+}
+```
+
+Restoration should define which source owns each part of the state:
+
+- `SavedStateHandle` can own small restorable values such as user input, filters or the current step;
+- repository or backend should own application data and durable drafts;
+- defaults should only be used when neither restored nor persistent data exists;
+- fresh data should update the fields it owns instead of replacing unrelated restored state.
+
+One option is to derive the screen state from its sources instead of maintaining another independently initialized mutable copy:
+
+```kotlin
+private val currentStep =
+    savedStateHandle.getStateFlow("current_step", 0)
+
+private val email =
+    savedStateHandle.getStateFlow("email", "")
+
+val uiState: StateFlow<OnboardingUiState> =
+    combine(
+        currentStep,
+        email,
+        repository.observeOptions()
+    ) { step, restoredEmail, options ->
+        OnboardingUiState(
+            currentStep = step,
+            email = restoredEmail,
+            options = options
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = OnboardingUiState(
+            currentStep = savedStateHandle["current_step"] ?: 0,
+            email = savedStateHandle["email"] ?: ""
+        )
+    )
+
+fun onEmailChanged(value: String) {
+    savedStateHandle["email"] = value
+}
+```
+
+For a mutable `UiState`, asynchronous results should be merged with `update { it.copy(...) }` rather than rebuilding the whole state from defaults. A reducer or state machine can serialize restoration and loading events, but it does not remove the need to define ownership and precedence correctly.
+
+**In short:** restoration must be part of initialization. Read restored values first, define which source owns each field, and make asynchronous loading merge with restored state instead of resetting it.
+
 ## Feature design
 
 ### How to design a feature flow from scratch?
