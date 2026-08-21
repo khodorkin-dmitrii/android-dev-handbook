@@ -269,5 +269,6 @@ val config = withTimeoutOrNull(10_000) {
 
 - [Coroutines Basics](basics.md)
 - [Flow Basics](flow-basics.md)
+- [Channels](channels.md)
 - [Lifecycle-aware Collection](lifecycle-aware-collection.md)
 - [UI State Architecture](../architecture/ui-state.md)

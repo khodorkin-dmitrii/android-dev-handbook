@@ -29,6 +29,8 @@ val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
 `SharedFlow` подходит для событий или streams, где не всегда есть "текущее состояние": navigation events, snackbar messages, refresh triggers, analytics-like events, websocket updates.
 
+В отличие от `Channel`, `SharedFlow` использует broadcast semantics: каждую emission получают все активные subscribers. Канал передаёт каждый элемент одному из конкурирующих receivers. Полное сравнение приведено в статье [Channels](channels.md).
+
 Для one-off UI events часто используют `MutableSharedFlow` с `replay = 0`, чтобы новый collector не получил старое событие автоматически:
 
 ```kotlin
@@ -74,9 +76,9 @@ State описывает текущее состояние экрана и до�
 
 Events/effects - одноразовые действия: navigation, snackbar, toast, open dialog, scroll command, permission request. Их не всегда удобно хранить как обычное состояние, потому что они могут повториться после recreation или нового collector-а.
 
-Для state чаще используют `StateFlow<UiState>`. Для effects можно использовать `SharedFlow<UiEvent>`, `Channel`, callback из UI или state-based event wrapper, в зависимости от архитектуры проекта.
+Для state чаще используют `StateFlow<UiState>`. Для некритичных transient effects можно использовать `SharedFlow` или point-to-point stream на основе `Channel`, если lifecycle и delivery semantics определены явно. Канал не гарантирует, что событие от более долгоживущего `ViewModel` действительно будет обработано UI; критичные результаты лучше сводить к восстанавливаемому state. Подробнее см. в [Channels](channels.md).
 
-Главное правило: критичные данные лучше хранить в state, а одноразовые UI-команды - в effect/event stream. Но event stream должен учитывать lifecycle, иначе события можно потерять.
+Главное правило: критичные данные лучше хранить в state. Отдельный effect/event stream подходит для transient commands, только если его lifecycle и поведение при отсутствии активного UI consumer-а определены заранее.
 
 ```kotlin
 sealed interface UiEvent {

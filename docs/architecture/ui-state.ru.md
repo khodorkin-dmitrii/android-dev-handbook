@@ -53,7 +53,7 @@ Events/effects - это одноразовые действия, которые 
 
 Главный риск - положить one-off event в обычный UI state и случайно повторить его после rotation или нового collect. Например, если state содержит `navigateBack = true`, новый UI collector может выполнить навигацию ещё раз.
 
-Обычно state публикуют через `StateFlow<UiState>`, а one-off effects - через `SharedFlow<UiEvent>`, `Channel` или explicit callback, в зависимости от архитектуры проекта.
+Для публикации state обычно используют `StateFlow<UiState>`. Для некритичных transient effects можно выделить отдельный `SharedFlow`, point-to-point `Channel` или explicit UI callback, если lifecycle и delivery semantics определены явно. Когда `ViewModel` живёт дольше UI consumer-а, in-memory event stream не гарантирует фактическую обработку, поэтому критичные результаты лучше сводить к восстанавливаемому state. Подробнее см. в [Channels](../coroutines-flow/channels.md).
 
 **Коротко:** state описывает, как UI должен выглядеть, а effects описывают одноразовые действия, которые UI должен выполнить.
 
@@ -76,6 +76,8 @@ val events = _events.asSharedFlow()
 UI collect-ит events lifecycle-aware и выполняет side effect. В Compose это часто делают через `LaunchedEffect`, во View System - через `repeatOnLifecycle`.
 
 **Важно:** `SharedFlow` с `replay = 0` может потерять событие, если collector ещё не активен. Для некритичных UI effects это часто приемлемо, но важные результаты лучше моделировать как часть `UiState`.
+
+К `Channel` относится то же предостережение: buffering может временно сохранить элемент, но его получение не гарантирует, что UI выполнил effect. Для exactly-once processing нужны explicit protocol, acknowledgement и persistence.
 
 Альтернатива - event wrapper или consumable state, но такой подход легко усложняет код. Важно выбирать решение осознанно и не смешивать durable state с transient commands.
 

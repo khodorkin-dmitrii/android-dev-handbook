@@ -40,6 +40,8 @@ Cold Flow начинает работу только при collection. Кажд
 
 Hot Flow существует независимо от конкретного collector-а и может хранить или emit-ить значения даже без активных подписчиков. `StateFlow` и `SharedFlow` - hot flows.
 
+`Channel` тоже является hot primitive, но это отдельный механизм point-to-point коммуникации, а не subtype `Flow`. Каждый элемент получает один receiver; подробнее см. в [Channels](channels.md).
+
 В Android часто превращают cold flow из repository в hot `StateFlow` во `ViewModel` через `stateIn(viewModelScope, SharingStarted.WhileSubscribed(...), initialValue)`, чтобы UI получил стабильное состояние и upstream не запускался хаотично.
 
 **Коротко:** cold flows are started by collectors, hot flows live independently of collectors.

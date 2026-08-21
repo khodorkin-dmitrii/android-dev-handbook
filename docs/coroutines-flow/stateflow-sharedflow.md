@@ -29,6 +29,8 @@ Unlike `StateFlow`, `SharedFlow` does not have to have a current `value`. Its be
 
 `SharedFlow` fits events or streams where there is not always a "current state": navigation events, snackbar messages, refresh triggers, analytics-like events, websocket updates.
 
+Unlike a `Channel`, `SharedFlow` uses broadcast semantics: every active subscriber receives an emission. A channel delivers each element to one competing receiver. See [Channels](channels.md) for the full comparison.
+
 For one-off UI events, `MutableSharedFlow` with `replay = 0` is often used so a new collector does not automatically receive an old event:
 
 ```kotlin
@@ -74,9 +76,9 @@ State describes the current screen state and should be reproducible: if the scre
 
 Events/effects are one-time actions: navigation, snackbar, toast, open dialog, scroll command, permission request. They are not always convenient to store as regular state because they may repeat after recreation or a new collector.
 
-For state, `StateFlow<UiState>` is most often used. For effects, `SharedFlow<UiEvent>`, `Channel`, UI callback or state-based event wrapper can be used depending on project architecture.
+For state, `StateFlow<UiState>` is most often used. Non-critical transient effects may use a `SharedFlow` or point-to-point `Channel` stream when lifecycle and delivery semantics are explicit. A channel does not guarantee that a longer-lived `ViewModel` event is actually processed by the UI; critical results are better reduced to recoverable state. See [Channels](channels.md#ui-events-and-effects).
 
-Main rule: critical data is better stored in state, while one-time UI commands belong in an effect/event stream. But the event stream must account for lifecycle, otherwise events can be lost.
+Main rule: critical data is better stored in state. A separate effect/event stream is suitable for transient commands only when its lifecycle and behavior without an active UI consumer are deliberately defined.
 
 ```kotlin
 sealed interface UiEvent {

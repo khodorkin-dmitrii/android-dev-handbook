@@ -40,6 +40,8 @@ For example, if there is `flow { api.load() }`, two collectors may trigger two s
 
 Hot Flow exists independently of a specific collector and can store or emit values even without active subscribers. `StateFlow` and `SharedFlow` are hot flows.
 
+`Channel` is also hot, but it is a separate point-to-point communication primitive rather than a Flow subtype. Each element is received by one receiver; see [Channels](channels.md).
+
 In Android, a cold flow from a repository is often converted to hot `StateFlow` in `ViewModel` through `stateIn(viewModelScope, SharingStarted.WhileSubscribed(...), initialValue)`, so UI gets stable state and upstream does not start chaotically.
 
 **In short:** cold flows are started by collectors, hot flows live independently of collectors.

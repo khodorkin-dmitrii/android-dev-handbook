@@ -53,7 +53,7 @@ Events/effects are one-off actions that are not persistent screen state: navigat
 
 The main risk is putting a one-off event into regular UI state and accidentally repeating it after rotation or another collection. For example, if state contains `navigateBack = true`, a new UI collector may navigate again.
 
-State is usually published through `StateFlow<UiState>`, while one-off effects are published through `SharedFlow<UiEvent>`, `Channel` or an explicit callback, depending on the project architecture.
+State is usually published through `StateFlow<UiState>`. Non-critical transient effects may use a separate `SharedFlow`, point-to-point `Channel` or explicit UI callback when lifecycle and delivery semantics are defined. If a `ViewModel` outlives the UI consumer, an in-memory event stream does not guarantee actual processing, so critical results are better reduced to recoverable state. See [Channels](../coroutines-flow/channels.md#ui-events-and-effects).
 
 **In short:** state describes what the UI should look like, effects describe one-time actions the UI should perform.
 
@@ -76,6 +76,8 @@ val events = _events.asSharedFlow()
 UI collects events in a lifecycle-aware way and performs the side effect. In Compose this is often done with `LaunchedEffect`; in the View System, with `repeatOnLifecycle`.
 
 **Important:** `SharedFlow` with `replay = 0` can lose an event if the collector is not active yet. This is often acceptable for non-critical UI effects, but important results are better modeled as part of `UiState`.
+
+The same caution applies to `Channel`: buffering can preserve an element temporarily, but receipt does not guarantee that the UI performed the effect. Exactly-once processing requires an explicit protocol, acknowledgement and persistence.
 
 An alternative is an event wrapper/consumable state, but it can easily complicate the code. The important part is to choose the approach deliberately and not mix durable state with transient commands.
 

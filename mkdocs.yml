@@ -82,6 +82,7 @@ plugins:
             Coroutine Scopes & Cancellation: Coroutine Scopes & Cancellation
             Flow Basics: Основы Flow
             Flow Operators: Flow Operators
+            Channels: Каналы
             StateFlow & SharedFlow: StateFlow & SharedFlow
             Lifecycle-aware Collection: Lifecycle-aware Collection
             Architecture Basics: Основы архитектуры
@@ -195,6 +196,7 @@ nav:
       - Coroutine Scopes & Cancellation: coroutines-flow/scopes-cancellation.md
       - Flow Basics: coroutines-flow/flow-basics.md
       - Flow Operators: coroutines-flow/flow-operators.md
+      - Channels: coroutines-flow/channels.md
       - StateFlow & SharedFlow: coroutines-flow/stateflow-sharedflow.md
       - Lifecycle-aware Collection: coroutines-flow/lifecycle-aware-collection.md
   - Architecture:

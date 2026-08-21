@@ -326,6 +326,10 @@ Common options are `Mutex` for protecting suspending code, atomic operations for
 
 Flow is an asynchronous stream of values from the coroutines ecosystem. A regular `Flow` is cold: every collector starts the upstream again.
 
+### How is `Channel` different from `Flow`?
+
+A regular `Flow` is usually a cold declarative stream started by each collector. `Channel` is a hot point-to-point communication primitive: it exists independently of receivers, and each sent element is consumed by only one of them.
+
 ### What is the difference between Flow and a suspend function?
 
 A suspend function usually returns one result. Flow can emit many values over time and is suitable for observing changes.
