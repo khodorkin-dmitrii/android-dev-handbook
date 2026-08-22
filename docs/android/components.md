@@ -22,13 +22,51 @@ One `Activity` usually owns one user-facing flow or acts as a host for several s
 
 ### Service
 
-`Service` - a component without its own UI, intended for background work or for exposing an API to other components through binding.
+`Service` - a component without its own UI, intended for work that must be owned independently of a screen or for exposing an API to other components through binding.
 
-**Important:** `Service` does not mean a separate thread. Service code runs on the main thread by default, so heavy work must be moved to a coroutine, worker or thread pool.
+**Important:** `Service` does not mean a separate thread. Service callbacks run on the main thread by default, so blocking or CPU-intensive work must be moved to a coroutine, worker or thread pool.
 
-Main variants: a started service is launched to perform a task; a bound service lives while a client is bound to it; a foreground service shows a persistent notification and is used for work the user should be aware of.
+Started and bound describe how a service is controlled and how long it lives. Foreground describes a user-visible execution mode with a persistent notification. These concepts are not mutually exclusive: one service can be started, bound and foreground at the same time.
 
-In modern Android, `WorkManager` is often preferable to a manual background `Service` for deferred and reliable background work.
+#### Started Service
+
+A started service is launched with `startService()` or, when foreground execution is required, `startForegroundService()`. The system calls `onStartCommand()`, and the service can continue after the component that started it is destroyed.
+
+A started service must stop itself with `stopSelf()` or be stopped with `stopService()`. It should not be used as a generic way to keep an app alive in the background. Modern Android restricts background service starts, and deferred reliable work is usually better handled by `WorkManager`.
+
+See [Background Work & System Behavior](background-work-system-behavior.md) for `WorkManager`, foreground services, Doze and background execution limits.
+
+#### Bound Service
+
+A bound service provides a client-server interface. A component calls `bindService()` with a `ServiceConnection`; the service receives `onBind()` and returns an `IBinder` through which the client can call operations or exchange data.
+
+A purely bound service normally exists while at least one client is bound. Multiple clients can bind at the same time. After the last client calls `unbindService()`, the system can destroy the service. Bind and unbind calls should be paired with an appropriate client lifecycle, commonly `onStart()` / `onStop()` when the connection is needed only while an `Activity` is visible.
+
+For a service and client in the same process, a custom `Binder` can expose the service API directly:
+
+```kotlin
+class PlaybackService : Service() {
+    inner class LocalBinder : Binder() {
+        fun getService(): PlaybackService = this@PlaybackService
+    }
+
+    private val binder = LocalBinder()
+
+    override fun onBind(intent: Intent): IBinder = binder
+
+    fun play() {
+        // Start playback on an appropriate execution context.
+    }
+}
+```
+
+The client receives the binder in `ServiceConnection.onServiceConnected()` and uses it until the connection is released. `Context.BIND_AUTO_CREATE` creates the service when the first client binds if it is not already running.
+
+For communication across processes, use a `Messenger` for serialized message-based IPC or AIDL when a typed concurrent IPC contract is genuinely required. These approaches are more complex than a local binder and require careful error handling, lifecycle management and thread safety.
+
+A service can also be both started and bound. In that case, unbinding the last client does not stop it: the started lifetime must still end through `stopSelf()` or `stopService()`, and the service is destroyed only after it is no longer started and has no bound clients.
+
+Use an explicit `Intent` when binding. If the service is private to the application, declare it with `android:exported="false"` so other apps cannot bind to it.
 
 ### BroadcastReceiver
 

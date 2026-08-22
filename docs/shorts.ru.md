@@ -162,6 +162,10 @@ Extension function добавляет удобный синтаксис вызо
 
 `Activity`, `Service`, `BroadcastReceiver` и `ContentProvider`. Они объявляются в манифесте и могут быть entry point приложения.
 
+### Чем Bound Service отличается от обычного Service?
+
+`Bound Service` - это `Service`, к которому другие компоненты подключаются через `bindService()` и взаимодействуют с ним через `IBinder`. Pure bound service существует, пока к нему привязан хотя бы один клиент. Обычный started service запускается через `startService()` и работает независимо от запустившего его компонента, пока не будет остановлен.
+
 ### Какой компонент инициализируется раньше: Application или ContentProvider?
 
 Сначала создаётся объект `Application`, затем инициализируются `ContentProvider`, и только после этого вызывается `Application.onCreate()`. Поэтому providers часто используются библиотеками для ранней автоинициализации.

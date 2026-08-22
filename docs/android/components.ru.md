@@ -22,13 +22,51 @@ Android-приложение строится вокруг компоненто�
 
 ### Service
 
-`Service` - компонент без собственного UI, предназначенный для работы в фоне или предоставления API другим компонентам через binding.
+`Service` - компонент без собственного UI, предназначенный для работы, которая должна существовать независимо от конкретного экрана, или для предоставления API другим компонентам через binding.
 
-**Важно:** `Service` не означает отдельный thread. Код service по умолчанию выполняется на main thread, поэтому тяжёлую работу нужно переносить в coroutine, worker или thread pool.
+**Важно:** `Service` не означает отдельный thread. Service callbacks по умолчанию выполняются на main thread, поэтому blocking или CPU-intensive работу нужно переносить в coroutine, worker или thread pool.
 
-Основные варианты: started service запускается для выполнения задачи; bound service живёт, пока к нему привязан клиент; foreground service показывает persistent notification и используется для задач, о которых пользователь должен знать.
+Started и bound описывают способ управления service и его lifecycle. Foreground описывает user-visible режим выполнения с persistent notification. Эти понятия не исключают друг друга: один service может одновременно быть started, bound и foreground.
 
-В современном Android для отложенной и гарантированной фоновой работы часто предпочтительнее `WorkManager`, а не ручной background `Service`.
+#### Started Service
+
+Started service запускается через `startService()` или, если требуется foreground execution, через `startForegroundService()`. Система вызывает `onStartCommand()`, после чего service может продолжать работу даже после уничтожения запустившего его компонента.
+
+Started service должен остановить себя через `stopSelf()` либо быть остановлен через `stopService()`. Его не следует использовать как универсальный способ удерживать приложение в фоне. Современный Android ограничивает запуск background services, а для отложенной гарантированной работы обычно лучше подходит `WorkManager`.
+
+Подробнее о `WorkManager`, foreground services, Doze и ограничениях фонового выполнения см. в [Background Work & System Behavior](background-work-system-behavior.md).
+
+#### Bound Service
+
+Bound service предоставляет client-server interface. Компонент вызывает `bindService()` и передаёт `ServiceConnection`; service получает `onBind()` и возвращает `IBinder`, через который клиент может вызывать операции или обмениваться данными.
+
+Pure bound service обычно существует, пока к нему привязан хотя бы один клиент. Одновременно подключиться могут несколько клиентов. После того как последний клиент вызовет `unbindService()`, система может уничтожить service. Вызовы bind и unbind нужно связывать с подходящими этапами lifecycle клиента - часто с `onStart()` / `onStop()`, если соединение требуется только пока `Activity` видима.
+
+Если service и клиент находятся в одном процессе, custom `Binder` может напрямую предоставлять API сервиса:
+
+```kotlin
+class PlaybackService : Service() {
+    inner class LocalBinder : Binder() {
+        fun getService(): PlaybackService = this@PlaybackService
+    }
+
+    private val binder = LocalBinder()
+
+    override fun onBind(intent: Intent): IBinder = binder
+
+    fun play() {
+        // Запустить playback в подходящем execution context.
+    }
+}
+```
+
+Клиент получает binder в `ServiceConnection.onServiceConnected()` и использует его до разрыва соединения. Флаг `Context.BIND_AUTO_CREATE` создаёт service при подключении первого клиента, если тот ещё не запущен.
+
+Для взаимодействия между разными процессами можно использовать `Messenger` для последовательного message-based IPC или AIDL, когда действительно требуется typed concurrent IPC contract. Эти варианты сложнее local binder и требуют аккуратной обработки ошибок, lifecycle и thread safety.
+
+Service также может быть одновременно started и bound. В этом случае отключение последнего клиента его не останавливает: started lifecycle должен завершиться через `stopSelf()` или `stopService()`. Service уничтожается только после того, как он больше не является started и к нему не привязано ни одного клиента.
+
+Для binding используй explicit `Intent`. Если service предназначен только для приложения, объяви для него `android:exported="false"`, чтобы другие приложения не могли к нему подключиться.
 
 ### BroadcastReceiver
 

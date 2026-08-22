@@ -162,6 +162,10 @@ It becomes a base JVM class or interface plus separate subclasses. The Kotlin co
 
 `Activity`, `Service`, `BroadcastReceiver`, and `ContentProvider`. They are declared in the manifest and can serve as application entry points.
 
+### How is a Bound Service different from a regular Service?
+
+A `Bound Service` is a `Service` that other components connect to through `bindService()` and interact with through an `IBinder`. A purely bound service exists while at least one client is bound. A regular started service is launched with `startService()` and runs independently of the component that started it until it is stopped.
+
 ### Which is initialized first: Application or ContentProvider?
 
 The `Application` object is created first, then `ContentProvider` instances are initialized, and only after that `Application.onCreate()` is called. This is why libraries often use providers for early auto-initialization.
