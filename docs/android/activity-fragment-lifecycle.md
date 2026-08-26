@@ -128,6 +128,7 @@ Intent flags control `Activity` launch and back stack behavior for a specific `I
 ## Related topics
 
 - [Android Components](components.md)
+- [Core Android System Services](android-system-services.md)
 - [Lifecycle-aware Collection](../coroutines-flow/lifecycle-aware-collection.md)
 - [UI State Architecture](../architecture/ui-state.md)
 - [Context & Resources](context-resources.md)

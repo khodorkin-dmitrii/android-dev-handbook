@@ -26,6 +26,8 @@ Android-приложение строится вокруг компоненто�
 
 **Важно:** `Service` не означает отдельный thread. Service callbacks по умолчанию выполняются на main thread, поэтому blocking или CPU-intensive работу нужно переносить в coroutine, worker или thread pool.
 
+Не следует путать этот компонент приложения с платформенной службой. О службах, стоящих за многими публичными framework API, см. в статье [Основные системные службы Android](android-system-services.md).
+
 Started и bound описывают способ управления service и его lifecycle. Foreground описывает user-visible режим выполнения с persistent notification. Эти понятия не исключают друг друга: один service может одновременно быть started, bound и foreground.
 
 #### Started Service
@@ -63,6 +65,8 @@ class PlaybackService : Service() {
 Клиент получает binder в `ServiceConnection.onServiceConnected()` и использует его до разрыва соединения. Флаг `Context.BIND_AUTO_CREATE` создаёт service при подключении первого клиента, если тот ещё не запущен.
 
 Для взаимодействия между разными процессами можно использовать `Messenger` для последовательного message-based IPC или AIDL, когда действительно требуется typed concurrent IPC contract. Эти варианты сложнее local binder и требуют аккуратной обработки ошибок, lifecycle и thread safety.
+
+Подробнее о границе процессов, сгенерированных proxy/stub, потоках и ошибках удаленных вызовов см. в статье [Binder IPC и AIDL](binder-ipc-aidl.md).
 
 Service также может быть одновременно started и bound. В этом случае отключение последнего клиента его не останавливает: started lifecycle должен завершиться через `stopSelf()` или `stopService()`. Service уничтожается только после того, как он больше не является started и к нему не привязано ни одного клиента.
 

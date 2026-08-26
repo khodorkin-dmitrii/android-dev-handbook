@@ -128,6 +128,7 @@ Intent flags управляют запуском `Activity` и back stack behavi
 ## Связанные темы
 
 - [Android Components](components.md)
+- [Основные системные службы Android](android-system-services.md)
 - [Lifecycle-aware Collection](../coroutines-flow/lifecycle-aware-collection.md)
 - [UI State Architecture](../architecture/ui-state.md)
 - [Context & Resources](context-resources.md)

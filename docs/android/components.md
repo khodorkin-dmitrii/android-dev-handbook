@@ -26,6 +26,8 @@ One `Activity` usually owns one user-facing flow or acts as a host for several s
 
 **Important:** `Service` does not mean a separate thread. Service callbacks run on the main thread by default, so blocking or CPU-intensive work must be moved to a coroutine, worker or thread pool.
 
+Do not confuse this application component with a platform service. See [Core Android System Services](android-system-services.md) for the services behind many public framework APIs.
+
 Started and bound describe how a service is controlled and how long it lives. Foreground describes a user-visible execution mode with a persistent notification. These concepts are not mutually exclusive: one service can be started, bound and foreground at the same time.
 
 #### Started Service
@@ -63,6 +65,8 @@ class PlaybackService : Service() {
 The client receives the binder in `ServiceConnection.onServiceConnected()` and uses it until the connection is released. `Context.BIND_AUTO_CREATE` creates the service when the first client binds if it is not already running.
 
 For communication across processes, use a `Messenger` for serialized message-based IPC or AIDL when a typed concurrent IPC contract is genuinely required. These approaches are more complex than a local binder and require careful error handling, lifecycle management and thread safety.
+
+See [Binder IPC and AIDL](binder-ipc-aidl.md) for the process boundary, generated proxy/stub model, threading and remote failure behavior.
 
 A service can also be both started and bound. In that case, unbinding the last client does not stop it: the started lifetime must still end through `stopSelf()` or `stopService()`, and the service is destroyed only after it is no longer started and has no bound clients.
 

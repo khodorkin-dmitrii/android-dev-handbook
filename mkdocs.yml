@@ -50,6 +50,9 @@ plugins:
           nav_translations:
             Overview: Обзор
             Android Components: Компоненты Android
+            Platform Internals: Внутреннее устройство платформы
+            Binder IPC and AIDL: Binder IPC и AIDL
+            Core Android System Services: Основные системные службы Android
             Activity, Fragment & Lifecycle: Activity, Fragment & Lifecycle
             View System / XML UI: View System / XML UI
             Context & Resources: Context & Resources
@@ -159,6 +162,9 @@ nav:
       - View System / XML UI: android/view-system-xml-ui.md
       - Context & Resources: android/context-resources.md
       - Background Work & System Behavior: android/background-work-system-behavior.md
+      - Platform Internals:
+          - Binder IPC and AIDL: android/binder-ipc-aidl.md
+          - Core Android System Services: android/android-system-services.md
       - Gradle & Build System: android/gradle-build-system.md
       - Storage: android/storage.md
       - Performance & Memory: android/performance-memory.md
