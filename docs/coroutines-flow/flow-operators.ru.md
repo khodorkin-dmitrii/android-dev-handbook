@@ -1,30 +1,62 @@
 # Flow Operators
 
-Flow operators помогают преобразовывать streams, объединять несколько источников, обрабатывать ошибки и управлять retry.
+Flow operators строят pipeline между producer и collector. При выборе оператора важно не то, какой из них короче, а что должно происходить с порядком, cancellation, ошибками и медленными consumers.
 
-## Transform и combine
+Cold и hot flow, collection и context подробнее разобраны в статье [Flow Basics](flow-basics.md).
 
-### `map` vs `flatMapLatest`
+## Преобразование и фильтрация
 
-`map` преобразует каждое значение потока один-к-одному: value -> transformed value. Например, `User` -> `UserUiModel`.
+Большинство промежуточных операторов lazy: они возвращают новый `Flow` и выполняются только после запуска терминального оператора.
 
-`flatMapLatest` нужен, когда каждое входное значение создаёт новый inner `Flow`, и при новом входном значении старый inner `Flow` должен быть отменён.
+| Задача | Оператор |
+| --- | --- |
+| Преобразовать каждое значение | `map` |
+| Оставить подходящие значения | `filter` / `filterNotNull` |
+| Пропустить последовательные одинаковые значения | `distinctUntilChanged` |
+| Выполнить side effect, не меняя значение | `onEach` |
+| Оставить или пропустить часть потока | `take`, `drop`, `takeWhile` |
+
+```kotlin
+userDao.observeUsers()
+    .map { users -> users.filter(User::isVisible) }
+    .distinctUntilChanged()
+    .onEach { users -> analytics.logVisibleCount(users.size) }
+```
+
+`distinctUntilChanged` сравнивает соседние значения через `equals`. Применять его непосредственно к `StateFlow` избыточно: `StateFlow` уже не выдаёт последовательные равные значения.
+
+### `map` и `flatMapLatest`
+
+Используй `map`, когда одно входное значение превращается в одно выходное, в том числе если преобразование вызывает suspend-функцию.
+
+Оператор `flatMap*` нужен, когда каждое входное значение создаёт новый `Flow`:
+
+| Оператор | Inner flows |
+| --- | --- |
+| `flatMapConcat` | собираются последовательно с сохранением порядка |
+| `flatMapMerge` | собираются конкурентно; результаты могут перемешиваться |
+| `flatMapLatest` | предыдущий inner flow отменяется при новом входном значении |
 
 ```kotlin
 selectedUserId
-    .flatMapLatest { id -> repository.observeUser(id) }
-    .map { user -> user.toUiModel() }
+    .distinctUntilChanged()
+    .flatMapLatest(repository::observeUser)
+    .map(User::toUiModel)
 ```
 
-Если `selectedUserId` изменился, старая подписка `observeUser(oldId)` отменяется и начинается `observeUser(newId)`.
+Так можно описать наблюдение за выбранным пользователем: смена ID отменяет устаревшую подписку. Не используй `flatMapLatest`, если каждая внутренняя операция обязана завершиться, например для критичной записи.
 
-**Коротко:** `map` transforms values, `flatMapLatest` switches to a new inner `Flow` and cancels the previous one.
+## Объединение нескольких Flow
 
-### `combine` vs `zip`
+`combine`, `zip` и `merge` решают разные задачи:
 
-`combine` объединяет несколько `Flow` и emit-ит новое значение, когда любой источник изменился, используя последние значения остальных источников.
+| Оператор | Результат |
+| --- | --- |
+| `combine` | после первого значения от каждого источника пересчитывает результат при изменении любого из них |
+| `zip` | объединяет значения попарно и завершается, когда завершился один из источников |
+| `merge` | передаёт значения совместимых Flow по мере поступления без гарантий порядка между источниками |
 
-Это часто используют во `ViewModel` для сборки `UiState` из нескольких источников:
+Для построения UI state обычно подходит `combine`:
 
 ```kotlin
 combine(userFlow, balanceFlow, cardsFlow) { user, balance, cards ->
@@ -32,57 +64,62 @@ combine(userFlow, balanceFlow, cardsFlow) { user, balance, cards ->
 }
 ```
 
-`zip` ждёт пару новых emissions: одно значение из первого `Flow` и одно значение из второго `Flow`. Он объединяет значения попарно.
+Используй `zip`, только если значения действительно образуют пары. `merge` подходит для равнозначных событий, например нажатия кнопки обновления и pull-to-refresh gesture.
 
-Для UI state чаще подходит `combine`, потому что экран должен обновляться при изменении любого источника. `zip` полезен реже, когда действительно нужны пары значений.
+## Время и медленные collectors
 
-**Коротко:** `combine` reacts to any source using latest values; `zip` waits for paired emissions.
-
-### `merge`
-
-`merge` объединяет несколько `Flow` одного или совместимого типа и просто пропускает emissions из всех источников в один downstream `Flow`.
-
-Он не комбинирует значения между собой и не ждёт пары. Он просто смешивает события по мере их прихода.
-
-Пример использования: объединить `refreshClickFlow`, `retryClickFlow` и `pullToRefreshFlow` в один stream refresh events.
-
-**Важно:** `merge` не сохраняет порядок между разными asynchronous sources в бизнес-смысле; он отдаёт emissions по фактическому приходу.
-
-**Коротко:** `merge` is for listening to multiple independent streams of the same kind as one stream.
-
-## Errors
-
-### `retry` / `retryWhen`
-
-`retry` и `retryWhen` позволяют повторить Flow upstream при ошибке.
-
-`retry` обычно задаёт количество попыток и predicate. `retryWhen` даёт больше контроля: cause, attempt, delay/backoff и дополнительные условия.
+Для поискового ввода часто используют несколько операторов вместе:
 
 ```kotlin
-flow.retryWhen { cause, attempt ->
-    cause is IOException && attempt < 3
-}
+queryFlow
+    .debounce(300)
+    .distinctUntilChanged()
+    .flatMapLatest(repository::search)
 ```
 
-Retry подходит для временных technical errors, например network issue. Не стоит ретраить business errors: invalid credentials, validation error, insufficient permissions.
+`debounce` выдаёт значение, когда источник не менялся в течение заданного интервала. Это уменьшает число запросов при быстром вводе, но намеренно добавляет задержку.
 
-Для критичных операций вроде payment/transfer нужна idempotency или проверка статуса, потому что повтор может выполнить действие дважды.
+По умолчанию Flow выполняется последовательно, поэтому медленный downstream может приостановить upstream. При необходимости выбери явную стратегию:
 
-**Коротко:** retry is for transient failures, `retryWhen` gives conditional retry logic; do not blindly retry business or critical operations.
+| Оператор | Поведение при медленном consumer |
+| --- | --- |
+| `buffer` | позволяет upstream и downstream работать параллельно; хранит значения до заполнения buffer |
+| `conflate` | пропускает промежуточные значения, сохраняя последнее |
+| `collectLatest` | отменяет предыдущий collector block ради нового значения |
 
-### `catch`
+`conflate` и `collectLatest` подходят, только если старые значения теряют актуальность. Они опасны для логов, платежей, команд и других потоков, где важно каждое значение.
 
-`catch` обрабатывает exceptions из upstream `Flow` и может emit-ить fallback/error state.
+## Ошибки, retry и завершение
+
+`retry` и `retryWhen` перезапускают upstream flow после подходящей ошибки. `retryWhen` также получает номер повторной попытки с нуля и может приостановиться для backoff:
 
 ```kotlin
 repository.observeData()
-    .map { data -> UiState.Content(data) }
-    .catch { e -> emit(UiState.Error(e.toUiMessage())) }
-    .collect { state -> render(state) }
+    .retryWhen { cause, attempt ->
+        if (cause !is IOException || attempt >= 3) return@retryWhen false
+        delay(500L * (1L shl attempt.toInt()))
+        true
+    }
+    .map(Data::toUiState)
+    .catch { error -> emit(UiState.Error(error)) }
 ```
 
-**Важно:** `catch` ловит ошибки выше по chain, но не ловит ошибки, которые произошли внутри `collect` после `catch`. Для них нужен `try` / `catch` вокруг `collect` или обработка ниже по цепочке.
+Порядок операторов важен: `retryWhen` должен находиться перед `catch`, потому что `catch` обрабатывает ошибку вместо её повторного выбрасывания. Оба оператора прозрачны для downstream-ошибок и cancellation.
 
-Не нужно проглатывать `CancellationException` как обычную ошибку. Если `catch` получает cancellation, обычно её нужно rethrow или не маппить в user-facing error.
+Повторяй только transient и idempotent операции. Payment или запись могут выполниться дважды без idempotency key или проверки результата.
 
-**Коротко:** `catch` handles upstream `Flow` exceptions; it should map errors intentionally and must not swallow cancellation.
+`onStart` может выдать loading state перед запуском upstream. `onCompletion` наблюдает обычное завершение, ошибку или cancellation, но, в отличие от `catch`, сам по себе не обрабатывает исключение.
+
+## Терминальные операторы
+
+Терминальные операторы запускают collection:
+
+| Задача | Оператор |
+| --- | --- |
+| Обработать каждое значение | `collect` |
+| Получить первое значение и отменить upstream | `first` / `firstOrNull` |
+| Потребовать ровно одно значение | `single` / `singleOrNull` |
+| Собрать конечный Flow в коллекцию | `toList` |
+| Запустить collection в переданном scope | `launchIn` |
+
+Не вызывай `toList` или `single` для hot или другого незавершающегося Flow: они будут ждать completion, который может никогда не наступить.

@@ -1,59 +1,87 @@
 # Flow Basics
 
-`Flow` - coroutine-based stream данных, который позволяет описывать несколько asynchronous значений во времени.
+`Flow<T>` - основанный на coroutines поток, который может выдавать значения во времени, а затем завершиться успешно или с ошибкой.
 
 ## Основы Flow
 
 ### Что такое Flow?
 
-`Flow` - asynchronous stream данных из Kotlin Coroutines, который может emit-ить несколько значений во времени.
+`Flow` полезен, когда значение может изменяться или приходить несколько раз: обновления базы данных, поисковый ввод, состояние UI, прогресс, polling или realtime-события. Если suspension и coroutine scopes пока незнакомы, начни со статьи [Coroutines Basics](basics.md).
 
-Обычный `Flow` по умолчанию cold: код внутри `flow { ... }` не запускается, пока его не начнут collect-ить.
+У Flow есть три основные части:
 
-`Flow` используют для наблюдения за изменениями: database updates, search input, UI state, realtime updates, polling, websocket-like streams и объединение нескольких источников данных.
+1. **Producer** выдаёт значения.
+2. Промежуточные операторы преобразуют их.
+3. Терминальный оператор запускает collection и обрабатывает результат.
 
 ```kotlin
-fun observeUser(id: String): Flow<User> = flow {
-    emit(api.getUser(id))
+fun observeVisibleUsers(): Flow<List<User>> =
+    userDao.observeUsers()              // Flow<List<User>>
+        .map { users -> users.filter(User::isVisible) }
+
+suspend fun printVisibleUsers() {
+    observeVisibleUsers().collect { users ->
+        println(users)
+    }
 }
 ```
 
-**Коротко:** `Flow` is a coroutine-based asynchronous stream; by default it is cold and starts when collected.
+Операторы `map`, `filter`, `combine` и `distinctUntilChanged` возвращают новый `Flow`, но не запускают его. `collect`, `first`, `single` и `toList` - терминальные операторы. Большинство терминальных операторов являются suspending-функциями.
 
-### Flow vs suspend function
+Обычно значения проходят через Flow последовательно: следующий оператор не начинает обработку нового значения, пока не готов к нему. Операторы `buffer`, `conflate` и `flatMapMerge` могут изменить это поведение, когда конкурентная обработка или пропуск промежуточных значений нужны явно.
 
-Suspend function обычно возвращает один результат или одну ошибку. Она хорошо подходит для one-shot операций: `login()`, `fetchUser()`, `saveSettings()`, `sendAnalytics()`.
+### Flow и suspend-функция
 
-`Flow` подходит, когда значений может быть несколько во времени: сначала cached data, потом fresh data, затем database updates или realtime status updates.
+Suspend-функция обычно возвращает один результат или выбрасывает одно исключение. Она подходит для one-shot операций: `login()`, `fetchUser()` или `saveSettings()`.
 
-Если нужен один ответ - чаще проще и понятнее suspend function. Если нужен stream обновлений или reactive chain - `Flow`.
+`Flow` нужен, когда во времени может прийти несколько значений: cached data, затем fresh data, обновления базы, прогресс загрузки или меняющийся статус устройства.
 
-Типичный pitfall: использовать `Flow` для простого одиночного запроса и усложнить API без реальной пользы.
+Если нужен только один ответ, suspend-функция обычно проще. Оборачивание каждого одиночного запроса во `Flow` добавляет семантику collection и cancellation без реальной пользы.
 
-**Коротко:** `suspend` is for a single asynchronous result, `Flow` is for multiple values over time.
+### Cold Flow и Hot Flow
 
-### Cold Flow vs Hot Flow
+Большинство Flow, созданных через `flow { ... }`, `flowOf(...)` или преобразования в repository, являются **cold**. Producer запускается для каждой терминальной операции, поэтому два collector-а могут повторить upstream-работу - включая два сетевых запроса.
 
-Cold Flow начинает работу только при collection. Каждый новый collector обычно заново запускает upstream.
+```kotlin
+val userFlow = flow {
+    emit(api.loadUser())
+}
 
-Например, если внутри `flow { api.load() }`, то два collector-а могут запустить два отдельных API call.
+userFlow.collect(::renderUser) // Выполняет api.loadUser()
+userFlow.collect(::cacheUser)  // Выполняет его снова
+```
 
-Hot Flow существует независимо от конкретного collector-а и может хранить или emit-ить значения даже без активных подписчиков. `StateFlow` и `SharedFlow` - hot flows.
+**Hot** Flow существует независимо от конкретного collector-а. `StateFlow` хранит последнее состояние, а `SharedFlow` рассылает значения согласно настройкам replay и buffering.
 
-`Channel` тоже является hot primitive, но это отдельный механизм point-to-point коммуникации, а не subtype `Flow`. Каждый элемент получает один receiver; подробнее см. в [Channels](channels.md).
+В Android cold flow из repository часто преобразуют в `StateFlow` во `ViewModel` через `stateIn(...)`. Scope и политика `SharingStarted` определяют, как долго будет активна общая collection upstream-а.
 
-В Android часто превращают cold flow из repository в hot `StateFlow` во `ViewModel` через `stateIn(viewModelScope, SharingStarted.WhileSubscribed(...), initialValue)`, чтобы UI получил стабильное состояние и upstream не запускался хаотично.
+`Channel` тоже является hot-примитивом, но это отдельный механизм коммуникации, а не subtype `Flow`. По умолчанию каждый элемент Channel обрабатывает один receiver; подробнее см. в статье [Channels](channels.md).
 
-**Коротко:** cold flows are started by collectors, hot flows live independently of collectors.
+### Collection, context и cancellation
 
-### `collect` vs `collectLatest`
+`collect` - suspending-терминальный оператор, который выполняется в collecting coroutine. Cold flow использует coroutine context collector-а, если upstream context не изменён через `flowOn`. `flowOn` влияет только на операторы выше него и не переносит collector на другой dispatcher.
 
-`collect` обрабатывает каждое значение до конца. Если приходит новое значение, оно ждёт, пока предыдущая обработка завершится.
+Collection подчиняется structured concurrency. Отмена collecting coroutine отменяет collection и cold upstream. В Android UI используй lifecycle-aware API, например `repeatOnLifecycle` или `collectAsStateWithLifecycle`, чтобы работа прекращалась, когда UI больше не нуждается в данных.
 
-`collectLatest` отменяет обработку предыдущего значения, если пришло новое. Это полезно, когда старый результат уже не актуален.
+Не поглощай `CancellationException` в общей обработке ошибок: cancellation - это управляющий сигнал, а не обычная ошибка.
 
-Типичные примеры `collectLatest`: search-as-you-type, быстрые изменения фильтра, обновление UI, где важен только последний input.
+### Обработка ошибок
 
-**Важно:** `collectLatest` отменяет body collection, поэтому его нельзя использовать там, где каждое значение обязательно должно быть обработано, например audit/logging/critical write operation.
+Необработанное upstream-исключение завершает Flow и выбрасывается терминальным оператором. `catch` обрабатывает только исключения из расположенных перед ним операторов и не перехватывает cancellation или ошибки downstream-блока `collect`.
 
-**Коротко:** `collect` processes every emission, `collectLatest` cancels previous processing when a new value arrives.
+```kotlin
+repository.observeUsers()
+    .map(::toUiModel)
+    .catch { error -> emit(UserUiModel.Error(error)) }
+    .collect(::render)
+```
+
+Используй `catch` для ожидаемых восстанавливаемых ошибок или выдачи явного error state. Неожиданные ошибки обычно следует пробрасывать дальше, а не незаметно превращать в пустые данные.
+
+### `collect` и `collectLatest`
+
+`collect` обрабатывает каждое значение до конца. Если обработка медленная, последующие значения ждут, если только buffering или конкурентные операторы не изменили pipeline.
+
+`collectLatest` при появлении нового значения отменяет предыдущий collector block и запускает его с последним значением. Это полезно для search-as-you-type, быстрых изменений фильтра или rendering, когда старый результат уже не актуален.
+
+Не используй `collectLatest`, если каждое значение обязательно должно быть обработано, например для audit logging, платежей или критичных операций записи: cancellation может прервать предыдущий block на середине.

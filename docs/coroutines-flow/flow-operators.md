@@ -1,30 +1,62 @@
 # Flow Operators
 
-Flow operators help transform streams, combine several sources, handle errors and manage retry.
+Flow operators build a pipeline between producer and collector. The important choice is not which operator is shortest, but what should happen to ordering, cancellation, errors, and slow consumers.
 
-## Transform and combine
+For cold and hot flow semantics, collection, and context, see [Flow Basics](flow-basics.md).
+
+## Transform and filter
+
+Most intermediate operators are lazy: they return a new `Flow` and run only when a terminal operator collects it.
+
+| Intent | Operator |
+| --- | --- |
+| Transform every value | `map` |
+| Keep matching values | `filter` / `filterNotNull` |
+| Skip consecutive equal values | `distinctUntilChanged` |
+| Perform a side effect without changing the value | `onEach` |
+| Keep or skip a limited part of the stream | `take`, `drop`, `takeWhile` |
+
+```kotlin
+userDao.observeUsers()
+    .map { users -> users.filter(User::isVisible) }
+    .distinctUntilChanged()
+    .onEach { users -> analytics.logVisibleCount(users.size) }
+```
+
+`distinctUntilChanged` compares consecutive values with `equals`. Applying it directly to `StateFlow` is redundant because `StateFlow` already suppresses equal consecutive values.
 
 ### `map` vs `flatMapLatest`
 
-`map` transforms each stream value one-to-one: value -> transformed value. For example, `User` -> `UserUiModel`.
+Use `map` when one input produces one output, including when the transformation calls a suspend function.
 
-`flatMapLatest` is needed when each input value creates a new inner `Flow`, and when a new input value arrives, the old inner `Flow` should be canceled.
+Use a `flatMap*` operator when each input produces another `Flow`:
+
+| Operator | Inner flows |
+| --- | --- |
+| `flatMapConcat` | collects sequentially and preserves order |
+| `flatMapMerge` | collects concurrently; results can interleave |
+| `flatMapLatest` | cancels the previous inner flow when a new input arrives |
 
 ```kotlin
 selectedUserId
-    .flatMapLatest { id -> repository.observeUser(id) }
-    .map { user -> user.toUiModel() }
+    .distinctUntilChanged()
+    .flatMapLatest(repository::observeUser)
+    .map(User::toUiModel)
 ```
 
-If `selectedUserId` changes, the old `observeUser(oldId)` subscription is canceled and `observeUser(newId)` starts.
+This models “observe the currently selected user”: changing the ID cancels the obsolete subscription. Do not use `flatMapLatest` when every inner operation must finish, such as a critical write.
 
-**In short:** `map` transforms values, `flatMapLatest` switches to a new inner `Flow` and cancels the previous one.
+## Combine several flows
 
-### `combine` vs `zip`
+`combine`, `zip`, and `merge` solve different problems:
 
-`combine` combines several `Flow`s and emits a new value whenever any source changes, using the latest values from the other sources.
+| Operator | Result |
+| --- | --- |
+| `combine` | after every source has emitted once, recomputes when any source changes using the latest values |
+| `zip` | pairs values by position and completes when either source completes |
+| `merge` | forwards values from compatible flows as they arrive, without cross-source ordering guarantees |
 
-This is often used in `ViewModel` to build `UiState` from several sources:
+`combine` is usually the right choice for building UI state:
 
 ```kotlin
 combine(userFlow, balanceFlow, cardsFlow) { user, balance, cards ->
@@ -32,57 +64,62 @@ combine(userFlow, balanceFlow, cardsFlow) { user, balance, cards ->
 }
 ```
 
-`zip` waits for a pair of new emissions: one value from the first `Flow` and one value from the second `Flow`. It combines values pairwise.
+Use `zip` only when values form real pairs, not merely because two sources exist. Use `merge` for equivalent events, for example refresh button clicks and pull-to-refresh gestures.
 
-For UI state, `combine` is usually a better fit because the screen should update when any source changes. `zip` is useful less often, when paired values are truly needed.
+## Timing and slow collectors
 
-**In short:** `combine` reacts to any source using latest values; `zip` waits for paired emissions.
-
-### `merge`
-
-`merge` combines several `Flow`s of the same or compatible type and simply passes emissions from all sources into one downstream `Flow`.
-
-It does not combine values with each other and does not wait for pairs. It simply mixes events as they arrive.
-
-Example use case: combine `refreshClickFlow`, `retryClickFlow` and `pullToRefreshFlow` into one stream of refresh events.
-
-**Important:** `merge` does not preserve order between different asynchronous sources in a business sense; it emits values by actual arrival.
-
-**In short:** `merge` is for listening to multiple independent streams of the same kind as one stream.
-
-## Errors
-
-### `retry` / `retryWhen`
-
-`retry` and `retryWhen` allow repeating Flow upstream on error.
-
-`retry` usually defines the number of attempts and predicate. `retryWhen` gives more control: cause, attempt, delay/backoff and additional conditions.
+Search input commonly uses two operators together:
 
 ```kotlin
-flow.retryWhen { cause, attempt ->
-    cause is IOException && attempt < 3
-}
+queryFlow
+    .debounce(300)
+    .distinctUntilChanged()
+    .flatMapLatest(repository::search)
 ```
 
-Retry fits temporary technical errors, for example network issue. Do not retry business errors: invalid credentials, validation error, insufficient permissions.
+`debounce` emits a value after the source stays quiet for the configured interval. It reduces requests during fast input but deliberately adds latency.
 
-Critical operations such as payment/transfer need idempotency or status verification, because retry can perform the action twice.
+Flows are sequential by default, so a slow downstream operator can suspend upstream. Choose an explicit policy only when needed:
 
-**In short:** retry is for transient failures, `retryWhen` gives conditional retry logic; do not blindly retry business or critical operations.
+| Operator | Slow-consumer behavior |
+| --- | --- |
+| `buffer` | lets upstream and downstream overlap; retains values until capacity is full |
+| `conflate` | skips intermediate values while keeping the latest one |
+| `collectLatest` | cancels the previous collector block for the newest value |
 
-### `catch`
+`conflate` and `collectLatest` are suitable only when old values become obsolete. They are unsafe for logs, payments, commands, or other streams where every value matters.
 
-`catch` handles exceptions from upstream `Flow` and can emit fallback/error state.
+## Errors, retry, and completion
+
+`retry` and `retryWhen` restart the upstream flow after a matching failure. `retryWhen` also exposes the zero-based retry attempt and can suspend for backoff:
 
 ```kotlin
 repository.observeData()
-    .map { data -> UiState.Content(data) }
-    .catch { e -> emit(UiState.Error(e.toUiMessage())) }
-    .collect { state -> render(state) }
+    .retryWhen { cause, attempt ->
+        if (cause !is IOException || attempt >= 3) return@retryWhen false
+        delay(500L * (1L shl attempt.toInt()))
+        true
+    }
+    .map(Data::toUiState)
+    .catch { error -> emit(UiState.Error(error)) }
 ```
 
-**Important:** `catch` catches errors above it in the chain, but does not catch errors that happen inside `collect` after `catch`. Those need `try` / `catch` around `collect` or handling lower in the chain.
+Operator order matters: `retryWhen` must be before `catch`, because `catch` handles the failure instead of rethrowing it. Both operators are transparent to downstream failures and cancellation.
 
-Do not swallow `CancellationException` as a regular error. If `catch` receives cancellation, usually rethrow it or do not map it to a user-facing error.
+Retry only transient, idempotent work. A payment or write can run twice unless the operation has an idempotency key or its result is verified.
 
-**In short:** `catch` handles upstream `Flow` exceptions; it should map errors intentionally and must not swallow cancellation.
+`onStart` can emit a loading state before upstream begins. `onCompletion` observes normal completion, failure, or cancellation; unlike `catch`, it does not handle an exception by itself.
+
+## Terminal operators
+
+Terminal operators start collection:
+
+| Need | Operator |
+| --- | --- |
+| Process every value | `collect` |
+| Get the first value and cancel upstream | `first` / `firstOrNull` |
+| Require exactly one value | `single` / `singleOrNull` |
+| Accumulate a finite flow | `toList` |
+| Collect in a supplied scope | `launchIn` |
+
+Do not call `toList` or `single` on a hot or otherwise non-terminating flow: they wait for completion that may never happen.

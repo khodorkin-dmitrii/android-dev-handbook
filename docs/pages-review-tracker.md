@@ -27,8 +27,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-07-09, `compose/side-effects.md`, Side Effects, Expanded side-effect guidance with an API selection table, Kotlin examples, `rememberUpdatedState`, `snapshotFlow`, common mistakes, and related topic links.
 1. P0, **UPDATED**, 2026-08-11, `compose/performance.md`, Compose Performance, Expanded measurement guidance, lazy list identity and reuse, composition work, frequently changing state, `derivedStateOf`, stability, backwards writes, and common performance mistakes.
 1. P0, **UPDATED**, 2026-08-11, `coroutines-flow/scopes-cancellation.md`, Coroutine Scopes & Cancellation, Expanded scope ownership, structured concurrency, Job hierarchy, supervision, cooperative cancellation, cleanup, timeout handling, and practical Android lifecycle guidance.
-1. P0, **TODO**, , `coroutines-flow/flow-basics.md`, Flow Basics
-1. P0, **TODO**, , `coroutines-flow/flow-operators.md`, Flow Operators
+1. P0, **UPDATED**, 2026-08-29, `coroutines-flow/flow-basics.md`, Flow Basics, clarified the Flow pipeline, collection semantics, context, cancellation, and error handling.
+1. P0, **UPDATED**, 2026-08-29, `coroutines-flow/flow-operators.md`, Flow Operators, reorganized operator selection and clarified flattening, combining, buffering, retry, and terminal semantics.
 1. P0, **TODO**, , `coroutines-flow/stateflow-sharedflow.md`, StateFlow & SharedFlow
 1. P0, **TODO**, , `coroutines-flow/lifecycle-aware-collection.md`, Lifecycle-aware Collection
 1. P0, **TODO**, , `architecture/basics.md`, Architecture Basics
