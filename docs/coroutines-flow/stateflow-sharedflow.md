@@ -1,90 +1,104 @@
 # StateFlow & SharedFlow
 
-`StateFlow` and `SharedFlow` are hot Flow primitives for state, events and shared emissions.
+`StateFlow` and `SharedFlow` are hot Flow primitives for sharing values with one or more collectors. Use `StateFlow` for observable state with a current value and `SharedFlow` for configurable broadcast-style emissions.
 
 ## State and events
 
 ### What is StateFlow?
 
-`StateFlow` - a hot `Flow` that always stores the current state value and immediately gives it to a new collector.
+`StateFlow` is a hot `Flow` that always stores a current value. A new collector immediately receives that value and then subsequent updates.
 
-`StateFlow` always has an initial value. It fits UI state in `ViewModel` well: loading/content/error, form state, selected item, screen data and derived state.
+It requires an initial value and fits UI state in a `ViewModel`: loading/content/error, form input, selected items and derived screen data. Its current value is also available through `value`.
 
-`StateFlow` is conflated: if the value changes quickly, a collector usually receives the latest actual value and is not required to process every intermediate one. Also, `StateFlow` does not emit a new value if it `equals()` the old one.
+`StateFlow` is conflated. A slow collector may skip intermediate updates but receives the latest value. Updates equal to the previous value according to `equals()` are not emitted, so state models should have reliable equality and are usually immutable.
 
-Usually, `ViewModel` exposes read-only `StateFlow` and keeps `MutableStateFlow` internally:
+Expose a read-only flow and keep mutation private. For read-modify-write changes, `update` performs the change atomically:
 
 ```kotlin
-private val _uiState = MutableStateFlow(UiState.Loading)
+private val _uiState = MutableStateFlow(UiState())
 val uiState: StateFlow<UiState> = _uiState.asStateFlow()
-```
 
-**In short:** `StateFlow` is a hot observable state holder with a current value; it is a good fit for `ViewModel` UI state.
-
-### What is SharedFlow?
-
-`SharedFlow` - a hot `Flow` for broadcast-style emissions to several collectors.
-
-Unlike `StateFlow`, `SharedFlow` does not have to have a current `value`. Its behavior is configured through `replay`, `extraBufferCapacity` and `onBufferOverflow`.
-
-`SharedFlow` fits events or streams where there is not always a "current state": navigation events, snackbar messages, refresh triggers, analytics-like events, websocket updates.
-
-Unlike a `Channel`, `SharedFlow` uses broadcast semantics: every active subscriber receives an emission. A channel delivers each element to one competing receiver. See [Channels](channels.md) for the full comparison.
-
-For one-off UI events, `MutableSharedFlow` with `replay = 0` is often used so a new collector does not automatically receive an old event:
-
-```kotlin
-private val _events = MutableSharedFlow<UiEvent>()
-val events = _events.asSharedFlow()
-```
-
-**Important:** events require careful lifecycle-aware collection, otherwise an event can be lost if the collector is not active yet. For critical events, it is sometimes better to model them as part of state.
-
-**In short:** `SharedFlow` is a configurable hot broadcast stream; it is useful for events or shared emissions, not necessarily for state.
-
-### StateFlow vs SharedFlow
-
-`StateFlow` stores one current value and always has an initial value. A new collector immediately receives the latest value.
-
-`SharedFlow` is more general: it can have a replay cache, buffer and does not have to have a current value. With `replay = 0`, a new collector does not receive old emissions.
-
-For UI state, `StateFlow` is usually chosen because a screen always needs to know the current state. For one-off events or shared event streams, `SharedFlow` is usually chosen.
-
-`StateFlow` can be viewed as a specialized `SharedFlow` for state: `replay = 1`, latest value, equality-based conflation and required initial value.
-
-**Important:** do not store navigation/snackbar as a simple field in `StateFlow` if the event should be consumed once. But `SharedFlow` with `replay = 0` can also lose an event if there is no collector.
-
-**In short:** `StateFlow` is for state with a current value, `SharedFlow` is for configurable shared emissions and events.
-
-### StateFlow vs LiveData
-
-`LiveData` - a lifecycle-aware observable data holder from AndroidX Lifecycle. It automatically accounts for `LifecycleOwner` and is active only in `STARTED` / `RESUMED` states.
-
-`StateFlow` - a Kotlin Coroutines primitive. It does not know Android lifecycle by itself, so in UI it should be collected lifecycle-aware: `collectAsStateWithLifecycle()` in Compose or `repeatOnLifecycle()` in View System.
-
-`StateFlow` integrates better with coroutines/Flow operators, `combine`, `stateIn`, testing through coroutines test APIs and Kotlin multiplatform-style architecture.
-
-`LiveData` is still found in legacy Android projects and simple lifecycle-aware scenarios, but for modern Android Kotlin, `Flow` / `StateFlow` is usually preferred.
-
-**Important:** if `StateFlow` is collected directly from `Activity` / `Fragment` without `repeatOnLifecycle`, collection may continue in an inappropriate lifecycle state and do unnecessary work or update inactive UI.
-
-**In short:** `LiveData` is Android lifecycle-aware by design; `StateFlow` is coroutine-based and needs lifecycle-aware collection on Android.
-
-### State vs events/effects
-
-State describes the current screen state and should be reproducible: if the screen is recreated and the state is rendered again, UI should look correct.
-
-Events/effects are one-time actions: navigation, snackbar, toast, open dialog, scroll command, permission request. They are not always convenient to store as regular state because they may repeat after recreation or a new collector.
-
-For state, `StateFlow<UiState>` is most often used. Non-critical transient effects may use a `SharedFlow` or point-to-point `Channel` stream when lifecycle and delivery semantics are explicit. A channel does not guarantee that a longer-lived `ViewModel` event is actually processed by the UI; critical results are better reduced to recoverable state. See [Channels](channels.md#ui-events-and-effects).
-
-Main rule: critical data is better stored in state. A separate effect/event stream is suitable for transient commands only when its lifecycle and behavior without an active UI consumer are deliberately defined.
-
-```kotlin
-sealed interface UiEvent {
-    data class ShowSnackbar(val message: String) : UiEvent
-    data object NavigateBack : UiEvent
+fun selectItem(id: Long) {
+    _uiState.update { current -> current.copy(selectedItemId = id) }
 }
 ```
 
-**In short:** state is durable and describes what the UI should show; events/effects are one-time actions and need careful lifecycle handling.
+### What is SharedFlow?
+
+`SharedFlow` is a hot `Flow` that broadcasts each emission to all active subscribers. It has no required initial value or `value` property.
+
+Its delivery behavior is configured with:
+
+- `replay` - values delivered to a new subscriber;
+- `extraBufferCapacity` - additional space for slow active subscribers;
+- `onBufferOverflow` - whether the emitter suspends or an old/new value is dropped when the buffer is full.
+
+With the default `MutableSharedFlow()` configuration, `replay` and extra capacity are both zero. `emit` waits for active subscribers to accept the value, but returns immediately when there are no subscribers and the value is lost. Extra buffer capacity does not preserve values while there are no subscribers; only the replay cache does.
+
+`SharedFlow` fits refresh signals, application-wide ticks, websocket updates and non-critical UI effects whose delivery rules are explicit:
+
+```kotlin
+private val _effects = MutableSharedFlow<UiEffect>(
+    extraBufferCapacity = 1,
+)
+val effects: SharedFlow<UiEffect> = _effects.asSharedFlow()
+```
+
+With `replay = 0`, a collector that starts later does not receive an earlier emission. Increasing `replay` changes that behavior, but can also repeat an already handled effect after recreation. Therefore, `replay` is not a general exactly-once delivery mechanism.
+
+Unlike `SharedFlow`, a `Channel` normally distributes each element to one competing receiver rather than broadcasting it to every subscriber. See [Channels](channels.md) for delivery trade-offs.
+
+### StateFlow vs SharedFlow
+
+| Property | StateFlow | SharedFlow |
+| --- | --- | --- |
+| Current value | Required and available through `value` | Not required |
+| Initial value | Required | Not required |
+| New subscriber | Receives the latest value | Receives `replay` cached values |
+| Conflation | Based on `equals()` | Controlled through buffering and overflow policy |
+| Typical use | Observable state | Shared signals and transient effects |
+
+`StateFlow` is a specialized `SharedFlow` for state: it keeps one latest value, replays it to new subscribers and applies equality-based conflation.
+
+Do not put a navigation or snackbar command into a simple `StateFlow` field when it must be consumed only once: a new collector can handle it again. However, replacing it with `SharedFlow(replay = 0)` introduces the opposite risk - the effect is lost when no collector is active.
+
+### Converting cold flows with stateIn and shareIn
+
+Collecting a cold `Flow` starts its upstream producer separately for every collector. Use `stateIn` when consumers need shared state, or `shareIn` when they need a shared stream of emissions.
+
+```kotlin
+val uiState: StateFlow<UiState> = repository.observeData()
+    .map(::toUiState)
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = UiState.Loading,
+    )
+```
+
+The supplied scope controls the lifetime of sharing. `SharingStarted.WhileSubscribed(...)` starts the upstream when subscribers appear and stops it after they disappear, optionally after a timeout. `Eagerly` starts immediately; `Lazily` starts on the first subscriber and then keeps running while the scope is alive.
+
+### StateFlow vs LiveData
+
+`LiveData` is an AndroidX observable holder that automatically stops notifying an observer when its `LifecycleOwner` is inactive. `StateFlow` is a Kotlin Coroutines primitive and does not know about the Android lifecycle.
+
+Collect flows with lifecycle awareness: use `collectAsStateWithLifecycle()` in Compose or collect inside `repeatOnLifecycle()` in the View system. A plain `launch` or `launchIn` tied only to an `Activity` or `Fragment` scope can keep collecting while the UI is stopped.
+
+`StateFlow` integrates naturally with Flow operators such as `map` and `combine`, coroutine test APIs and shared Kotlin architecture. `LiveData` remains common in existing View-based code, but `StateFlow` is usually the default for modern coroutine-based state.
+
+### State vs events/effects
+
+State describes what the screen should show now. It should be reproducible: collecting it again after recreation should render the same valid UI.
+
+Effects are transient commands such as showing a snackbar, navigating, scrolling or launching a system picker. A separate `SharedFlow` or [Channel](channels.md#ui-events-and-effects) can be appropriate when the consequence is non-critical and behavior without an active collector is deliberately defined.
+
+Critical outcomes should usually be reduced to durable state. For example, store that an operation succeeded or that data was saved; navigation or a confirmation message can then be derived from an explicit UI decision instead of being the only record of the result.
+
+```kotlin
+sealed interface UiEffect {
+    data class ShowSnackbar(val message: String) : UiEffect
+    data object NavigateBack : UiEffect
+}
+```
+
+The choice is not simply “state uses `StateFlow`, events use `SharedFlow`.” First decide whether the information must survive the absence or recreation of the UI, then choose the primitive and buffering policy that provide those semantics.
