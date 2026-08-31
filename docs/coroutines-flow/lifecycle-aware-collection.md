@@ -1,74 +1,88 @@
 # Lifecycle-aware Collection
 
-Lifecycle-aware collection is needed so UI collects `Flow` only when the screen is active and does not continue unnecessary work in the background.
+Lifecycle-aware collection keeps UI subscriptions active only while the screen can use their values. This avoids unnecessary upstream work and prevents a stopped UI from reacting to updates.
 
 ## Android UI collection
 
 ### `collectAsStateWithLifecycle`
 
-`collectAsStateWithLifecycle()` - a Compose API from `lifecycle-runtime-compose` that collects `Flow` / `StateFlow` and converts it into Compose `State` with `Lifecycle` awareness.
+`collectAsStateWithLifecycle()` is the recommended Android Compose API for converting a `Flow` into Compose `State` with `Lifecycle` awareness. It is provided by `lifecycle-runtime-compose`.
 
-It is used in Compose UI to safely subscribe to `uiState` from `ViewModel`:
+For a `StateFlow`, the current value is used automatically:
 
 ```kotlin
 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 ```
 
-Main benefit: collection is active only in the appropriate lifecycle state, usually `STARTED` and above. When the screen goes to the background, collection is paused; when it returns, collection resumes.
+For a general `Flow`, provide an initial value:
 
-For `StateFlow`, this is especially convenient: UI immediately receives the latest value and does not start unnecessary work while the screen is inactive.
+```kotlin
+val items by viewModel.items.collectAsStateWithLifecycle(
+    initialValue = emptyList(),
+)
+```
 
-**Important:** do not use regular `collectAsState()` for Android screen-level flows without understanding lifecycle, because collection may continue when UI is already inactive.
+Collection runs while the lifecycle is at least `STARTED` by default. When it drops below that state, the collecting coroutine is cancelled; when the lifecycle becomes active again, collection restarts. A `StateFlow` immediately supplies its latest value after restart.
 
-**In short:** `collectAsStateWithLifecycle` is the recommended Compose way to collect `Flow` / `StateFlow` from `ViewModel` with Android lifecycle awareness.
+Use `collectAsStateWithLifecycle()` for observable screen state. Plain `collectAsState()` is lifecycle-agnostic and is mainly appropriate for platform-independent Compose code or flows whose lifetime is already controlled elsewhere.
+
+Do not use state collection for one-off commands merely because it is convenient. State can be replayed after recreation, so navigation and snackbar behavior requires an explicit delivery design.
 
 ### `repeatOnLifecycle`
 
-`repeatOnLifecycle()` - a lifecycle-aware API for running a coroutine block only in a specific `Lifecycle.State`, for example `STARTED`.
+`repeatOnLifecycle()` runs a suspending block whenever a `Lifecycle` reaches a target state. It cancels the block and its child coroutines below that state, then starts a new block when the lifecycle returns.
 
-When lifecycle reaches the target state, the block starts. When lifecycle drops below that state, the coroutine inside the block is canceled. When lifecycle returns to the target state, the block starts again.
-
-Typical Fragment/View System example:
+Typical Fragment/View System collection:
 
 ```kotlin
 viewLifecycleOwner.lifecycleScope.launch {
     viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        viewModel.uiState.collect { state ->
-            render(state)
-        }
+        viewModel.uiState.collect(::render)
     }
 }
 ```
 
-Use `viewLifecycleOwner` for Fragment UI, not the lifecycle of the `Fragment` itself, because the View lifecycle is shorter than the Fragment lifecycle.
+Use `viewLifecycleOwner` for Fragment UI because the Fragment's view has a shorter lifecycle than the Fragment itself. This prevents updates from targeting a destroyed view.
 
-`repeatOnLifecycle` is better than `launchWhenStarted` / `launchWhenResumed` because it explicitly cancels and restarts collection, rather than just suspending execution in less obvious places.
-
-**Important:** if several `Flow`s need to be collected in parallel inside `repeatOnLifecycle`, each `collect` should be in a separate `launch`; otherwise the first `collect` blocks the others.
-
-**In short:** `repeatOnLifecycle` starts collection only when lifecycle is at least the target state and cancels it when the UI is stopped.
-
-### `LaunchedEffect` for effects
-
-In Compose, one-off UI effects are often collected through `LaunchedEffect` because it is a coroutine tied to composition lifecycle.
+If several flows must be collected concurrently, launch a child coroutine for each one. A `collect` call normally does not complete, so sequential calls would leave later collectors unreachable:
 
 ```kotlin
-LaunchedEffect(Unit) {
-    viewModel.events.collect { event ->
-        when (event) {
-            UiEvent.NavigateBack -> navController.popBackStack()
-            is UiEvent.ShowSnackbar -> {
-                snackbarHostState.showSnackbar(event.message)
+viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+    launch { viewModel.uiState.collect(::render) }
+    launch { viewModel.messages.collect(::showMessage) }
+}
+```
+
+Prefer `repeatOnLifecycle()` to the older `launchWhenStarted` / `launchWhenResumed` APIs. Those APIs suspend the consumer instead of cancelling it, so a flow's upstream producer may remain active while the UI is stopped.
+
+### Effects in Compose
+
+`LaunchedEffect` starts a coroutine tied to the composable's presence in the composition. It is useful for UI reactions such as showing a snackbar, scrolling or navigating, but **it is not Android lifecycle-aware by itself**.
+
+For effects that should only be handled while the screen is `STARTED`, combine it with `repeatOnLifecycle()`:
+
+```kotlin
+val lifecycleOwner = LocalLifecycleOwner.current
+
+LaunchedEffect(viewModel, lifecycleOwner) {
+    lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        viewModel.events.collect { event ->
+            when (event) {
+                UiEvent.NavigateBack -> navController.popBackStack()
+                is UiEvent.ShowSnackbar ->
+                    snackbarHostState.showSnackbar(event.message)
             }
         }
     }
 }
 ```
 
-`LaunchedEffect` fits navigation, snackbar, scroll command, permission request trigger and other one-off effects that should run as a UI reaction to an event stream.
+`LaunchedEffect` restarts when one of its keys changes. Choose stable keys that represent the subscription owner; an accidental key change can cancel and recreate the collector.
 
-`LaunchedEffect` keys matter: if a key changes, the old coroutine is canceled and collection starts again. For a persistent subscription to events, usually use `LaunchedEffect(Unit)` or `LaunchedEffect(viewModel)` if changing the `ViewModel` should restart collection.
+Lifecycle-aware collection does not guarantee event delivery. A `SharedFlow` with `replay = 0` drops emissions when no collector is active, while replaying an effect can execute it again after recreation. Keep critical outcomes in durable UI state and define loss, buffering and consumption semantics explicitly for transient effects.
 
-**Important:** `SharedFlow` with `replay = 0` can lose an event if the UI collector is not active yet. For critical events, prefer storing them in state or designing event delivery separately.
+## Related topics
 
-**In short:** in Compose, `LaunchedEffect` is used to collect one-off UI effects in a coroutine scoped to the composable lifecycle.
+- [StateFlow & SharedFlow](stateflow-sharedflow.md)
+- [Coroutine Scopes & Cancellation](scopes-cancellation.md)
+- [UI State Architecture](../architecture/ui-state.md)

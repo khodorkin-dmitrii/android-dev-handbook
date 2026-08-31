@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-08-30
+1. Last tracker update: 2026-08-31
 1. Total articles tracked: 71
-1. Updated: 14
-1. TODO: 57
+1. Updated: 15
+1. TODO: 56
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 11 | 15 |
+| P0 | 26 | 12 | 14 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -30,7 +30,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-08-29, `coroutines-flow/flow-basics.md`, Flow Basics, clarified the Flow pipeline, collection semantics, context, cancellation, and error handling.
 1. P0, **UPDATED**, 2026-08-29, `coroutines-flow/flow-operators.md`, Flow Operators, reorganized operator selection and clarified flattening, combining, buffering, retry, and terminal semantics.
 1. P0, **UPDATED**, 2026-08-30, `coroutines-flow/stateflow-sharedflow.md`, StateFlow & SharedFlow, clarified delivery semantics, added stateIn/shareIn, and improved lifecycle guidance.
-1. P0, **TODO**, , `coroutines-flow/lifecycle-aware-collection.md`, Lifecycle-aware Collection
+1. P0, **UPDATED**, 2026-08-31, `coroutines-flow/lifecycle-aware-collection.md`, Lifecycle-aware Collection, Clarified cancellation and restart semantics, StateFlow and Flow collection, parallel collectors, Compose effect handling, and the lifecycle limitations of LaunchedEffect.
 1. P0, **TODO**, , `architecture/basics.md`, Architecture Basics
 1. P0, **UPDATED**, 2026-07-03, `architecture/ui-state.md`, UI State Architecture, Added state restoration guidance: state ownership, lifecycle boundaries, SavedStateHandle, repository/storage, temporary UI scopes, and feature design restoration decisions.
 1. P0, **TODO**, , `architecture/mv-patterns.md`, MV* Patterns
