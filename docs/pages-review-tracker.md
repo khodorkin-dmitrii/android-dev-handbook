@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-08-31
+1. Last tracker update: 2026-09-03
 1. Total articles tracked: 71
-1. Updated: 15
-1. TODO: 56
+1. Updated: 18
+1. TODO: 53
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 12 | 14 |
+| P0 | 26 | 15 | 11 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -31,10 +31,10 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-08-29, `coroutines-flow/flow-operators.md`, Flow Operators, reorganized operator selection and clarified flattening, combining, buffering, retry, and terminal semantics.
 1. P0, **UPDATED**, 2026-08-30, `coroutines-flow/stateflow-sharedflow.md`, StateFlow & SharedFlow, clarified delivery semantics, added stateIn/shareIn, and improved lifecycle guidance.
 1. P0, **UPDATED**, 2026-08-31, `coroutines-flow/lifecycle-aware-collection.md`, Lifecycle-aware Collection, Clarified cancellation and restart semantics, StateFlow and Flow collection, parallel collectors, Compose effect handling, and the lifecycle limitations of LaunchedEffect.
-1. P0, **TODO**, , `architecture/basics.md`, Architecture Basics
+1. P0, **UPDATED**, 2026-09-03, `architecture/basics.md`, Architecture Basics, Clarified layer responsibilities, unidirectional data flow, Clean Architecture dependency semantics, repository boundaries, domain-layer trade-offs, and single-source-of-truth ownership.
 1. P0, **UPDATED**, 2026-07-03, `architecture/ui-state.md`, UI State Architecture, Added state restoration guidance: state ownership, lifecycle boundaries, SavedStateHandle, repository/storage, temporary UI scopes, and feature design restoration decisions.
-1. P0, **TODO**, , `architecture/mv-patterns.md`, MV* Patterns
-1. P0, **TODO**, , `architecture/multi-module.md`, Multi-module Architecture
+1. P0, **UPDATED**, 2026-09-03, `architecture/mv-patterns.md`, MV* Patterns, Clarified MVC, MVP, MVVM and MVI responsibilities, distinguished Jetpack ViewModel from MVVM, explained reducer and effect boundaries, and added a pragmatic MVVM/MVI comparison.
+1. P0, **UPDATED**, 2026-09-03, `architecture/multi-module.md`, Multi-module Architecture, Streamlined modularization strategies, clarified module APIs and dependency rules, added Gradle api/implementation guidance, and made build-performance recommendations measurement-driven.
 1. P0, **UPDATED**, 2026-08-23, `android/activity-fragment-lifecycle.md`, Activity, Fragment & Lifecycle
 1. P0, **TODO**, , `android/components.md`, Android Components
 1. P0, **TODO**, , `android/view-system-xml-ui.md`, View System / XML UI

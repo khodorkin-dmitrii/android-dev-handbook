@@ -1,75 +1,68 @@
 # Architecture Basics
 
-Modern Android architecture - прагматичный подход к разделению ответственности между UI, state holder, domain logic и data sources.
+Современная Android-архитектура разделяет UI, управление состоянием, бизнес-правила и доступ к данным. Благодаря этому у каждой части есть понятная ответственность и возможность развиваться независимо.
 
-## Layers
+## Слои
 
-### Modern Android architecture
+### Современная Android-архитектура
 
-Modern Android architecture - это layered architecture, где приложение разделено на UI layer, data layer и optional domain layer.
+Типичное Android-приложение состоит из UI-слоя, слоя данных и, при необходимости, доменного слоя. Это практическое применение принципа разделения ответственности, а не требование создавать одинаковые папки и классы в каждой фиче.
 
-Главная идея - separation of concerns: `Activity`, `Fragment` и composable не должны содержать всю логику приложения, а каждый слой должен иметь понятную ответственность и границы.
+UI наблюдает за неизменяемым состоянием и передаёт действия пользователя обратно владельцу состояния, обычно `ViewModel`. Владелец состояния координирует работу через репозитории или use case-ы и публикует результат как UI state. Так формируется однонаправленный поток данных:
 
-В modern Android обычно используют `ViewModel` как state holder, immutable UI state, unidirectional data flow, repositories, coroutines/Flow и dependency injection.
+```text
+UI events -> state holder -> domain/data layer
+UI state  <- state holder <- domain/data layer
+```
 
-**Коротко:** modern Android architecture is usually a pragmatic layered architecture with clear responsibilities: UI renders state, `ViewModel` produces UI state, repositories hide data sources, and domain/use cases are added when they reduce complexity.
+`Activity`, `Fragment` и composable-функции должны отвечать прежде всего за отображение и взаимодействие с UI и платформой. В них не стоит помещать детали доступа к данным и бизнес-правила, которым нужны более долгоживущие и независимо тестируемые компоненты.
 
-### UI layer / domain layer / data layer
+### UI-слой / слой данных / доменный слой
 
-UI layer отвечает за отображение application data и обработку user interaction. В Android это обычно composable, `Fragment`, `Activity`, `ViewModel`, UI state, UI events и UI-specific formatting.
+**UI-слой** отображает данные приложения и обрабатывает действия пользователя. К нему относятся composable-функции или Views, Android UI components, владельцы состояния экрана, UI-модели и форматирование для отображения.
 
-Data layer отвечает за application data и business logic, связанный с созданием, хранением и изменением данных. Обычно включает repositories, remote/local data sources, API services, Room/DataStore/cache, DTO/entity models и mappers.
+**Слой данных** предоставляет данные приложения через репозитории. Он координирует удалённые и локальные источники, например API services, Room, DataStore, файлы и кэш, а также владеет правилами чтения, изменения, преобразования и синхронизации данных. UI-код не должен напрямую зависеть от Retrofit services, DAO или конкретных источников данных.
 
-Domain layer - optional слой между UI и data. Он содержит use cases/interactors, business rules, validation и orchestration сценариев, когда логика сложная или переиспользуется несколькими `ViewModel`.
+**Доменный слой** необязателен. В нём размещают use case-ы или interactors, когда бизнес-логика сложна, переиспользуется несколькими владельцами состояния или объединяет несколько репозиториев. На простом экране `ViewModel` может обращаться к репозиторию напрямую, и это не нарушает архитектуру.
 
-Хорошее разделение слоёв означает, что UI не знает деталей API/database, data layer не зависит от Android UI, а бизнес-правила не размазаны по composable или `Activity`.
-
-**Коротко:** UI layer shows state and sends user actions, data layer owns data and repositories, domain layer is optional and contains reusable business logic.
+Границы слоёв должны ясно определять зависимости: UI зависит от API доменного слоя или слоя данных, а слой данных не зависит от Android UI.
 
 ### Clean Architecture
 
-Clean Architecture - подход к разделению ответственности, где UI, бизнес-логика и работа с данными отделены друг от друга, а зависимости направлены к более стабильным абстракциям.
+Clean Architecture отделяет бизнес-правила от UI-фреймворков и деталей реализации. Согласно dependency rule, зависимости в исходном коде направлены к стабильным правилам или абстракциям. Схема `UI -> ViewModel -> use case -> repository -> data source` обычно показывает вызовы и движение данных, но сама по себе не задаёт направление всех compile-time dependencies.
 
-В Android это часто выглядит как UI layer -> `ViewModel` -> use case/domain -> repository -> data sources. Но Clean Architecture не обязана означать одинаковый набор папок и use case на каждое действие.
+В Android этот подход стоит применять прагматично. Интерфейсы полезны, когда реализации могут меняться, тестам нужна подмена зависимости или требуется изоляция модулей. Необязательно создавать use case, mapper и interface для каждой тривиальной операции. Ясное владение логикой и тестируемость должны оправдывать дополнительную косвенность.
 
-Польза: код проще тестировать, бизнес-логику легче переиспользовать, data sources можно заменить без переписывания UI, а большие классы проще разделять.
+### Когда нужен доменный слой?
 
-Trade-off: слишком строгая Clean Architecture в простом CRUD/API-to-UI экране может добавить boilerplate и замедлить разработку без реальной пользы.
+Добавляйте доменный слой, когда он упрощает фичу, например если:
 
-**Коротко:** use Clean Architecture pragmatically: keep clear boundaries and testable business logic, but avoid adding layers that do not solve a real problem.
+- бизнес-правила достаточно сложны и должны тестироваться отдельно;
+- одна операция переиспользуется несколькими `ViewModel`;
+- один сценарий объединяет несколько репозиториев;
+- validation, authorization или error mapping сложнее UI-форматирования;
+- workflow координирует несколько шагов или источников данных.
 
-### Когда нужен domain layer?
+Типичные примеры - платежи, checkout и проверка доступности подписки. Для загрузки списка из одного репозитория отдельный use case обычно не нужен.
 
-Domain layer нужен не всегда. Он полезен, когда есть сложная бизнес-логика, сценарии переиспользуются между несколькими `ViewModel`, нужно объединять несколько repositories или важно тестировать business rules отдельно от UI и data details.
-
-Типичные примеры: payment flow, authorization rules, permissions, validation, combining user + subscription + feature flags, complex error mapping, orchestration нескольких remote/local sources.
-
-Если экран просто загружает список и показывает его, отдельный use case на каждую маленькую операцию может быть лишним. В таком случае `ViewModel` может обращаться к repository напрямую, если это принято в проекте и границы слоёв остаются понятными.
-
-**Коротко:** domain layer is optional; add it when it reduces duplication, hides complex business logic, or makes behavior easier to test.
-
-## Data ownership
+## Владение данными
 
 ### Repository pattern
 
-Repository - фасад над источниками данных, который даёт остальным слоям единый API для работы с данными.
+Репозиторий - публичная точка входа в определённую часть слоя данных. Он скрывает, поступают ли данные из сети, базы, кэша, DataStore, файла или websocket, и предоставляет остальному приложению осмысленные операции.
 
-Repository скрывает, откуда пришли данные: network, database, cache, DataStore, file или websocket. Он может centralize data changes, resolve conflicts between sources, делать mapping и инкапсулировать caching/offline-first логику.
-
-`ViewModel` или use case не должны напрямую зависеть от Retrofit service, DAO или DataSource, если repository уже является entry point в data layer.
-
-**Важно:** repository не должен быть просто тонкой прокладкой без смысла. Он полезен, когда реально скрывает источники данных, правила кэширования, mapping, error handling или orchestration.
-
-**Коротко:** repository abstracts data sources and exposes a clean API to the rest of the app, so UI/domain code does not know whether data comes from API, database or cache.
+Репозиторий может координировать источники, преобразовывать модели, задавать правила кэширования и реализовывать offline-first поведение. Он не должен превращаться в несвязанное хранилище всей бизнес-логики. Даже небольшая реализация полезна, если формирует ясную границу слоя данных, но дополнительные обёртки внутри неё должны оправдывать свою сложность.
 
 ### Single source of truth
 
-Single source of truth - принцип, при котором у конкретного состояния есть один главный владелец, а остальные части системы читают данные от него, а не хранят конкурирующие копии.
+Single source of truth означает, что у каждого типа данных приложения есть один авторитетный владелец. Остальные компоненты наблюдают за его данными или запрашивают изменения через него, а не хранят конкурирующие изменяемые копии.
 
-Для UI это значит, что экран должен рендериться из одного актуального UI state, а не собирать противоречивые значения из разных mutable полей. Для данных это часто repository/database/cache как главный источник, из которого строится observable stream.
+В offline-first фиче источником истины часто выступает локальная база: ответы сети обновляют её, а UI наблюдает за ней через репозиторий. В более простой фиче источником может быть backend или состояние в памяти под управлением репозитория. Выбор зависит от требований к сохранению, offline-работе и согласованности данных.
 
-Single source of truth снижает риск рассинхронизации, race conditions и багов после recreation/configuration change.
+К UI state применяется тот же принцип владения. Экран должен рендериться из состояния одного владельца, а не собирать его из несвязанных mutable-полей в UI. Действия пользователя возвращаются владельцу, который обновляет state. Это уменьшает риск рассинхронизации, race conditions и ошибок после пересоздания экрана.
 
-**Важно:** не меняй UI state напрямую в UI, если владельцем данных является `ViewModel` или data layer.
+## Связанные темы
 
-**Коротко:** single source of truth means one clear owner of state; UI observes it and sends events back instead of maintaining competing copies.
+- [UI State Architecture](ui-state.ru.md)
+- [MV* Patterns](mv-patterns.ru.md)
+- [Multi-module Architecture](multi-module.ru.md)
