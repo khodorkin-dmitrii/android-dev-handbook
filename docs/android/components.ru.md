@@ -1,48 +1,44 @@
 # Android Components
 
-Android-приложение строится вокруг компонентов, через которые система или пользователь могут войти в приложение.
+Компоненты Android-приложения - это точки входа, через которые система или другое приложение могут создать приложение либо обратиться к нему. Процесс может быть запущен ради `Activity`, `Service`, `BroadcastReceiver` или `ContentProvider`, поэтому инициализация не должна исходить из того, что пользователь сначала открыл экран.
 
 ## Основные компоненты
 
-### Компоненты Android приложения
+### Компоненты Android-приложения
 
-Четыре основных app components: `Activity`, `Service`, `BroadcastReceiver` и `ContentProvider`. Они объявляются в `AndroidManifest.xml` и имеют разные жизненные циклы.
+Четыре основных компонента - `Activity`, `Service`, `BroadcastReceiver` и `ContentProvider`. У каждого своя задача и жизненный цикл. Activity, service и provider объявляются в `AndroidManifest.xml`; receiver можно объявить в манифесте или зарегистрировать во время выполнения.
 
-`Activity` отвечает за экран и взаимодействие с пользователем. `Service` выполняет фоновые или bound-задачи без UI. `BroadcastReceiver` принимает события. `ContentProvider` управляет доступом к данным через общий контракт.
-
-Эти компоненты могут быть entry points приложения: процесс не всегда создаётся из-за запуска `Activity`. Например, он может быть создан из-за `BroadcastReceiver`, `Service` или `ContentProvider`.
+Доступность компонента для других приложений зависит от intent filters, permissions и настройки `android:exported`. Внутренние компоненты следует оставлять неэкспортируемыми, а все данные, поступающие в экспортируемые компоненты, - проверять.
 
 ### Activity
 
-`Activity` - компонент, представляющий экран с UI и основной entry point для взаимодействия пользователя с приложением.
+`Activity` - основная точка входа для взаимодействия с пользователем. Она владеет окном, в котором приложение показывает UI, но не обязана соответствовать ровно одному экрану.
 
-Одна `Activity` обычно отвечает за один user-facing flow или служит host для нескольких экранов, fragments или Compose navigation. В современных приложениях часто встречается Single Activity approach, где одна `Activity` содержит `NavHost`, а конкретные экраны реализованы как fragments или composables.
+В современных приложениях одна `Activity` часто служит контейнером для навигации на Fragment или Compose. Система управляет ею через lifecycle callbacks и может уничтожить и пересоздать после изменения конфигурации или завершения процесса. Поэтому UI-состояние должно храниться у подходящего state holder и при необходимости восстанавливаться.
 
-`Activity` объявляется в `AndroidManifest.xml` и управляется системой через lifecycle callbacks.
+Состояния жизненного цикла и границы восстановления разобраны в статье [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md).
 
 ### Service
 
-`Service` - компонент без собственного UI, предназначенный для работы, которая должна существовать независимо от конкретного экрана, или для предоставления API другим компонентам через binding.
+`Service` - компонент без собственного UI. Он подходит для работы, которая должна существовать независимо от экрана, или для предоставления API другим компонентам через binding.
 
-**Важно:** `Service` не означает отдельный thread. Service callbacks по умолчанию выполняются на main thread, поэтому blocking или CPU-intensive работу нужно переносить в coroutine, worker или thread pool.
+**Важно:** service не является фоновым потоком. Его lifecycle callbacks по умолчанию выполняются в main thread, поэтому блокирующую или CPU-intensive работу нужно переносить на подходящий coroutine dispatcher, worker или executor.
 
-Не следует путать этот компонент приложения с платформенной службой. О службах, стоящих за многими публичными framework API, см. в статье [Основные системные службы Android](android-system-services.md).
+Started и bound описывают способ управления service и продолжительность его жизни. Foreground означает видимый пользователю режим выполнения с уведомлением. Эти понятия не исключают друг друга: один service может одновременно быть started, bound и foreground.
 
-Started и bound описывают способ управления service и его lifecycle. Foreground описывает user-visible режим выполнения с persistent notification. Эти понятия не исключают друг друга: один service может одновременно быть started, bound и foreground.
+#### Started service
 
-#### Started Service
+Started service запускается через `startService()` или, когда foreground execution разрешён и необходим, через `startForegroundService()`. Система вызывает `onStartCommand()`, после чего service может продолжать работу даже после уничтожения запустившего его компонента.
 
-Started service запускается через `startService()` или, если требуется foreground execution, через `startForegroundService()`. Система вызывает `onStartCommand()`, после чего service может продолжать работу даже после уничтожения запустившего его компонента.
+Он должен остановить себя через `stopSelf()` либо быть остановлен через `stopService()`. Не следует использовать service как универсальный способ удерживать приложение в фоне. Современный Android ограничивает фоновое выполнение; для отложенной гарантированной работы обычно лучше подходит `WorkManager`.
 
-Started service должен остановить себя через `stopSelf()` либо быть остановлен через `stopService()`. Его не следует использовать как универсальный способ удерживать приложение в фоне. Современный Android ограничивает запуск background services, а для отложенной гарантированной работы обычно лучше подходит `WorkManager`.
+Подробнее о `WorkManager`, foreground services, Doze и ограничениях фонового выполнения см. в статье [Background Work & System Behavior](background-work-system-behavior.md).
 
-Подробнее о `WorkManager`, foreground services, Doze и ограничениях фонового выполнения см. в [Background Work & System Behavior](background-work-system-behavior.md).
+#### Bound service
 
-#### Bound Service
+Bound service предоставляет client-server interface. Компонент вызывает `bindService()` с `ServiceConnection`; service получает `onBind()` и возвращает `IBinder`, через который клиент с ним взаимодействует.
 
-Bound service предоставляет client-server interface. Компонент вызывает `bindService()` и передаёт `ServiceConnection`; service получает `onBind()` и возвращает `IBinder`, через который клиент может вызывать операции или обмениваться данными.
-
-Pure bound service обычно существует, пока к нему привязан хотя бы один клиент. Одновременно подключиться могут несколько клиентов. После того как последний клиент вызовет `unbindService()`, система может уничтожить service. Вызовы bind и unbind нужно связывать с подходящими этапами lifecycle клиента - часто с `onStart()` / `onStop()`, если соединение требуется только пока `Activity` видима.
+Purely bound service обычно существует, пока к нему привязан хотя бы один клиент. Вызовы bind и unbind нужно связывать с жизненным циклом клиента - часто с `onStart()` / `onStop()`, если соединение требуется только пока `Activity` видима.
 
 Если service и клиент находятся в одном процессе, custom `Binder` может напрямую предоставлять API сервиса:
 
@@ -57,76 +53,70 @@ class PlaybackService : Service() {
     override fun onBind(intent: Intent): IBinder = binder
 
     fun play() {
-        // Запустить playback в подходящем execution context.
+        // Запустить воспроизведение в подходящем execution context.
     }
 }
 ```
 
-Клиент получает binder в `ServiceConnection.onServiceConnected()` и использует его до разрыва соединения. Флаг `Context.BIND_AUTO_CREATE` создаёт service при подключении первого клиента, если тот ещё не запущен.
+Флаг `Context.BIND_AUTO_CREATE` создаёт service при подключении первого клиента, если тот ещё не запущен. Для взаимодействия между процессами используют `Messenger` для последовательных сообщений или AIDL, когда действительно нужен типизированный конкурентный IPC-контракт. Оба варианта усложняют работу с lifecycle, ошибками и thread safety.
 
-Для взаимодействия между разными процессами можно использовать `Messenger` для последовательного message-based IPC или AIDL, когда действительно требуется typed concurrent IPC contract. Эти варианты сложнее local binder и требуют аккуратной обработки ошибок, lifecycle и thread safety.
+Service может быть одновременно started и bound. Тогда отключение последнего клиента его не остановит: started lifetime также нужно завершить через `stopSelf()` или `stopService()`.
 
-Подробнее о границе процессов, сгенерированных proxy/stub, потоках и ошибках удаленных вызовов см. в статье [Binder IPC и AIDL](binder-ipc-aidl.md).
-
-Service также может быть одновременно started и bound. В этом случае отключение последнего клиента его не останавливает: started lifecycle должен завершиться через `stopSelf()` или `stopService()`. Service уничтожается только после того, как он больше не является started и к нему не привязано ни одного клиента.
-
-Для binding используй explicit `Intent`. Если service предназначен только для приложения, объяви для него `android:exported="false"`, чтобы другие приложения не могли к нему подключиться.
+Для binding используй explicit `Intent`. Если service доступен только внутри приложения, укажи `android:exported="false"`.
 
 ### BroadcastReceiver
 
-`BroadcastReceiver` получает broadcast events от системы или других приложений. Это entry point, через который приложение может отреагировать на событие вне обычного user flow.
+`BroadcastReceiver` позволяет приложению реагировать на broadcasts от системы или других приложений. Это короткоживущая точка входа, а не место для длительной работы.
 
-`BroadcastReceiver` должен выполнять короткую работу. Для длительной операции лучше делегировать задачу в `WorkManager`, `JobScheduler` или foreground service, если сценарий действительно требует foreground execution.
+`onReceive()` выполняется в main thread и должен быстро завершаться. `goAsync()` позволяет закончить короткую асинхронную работу после возврата из `onReceive()`, но не снимает ограничение по времени. Более длительную или отложенную работу следует передавать в `WorkManager`; foreground service подходит только для видимой пользователю задачи, когда платформа разрешает его запуск.
 
-Broadcast может быть system-wide или app-specific. При регистрации receiver важно учитывать security: exported/non-exported, permissions и ограничения implicit broadcasts в новых версиях Android.
+Receiver можно зарегистрировать в манифесте или во время выполнения. Нужно учитывать ограничения implicit broadcasts, permissions и exported/non-exported flags. Если Intent может прийти от другого приложения, его данные следует считать недоверенными.
 
 ### ContentProvider
 
-`ContentProvider` управляет доступом к структурированным данным приложения и может предоставлять эти данные другим приложениям через URI-based API.
+`ContentProvider` предоставляет структурированные данные через URI-based API. Клиенты обращаются к нему через `ContentResolver`, независимо от того, хранятся ли данные в базе, файлах или другом источнике.
 
-Типичные примеры: `ContactsProvider`, `MediaStore`, `FileProvider`. Provider может хранить данные в SQLite, файлах, сети или другом storage, но наружу отдаёт единый контракт через `ContentResolver`.
-
-`ContentProvider` является одним из entry points приложения и может быть создан системой очень рано, иногда до `Application.onCreate()`. Поэтому в provider-коде нужно осторожно относиться к тяжёлой инициализации.
+Типичные примеры - `ContactsProvider`, `MediaStore` и `FileProvider`. Provider может быть точкой входа и инициализироваться до `Application.onCreate()`, поэтому в нём следует избегать тяжёлой работы при старте. Если provider экспортирован, чувствительные операции нужно защищать узкими URI permissions или явными permissions.
 
 ## Передача данных
 
 ### Intent: explicit vs implicit
 
-Explicit Intent явно указывает компонент, который нужно запустить. Обычно используется для навигации внутри приложения.
+Explicit `Intent` называет целевой компонент и обычно используется для внутренней навигации или взаимодействия с service.
 
 ```kotlin
 val intent = Intent(this, DetailsActivity::class.java)
-intent.putExtra("item_id", itemId)
+    .putExtra("item_id", itemId)
 startActivity(intent)
 ```
 
-Implicit Intent описывает действие, а не конкретный компонент. Система выбирает подходящее приложение или компонент через intent filters.
+Implicit `Intent` описывает действие. Android находит подходящий компонент по intent filters. Используй chooser, когда получателя должен выбрать пользователь, и проверяй возможность обработки Intent, если подходящего компонента может не оказаться.
 
 ```kotlin
-val intent = Intent(Intent.ACTION_SEND)
-intent.type = "text/plain"
-intent.putExtra(Intent.EXTRA_TEXT, "Hello, world!")
+val intent = Intent(Intent.ACTION_SEND).apply {
+    type = "text/plain"
+    putExtra(Intent.EXTRA_TEXT, "Hello, world!")
+}
 startActivity(Intent.createChooser(intent, "Share"))
 ```
 
-**Коротко:** explicit intent targets a specific component, implicit intent describes an action and lets Android resolve who can handle it.
-
 ### Bundle
 
-`Bundle` - контейнер key-value данных, который часто используется для передачи параметров между Android-компонентами и сохранения небольшого состояния.
+`Bundle` - key-value контейнер для Intent extras, Fragment arguments, `onSaveInstanceState()` и интеграции с `SavedStateHandle`. Он поддерживает primitives, `String`, `Parcelable`, `Serializable`, а также некоторые массивы и коллекции.
 
-`Bundle` может хранить primitives, `String`, `Parcelable`, `Serializable` и некоторые массивы/коллекции поддерживаемых типов.
-
-Типичные места использования: Intent extras, Fragment arguments, `onSaveInstanceState()`, `SavedStateHandle` interop.
-
-**Важно:** `Bundle` не предназначен для больших данных. Для больших объектов лучше передавать id и загружать данные из repository, database или cache.
+Bundle передаётся через Binder и не рассчитан на большие графы объектов. Объёмные данные могут привести к `TransactionTooLargeException`. Вместо них лучше передать стабильный идентификатор и загрузить данные из repository, database или cache.
 
 ### Serializable vs Parcelable
 
-`Serializable` - стандартный Java-механизм сериализации. Он простой в использовании, но часто медленнее и создаёт больше runtime overhead, потому что работает через reflection и промежуточные объекты.
+`Serializable` - универсальный Java-механизм сериализации. Он удобен в простых случаях, но обычно требует больше работы во время выполнения и создаёт больше объектов.
 
-`Parcelable` - Android-ориентированный механизм передачи объектов между компонентами, например через `Intent` или `Bundle`. Он обычно быстрее и лучше подходит для Android IPC/Bundle-сценариев, но требует явного описания того, как объект записывается и читается.
+`Parcelable` - Android-формат для IPC и значений внутри `Intent` или `Bundle`. Kotlin-плагин `@Parcelize` генерирует реализацию и избавляет от большей части boilerplate.
 
-В Kotlin чаще используют `@Parcelize`, чтобы не писать boilerplate `Parcelable` вручную.
+Если объект действительно нужно передать между Android-компонентами, обычно стоит выбрать `Parcelable`, но payload должен оставаться небольшим. Стабильный идентификатор чаще оказывается более надёжным контрактом, чем передача целого domain object.
 
-**Коротко:** `Serializable` проще, `Parcelable` быстрее и является предпочтительным вариантом для Android component communication.
+## Связанные темы
+
+- [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
+- [Background Work & System Behavior](background-work-system-behavior.md)
+- [Context & Resources](context-resources.md)
+- [Storage](storage.md)

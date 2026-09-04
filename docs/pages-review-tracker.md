@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-03
+1. Last tracker update: 2026-09-04
 1. Total articles tracked: 71
-1. Updated: 18
-1. TODO: 53
+1. Updated: 19
+1. TODO: 52
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 15 | 11 |
+| P0 | 26 | 16 | 10 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -36,7 +36,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-09-03, `architecture/mv-patterns.md`, MV* Patterns, Clarified MVC, MVP, MVVM and MVI responsibilities, distinguished Jetpack ViewModel from MVVM, explained reducer and effect boundaries, and added a pragmatic MVVM/MVI comparison.
 1. P0, **UPDATED**, 2026-09-03, `architecture/multi-module.md`, Multi-module Architecture, Streamlined modularization strategies, clarified module APIs and dependency rules, added Gradle api/implementation guidance, and made build-performance recommendations measurement-driven.
 1. P0, **UPDATED**, 2026-08-23, `android/activity-fragment-lifecycle.md`, Activity, Fragment & Lifecycle
-1. P0, **TODO**, , `android/components.md`, Android Components
+1. P0, **UPDATED**, 2026-09-04, `android/components.md`, Android Components, Clarified component entry points and exposure, service and receiver execution semantics, ContentProvider security, Intent resolution, Bundle size limits, and Parcelable usage.
 1. P0, **TODO**, , `android/view-system-xml-ui.md`, View System / XML UI
 1. P0, **TODO**, , `android/background-work-system-behavior.md`, Background Work & System Behavior
 1. P0, **TODO**, , `android/gradle-build-system.md`, Gradle & Build System

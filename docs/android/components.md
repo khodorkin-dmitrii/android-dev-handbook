@@ -1,48 +1,44 @@
 # Android Components
 
-An Android app is built around components through which the system or the user can enter the app.
+Android app components are entry points through which the system or another app can create or interact with your application. The process may start for an `Activity`, `Service`, `BroadcastReceiver`, or `ContentProvider`, so initialization must not assume that the user opened a screen first.
 
 ## Core components
 
 ### Android app components
 
-The four core app components are `Activity`, `Service`, `BroadcastReceiver` and `ContentProvider`. They are declared in `AndroidManifest.xml` and have different lifecycles.
+The four core app components are `Activity`, `Service`, `BroadcastReceiver`, and `ContentProvider`. Each has a distinct role and lifecycle. Activities, services, and providers are declared in `AndroidManifest.xml`; receivers can be declared in the manifest or registered at runtime.
 
-`Activity` represents a screen and user interaction. `Service` performs background or bound work without UI. `BroadcastReceiver` receives events. `ContentProvider` manages access to data through a shared contract.
-
-These components can be app entry points: a process is not always created because an `Activity` was launched. For example, it can be created because of a `BroadcastReceiver`, `Service` or `ContentProvider`.
+Whether a component is available to other apps depends on its intent filters, permissions, and `android:exported` configuration. Keep internal components non-exported and validate all data received by exported components.
 
 ### Activity
 
-`Activity` - a component that represents a screen with UI and the main entry point for user interaction with the app.
+`Activity` is the main entry point for user interaction. It owns a window where the app presents UI, but it does not have to map one-to-one to a screen.
 
-One `Activity` usually owns one user-facing flow or acts as a host for several screens, fragments or Compose navigation. Modern apps often use the Single Activity approach, where one `Activity` contains a `NavHost`, and individual screens are implemented as fragments or composables.
+Modern apps often use a single `Activity` as a host for Fragment or Compose navigation. The system manages the activity through lifecycle callbacks and may destroy and recreate it after configuration changes or process death. UI state should therefore live at the appropriate state holder and be restored when needed.
 
-`Activity` is declared in `AndroidManifest.xml` and managed by the system through lifecycle callbacks.
+See [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md) for lifecycle states and restoration boundaries.
 
 ### Service
 
-`Service` - a component without its own UI, intended for work that must be owned independently of a screen or for exposing an API to other components through binding.
+`Service` is a component without its own UI. Use it for work that must be owned independently of a screen or for exposing an API to other components through binding.
 
-**Important:** `Service` does not mean a separate thread. Service callbacks run on the main thread by default, so blocking or CPU-intensive work must be moved to a coroutine, worker or thread pool.
+**Important:** a service is not a background thread. Its lifecycle callbacks run on the main thread by default, so blocking or CPU-intensive work must run on an appropriate coroutine dispatcher, worker, or executor.
 
-Do not confuse this application component with a platform service. See [Core Android System Services](android-system-services.md) for the services behind many public framework APIs.
+Started and bound describe how a service is controlled and how long it lives. Foreground describes a user-visible execution mode with a notification. These concepts are not mutually exclusive: one service can be started, bound, and foreground at the same time.
 
-Started and bound describe how a service is controlled and how long it lives. Foreground describes a user-visible execution mode with a persistent notification. These concepts are not mutually exclusive: one service can be started, bound and foreground at the same time.
+#### Started service
 
-#### Started Service
+A started service is launched with `startService()` or, when foreground execution is allowed and required, `startForegroundService()`. The system calls `onStartCommand()`, and the service can continue after the component that started it is destroyed.
 
-A started service is launched with `startService()` or, when foreground execution is required, `startForegroundService()`. The system calls `onStartCommand()`, and the service can continue after the component that started it is destroyed.
+It must stop itself with `stopSelf()` or be stopped with `stopService()`. Do not use a service as a generic way to keep an app alive. Modern Android restricts background execution; deferrable, guaranteed work is usually better handled by `WorkManager`.
 
-A started service must stop itself with `stopSelf()` or be stopped with `stopService()`. It should not be used as a generic way to keep an app alive in the background. Modern Android restricts background service starts, and deferred reliable work is usually better handled by `WorkManager`.
+See [Background Work & System Behavior](background-work-system-behavior.md) for `WorkManager`, foreground services, Doze, and background execution limits.
 
-See [Background Work & System Behavior](background-work-system-behavior.md) for `WorkManager`, foreground services, Doze and background execution limits.
+#### Bound service
 
-#### Bound Service
+A bound service exposes a client-server interface. A component calls `bindService()` with a `ServiceConnection`; the service receives `onBind()` and returns an `IBinder` through which the client communicates with it.
 
-A bound service provides a client-server interface. A component calls `bindService()` with a `ServiceConnection`; the service receives `onBind()` and returns an `IBinder` through which the client can call operations or exchange data.
-
-A purely bound service normally exists while at least one client is bound. Multiple clients can bind at the same time. After the last client calls `unbindService()`, the system can destroy the service. Bind and unbind calls should be paired with an appropriate client lifecycle, commonly `onStart()` / `onStop()` when the connection is needed only while an `Activity` is visible.
+A purely bound service normally exists while at least one client is bound. Pair bind and unbind calls with the client lifecycle, commonly `onStart()` / `onStop()` when the connection is needed only while an `Activity` is visible.
 
 For a service and client in the same process, a custom `Binder` can expose the service API directly:
 
@@ -62,71 +58,65 @@ class PlaybackService : Service() {
 }
 ```
 
-The client receives the binder in `ServiceConnection.onServiceConnected()` and uses it until the connection is released. `Context.BIND_AUTO_CREATE` creates the service when the first client binds if it is not already running.
+`Context.BIND_AUTO_CREATE` creates the service when the first client binds if it is not already running. For cross-process communication, use `Messenger` for serialized messages or AIDL when a typed concurrent IPC contract is genuinely required. Both add lifecycle, failure-handling, and thread-safety concerns.
 
-For communication across processes, use a `Messenger` for serialized message-based IPC or AIDL when a typed concurrent IPC contract is genuinely required. These approaches are more complex than a local binder and require careful error handling, lifecycle management and thread safety.
+A service can be both started and bound. Unbinding the last client then does not stop it: its started lifetime must also end through `stopSelf()` or `stopService()`.
 
-See [Binder IPC and AIDL](binder-ipc-aidl.md) for the process boundary, generated proxy/stub model, threading and remote failure behavior.
-
-A service can also be both started and bound. In that case, unbinding the last client does not stop it: the started lifetime must still end through `stopSelf()` or `stopService()`, and the service is destroyed only after it is no longer started and has no bound clients.
-
-Use an explicit `Intent` when binding. If the service is private to the application, declare it with `android:exported="false"` so other apps cannot bind to it.
+Use an explicit `Intent` when binding. If the service is private to the app, declare `android:exported="false"`.
 
 ### BroadcastReceiver
 
-`BroadcastReceiver` receives broadcast events from the system or other apps. It is an entry point through which an app can react to an event outside the normal user flow.
+`BroadcastReceiver` lets an app react to broadcasts from the system or other apps. It is a short-lived entry point, not a place for long-running work.
 
-`BroadcastReceiver` should do short work. For a long-running operation, delegate the task to `WorkManager`, `JobScheduler` or a foreground service if the scenario truly requires foreground execution.
+`onReceive()` runs on the main thread and should return quickly. `goAsync()` lets short asynchronous work finish after `onReceive()` returns, but it does not remove the execution time limit. Delegate longer or deferrable work to `WorkManager`; use a foreground service only when the task is user-visible and the platform permits it.
 
-A broadcast can be system-wide or app-specific. When registering a receiver, security matters: exported/non-exported state, permissions and implicit broadcast restrictions in newer Android versions.
+Receivers can be registered in the manifest or at runtime. Account for implicit broadcast restrictions, permissions, and exported/non-exported registration flags. Treat incoming intents as untrusted when another app can send them.
 
 ### ContentProvider
 
-`ContentProvider` manages access to structured app data and can expose that data to other apps through a URI-based API.
+`ContentProvider` exposes structured data through a URI-based API. Clients access it through `ContentResolver`, regardless of whether the underlying data comes from a database, files, or another source.
 
-Typical examples are `ContactsProvider`, `MediaStore` and `FileProvider`. A provider may store data in SQLite, files, the network or another storage layer, but externally it exposes a unified contract through `ContentResolver`.
-
-`ContentProvider` is one of the app entry points and can be created by the system very early, sometimes before `Application.onCreate()`. For that reason, provider code should be careful with heavy initialization.
+Common examples are `ContactsProvider`, `MediaStore`, and `FileProvider`. Providers can be app entry points and may be initialized before `Application.onCreate()`, so avoid heavy startup work. If a provider is exported, protect sensitive operations with narrow URI permissions or explicit permissions.
 
 ## Passing data
 
 ### Intent: explicit vs implicit
 
-An explicit `Intent` directly specifies the component to launch. It is usually used for navigation inside the app.
+An explicit `Intent` names the target component and is normally used for internal navigation or service communication.
 
 ```kotlin
 val intent = Intent(this, DetailsActivity::class.java)
-intent.putExtra("item_id", itemId)
+    .putExtra("item_id", itemId)
 startActivity(intent)
 ```
 
-An implicit `Intent` describes an action, not a specific component. The system chooses a suitable app or component through intent filters.
+An implicit `Intent` describes an action. Android resolves a matching component through intent filters. Use a chooser when the user should select the destination, and check that the intent can be handled when no match is possible.
 
 ```kotlin
-val intent = Intent(Intent.ACTION_SEND)
-intent.type = "text/plain"
-intent.putExtra(Intent.EXTRA_TEXT, "Hello, world!")
+val intent = Intent(Intent.ACTION_SEND).apply {
+    type = "text/plain"
+    putExtra(Intent.EXTRA_TEXT, "Hello, world!")
+}
 startActivity(Intent.createChooser(intent, "Share"))
 ```
 
-**In short:** explicit intent targets a specific component; implicit intent describes an action and lets Android resolve who can handle it.
-
 ### Bundle
 
-`Bundle` - a key-value data container often used to pass parameters between Android components and save small pieces of state.
+`Bundle` is a key-value container used for intent extras, Fragment arguments, `onSaveInstanceState()`, and integration with `SavedStateHandle`. It supports primitives, `String`, `Parcelable`, `Serializable`, and selected arrays and collections.
 
-`Bundle` can store primitives, `String`, `Parcelable`, `Serializable` and some arrays/collections of supported types.
-
-Common usage points are Intent extras, Fragment arguments, `onSaveInstanceState()` and `SavedStateHandle` interop.
-
-**Important:** `Bundle` is not designed for large data. For large objects, pass an id and load the data from a repository, database or cache.
+Bundles are transferred through Binder and are not designed for large object graphs. Large payloads can cause `TransactionTooLargeException`. Pass a stable identifier and load the data from a repository, database, or cache instead.
 
 ### Serializable vs Parcelable
 
-`Serializable` - the standard Java serialization mechanism. It is simple to use, but often slower and creates more runtime overhead because it works through reflection and intermediate objects.
+`Serializable` is a general Java serialization mechanism. It is convenient for simple cases but typically adds more runtime work and allocations.
 
-`Parcelable` - an Android-oriented mechanism for passing objects between components, for example through `Intent` or `Bundle`. It is usually faster and better suited for Android IPC/Bundle scenarios, but requires explicitly describing how the object is written and read.
+`Parcelable` is Android's IPC-oriented format for values placed in an `Intent` or `Bundle`. Kotlin's `@Parcelize` plugin generates the implementation and avoids most boilerplate.
 
-In Kotlin, `@Parcelize` is commonly used to avoid writing `Parcelable` boilerplate by hand.
+Prefer `Parcelable` for Android component boundaries when an object must be passed, but keep payloads small. An identifier is usually a more robust contract than transferring an entire domain object.
 
-**In short:** `Serializable` is simpler, while `Parcelable` is faster and is the preferred option for Android component communication.
+## Related topics
+
+- [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
+- [Background Work & System Behavior](background-work-system-behavior.md)
+- [Context & Resources](context-resources.md)
+- [Storage](storage.md)
