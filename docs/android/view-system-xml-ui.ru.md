@@ -1,127 +1,128 @@
 # View System / XML UI
 
-View System - классический Android UI stack на XML layout, `View`, `ViewGroup`, themes, styles и rendering pipeline.
+View System - классический UI toolkit Android на основе XML-разметки, `View`, `ViewGroup`, ресурсов, тем, стилей и императивного rendering pipeline. Он по-прежнему важен для существующих приложений, интеграции с Compose, custom widgets и собеседований.
 
-## View lifecycle и custom UI
+## Жизненный цикл View и custom UI
 
-### View lifecycle: measure / layout / draw
+### Жизненный цикл View: measure / layout / draw
 
-View lifecycle состоит из трёх основных фаз: measure, layout и draw.
+Отрисовка View hierarchy состоит из трёх основных фаз: measure, layout и draw.
 
-Measure определяет, какого размера должна быть `View`. Родитель вызывает `measure()` у child `View` и передаёт `MeasureSpec`: `EXACTLY`, `AT_MOST` или `UNSPECIFIED`. В custom `View` обычно переопределяют `onMeasure()` и вызывают `setMeasuredDimension()`.
+Во время **measure** родитель вызывает `measure()` для каждого дочернего элемента и передаёт `MeasureSpec` для ширины и высоты:
 
-Layout определяет позицию `View` внутри родителя. Для обычной `View` это делает parent, а custom `ViewGroup` в `onLayout()` размещает своих children.
+- `EXACTLY` - родитель требует конкретный размер;
+- `AT_MOST` - дочерний элемент может занять не больше заданного размера;
+- `UNSPECIFIED` - родитель не ограничивает размер по этой оси.
 
-Draw отвечает за отрисовку `View` на `Canvas`. Для custom `View` обычно переопределяют `onDraw()`, но не делают там тяжёлые вычисления и allocations.
+Custom `View` переопределяет `onMeasure()`, только если стандартного измерения недостаточно, и сообщает результат через `setMeasuredDimension()`. Измерение может выполняться несколько раз, поэтому оно должно быть быстрым и детерминированным.
 
-**Коротко:** measure calculates size, layout places the view, draw renders it on the screen.
+Во время **layout** родитель задаёт окончательные границы каждого дочернего элемента. Custom `ViewGroup` реализует `onLayout()` и обычно согласует размещение с измерением children в `onMeasure()`.
+
+Во время **draw** иерархия рисуется на `Canvas`. Собственную отрисовку обычно выполняют в `onDraw()`. Переиспользуемые `Paint`, `Path` и похожие объекты следует создавать за пределами этого метода, а вычисления, зависящие от размера, по возможности переносить в `onSizeChanged()`.
 
 ### `invalidate()` vs `requestLayout()`
 
-`invalidate()` просит систему перерисовать `View`. Это нужно, когда изменился только внешний вид: цвет, текстура, progress, custom drawing, но размер и позиция не изменились.
+`invalidate()` помечает `View` как требующую перерисовки. Он нужен, когда изменилось визуальное состояние, но текущие размер и позиция остаются корректными, например при изменении цвета, progress или данных custom drawing.
 
-`requestLayout()` просит заново пройти measure/layout для `View` hierarchy. Это нужно, когда изменился размер, layout params, содержимое, влияющее на размер, или положение children.
+`requestLayout()` помечает иерархию как требующую нового прохода measure/layout. Он нужен, когда содержимое, layout params или состояние могут изменить размер `View` либо расположение children. Такой запрос может распространиться вверх по иерархии и обычно дороже одной перерисовки.
 
-`requestLayout()` обычно дороже, потому что может затронуть измерение и размещение дерева `View`. Если нужно только перерисовать `Canvas`, достаточно `invalidate()`.
-
-В custom `View` важно выбирать правильный вызов: при изменении drawing state - `invalidate()`, при изменении measured size или layout-affecting state - `requestLayout()`.
+Если изменилась и геометрия, и внешний вид, могут потребоваться оба этапа. Не стоит многократно вызывать эти методы из кода, который выполняется во время того же прохода.
 
 ### Custom View и Custom ViewGroup
 
-Custom `View` создают, когда стандартных widgets недостаточно и нужно своё рисование, touch handling или особое поведение. Обычно наследуются от `View` и переопределяют `onMeasure()`, `onDraw()` и при необходимости `onTouchEvent()`.
+Custom `View` создают, когда стандартные widgets не дают нужной отрисовки, обработки ввода или поведения. Обычно переопределяют `onMeasure()`, `onDraw()`, `onSizeChanged()` и при необходимости `onTouchEvent()`.
 
-Custom `ViewGroup` создают, когда нужно своё правило измерения и размещения children. Обычно переопределяют `onMeasure()` и `onLayout()`.
+Custom `ViewGroup` нужен для собственных правил измерения и размещения children. Обычно он переопределяет и `onMeasure()`, и `onLayout()`.
 
-Ключевые pitfalls: не делать allocations в `onDraw()`, учитывать padding, корректно обрабатывать `MeasureSpec`, вызывать `setMeasuredDimension()` в `onMeasure()`, поддерживать accessibility и не забывать про `invalidate()` / `requestLayout()`.
+Основные требования и типичные ошибки:
 
-**Коротко:** custom `View` отвечает в основном за собственное измерение и рисование, а custom `ViewGroup` дополнительно измеряет и размещает дочерние `View`.
+- учитывать padding, минимальный размер и ограничения `MeasureSpec`;
+- избегать allocations и тяжёлых вычислений во время draw;
+- получать настраиваемые значения из styled attributes, а не хардкодить их;
+- предоставлять осмысленные content descriptions и accessibility actions;
+- при ручной обработке нажатий вызывать `performClick()`, чтобы действие получали accessibility services;
+- сохранять временное пользовательское состояние, если оно должно переживать пересоздание.
 
 ### Dialog vs DialogFragment
 
-`Dialog` - базовый UI-компонент для показа модального окна. Его можно создать напрямую через `Dialog` или `AlertDialog`, но тогда разработчик сам отвечает за lifecycle, сохранение состояния и корректную работу при configuration changes.
+`Dialog` - окно для модального UI. Если создать и показать его напрямую, вызывающий код сам отвечает за закрытие, согласование с lifecycle и восстановление состояния.
 
-`DialogFragment` - `Fragment`-обёртка вокруг `Dialog`. Он интегрирован с `FragmentManager`, имеет lifecycle, корректнее переживает rotation и лучше подходит для показа диалогов в Android-приложении.
+`DialogFragment` управляет `Dialog` через `FragmentManager`. Он связывает диалог с lifecycle Fragment и back stack, поэтому обычно безопаснее для диалогов на экранах, построенных на Fragment.
 
-На практике `DialogFragment` удобнее, когда диалог связан с navigation/lifecycle или должен переживать пересоздание экрана. Обычный `Dialog` может быть достаточен для простых внутренних случаев, но его легче привязать к устаревшему `Activity Context` и получить leak.
-
-**Коротко:** `Dialog` is just a window, `DialogFragment` manages that dialog through Fragment lifecycle and `FragmentManager`.
+`DialogFragment` не делает произвольное состояние автоматически постоянным. Долгоживущее состояние следует хранить во `ViewModel` или saved state и по нему пересоздавать диалог. Не нужно удерживать обычный `Dialog` или старый `Activity` context после configuration change.
 
 ## Списки и переиспользование View
 
 ### Как работает RecyclerView
 
-`RecyclerView` эффективно отображает большие наборы данных, создавая и сохраняя только те `View` элементов, которые нужны для видимой области и небольшого рабочего запаса вокруг неё. Его основные компоненты разделяют ответственность:
+`RecyclerView` отображает большие или изменяемые наборы данных, используя только item Views, необходимые для viewport и ограниченного рабочего запаса. Основные участники имеют разные обязанности:
 
-- `RecyclerView` - контейнер `ViewGroup`, который координирует layout, прокрутку и переиспользование элементов.
-- `LayoutManager` - определяет, какие позиции сейчас нужны, измеряет и размещает их `View`, а также задаёт пространственное поведение прокрутки.
-- `RecyclerView.Recycler` - получает подходящую `View` для запрошенной позиции. По возможности он переиспользует существующий `ViewHolder`, а когда holder нужно создать или привязать, задействует `Adapter`.
-- `Adapter` - сообщает количество элементов, создаёт `ViewHolder` и привязывает к нему данные.
-- `ViewHolder` - хранит `View` отдельного элемента и ссылки, используемые во время binding.
+- `RecyclerView` - контейнер `ViewGroup`, координирующий прокрутку, layout, анимации и recycling.
+- `LayoutManager` - определяет нужные позиции, измеряет и размещает их Views и задаёт поведение прокрутки.
+- `RecyclerView.Recycler` - предоставляет View для запрошенной позиции, по возможности переиспользуя совместимый `ViewHolder`.
+- `Adapter` - сообщает количество элементов, создаёт holders и привязывает к ним данные.
+- `ViewHolder` - хранит item View и ссылки, необходимые во время binding.
 
-Полезная концептуальная цепочка запроса выглядит так:
+Полезная концептуальная цепочка запроса:
 
 ```text
 RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder
 ```
 
-Это схема взаимодействия, а не иерархия владения. Во время layout `LayoutManager` запрашивает через `Recycler` те `View`, которые нужны для текущего viewport. При прокрутке он перемещает прикреплённые дочерние элементы, передаёт больше не нужные элементы на переиспользование и запрашивает `View` для новых видимых позиций. `Recycler` может использовать совместимый holder повторно; иначе `Adapter` создаёт его и при необходимости выполняет binding.
+Это схема взаимодействия, а не иерархия владения. Во время layout или прокрутки `LayoutManager` получает нужные Views через `Recycler`. Совместимый holder может быть взят из attached scrap, cache или recycled-view pool. Если подходящего holder нет, `Adapter` создаёт его, а когда содержимое должно соответствовать позиции - выполняет binding.
 
-Стандартные реализации покрывают большинство вариантов раскладки:
+Стандартные реализации покрывают типичные раскладки:
 
-- `LinearLayoutManager` - вертикальный или горизонтальный список.
-- `GridLayoutManager` - сетка с фиксированным количеством spans.
-- `StaggeredGridLayoutManager` - staggered grid, в котором элементы могут иметь разные размеры.
+- `LinearLayoutManager` - вертикальный или горизонтальный список;
+- `GridLayoutManager` - сетка с заданным количеством spans;
+- `StaggeredGridLayoutManager` - сетка с элементами разного размера.
 
-`LayoutManager` не владеет данными и не определяет содержимое элементов. `Adapter` описывает, как представить данные, а `LayoutManager` решает, где и когда должны появиться `View` элементов.
-
-**Коротко:** `RecyclerView` координирует список, `LayoutManager` управляет размещением и прокруткой, `Recycler` переиспользует `View` элементов, `Adapter` создаёт и привязывает holders, а `ViewHolder` хранит `View` отдельного элемента.
+`LayoutManager` не владеет данными и не определяет содержимое элементов. Для изменяемых списков лучше использовать `ListAdapter` или `AsyncListDiffer` с корректным `DiffUtil.ItemCallback`. Stable IDs нужны только тогда, когда у элементов действительно есть стабильные уникальные идентификаторы.
 
 ## Binding, performance и оформление
 
 ### ViewBinding vs DataBinding
 
-`ViewBinding` генерирует binding-класс для XML layout и даёт type-safe доступ к `View` без `findViewById()`. Он не содержит binding expressions и почти не добавляет runtime overhead.
+`ViewBinding` генерирует binding-класс для каждой подключённой XML-разметки и предоставляет type-safe ссылки на Views с ID. Он заменяет большинство вызовов `findViewById()`, но не вычисляет XML expressions и не наблюдает за данными.
 
-`DataBinding` тоже генерирует binding-класс, но дополнительно поддерживает expressions в XML, binding adapters, two-way binding и привязку observable data. Это мощнее, но сложнее для поддержки, дебага и компиляции.
+`DataBinding` тоже генерирует binding-классы и поддерживает XML expressions, binding adapters, observable data и two-way binding. Эти возможности могут уменьшить количество связующего кода, но усложняют сборку и делают поток данных и отладку менее явными.
 
-`ViewBinding` обычно выбирают, когда нужно просто безопасно получить ссылки на `View`. `DataBinding` используют, когда проект сознательно строит UI через XML bindings, но в modern Android часто предпочитают `ViewBinding` + `ViewModel` / `Flow` / `LiveData` или переход на Compose.
+`ViewBinding` подходит, когда экрану нужны только безопасные ссылки на Views. `DataBinding` стоит использовать, когда его декларативная модель является осознанным решением для проекта, а не удобством для одного случая.
 
-Важно очищать binding во `Fragment` в `onDestroyView()`, потому что View lifecycle короче Fragment lifecycle.
+View lifecycle у Fragment короче lifecycle самого Fragment. Если binding хранится в property Fragment, ссылку нужно очищать в `onDestroyView()` и не использовать за пределами View lifecycle.
 
-### XML UI performance
+### Производительность XML UI
 
-Основные проблемы XML UI performance: слишком глубокая View hierarchy, лишние nested layouts, overdraw, тяжёлая работа на main thread, частые `requestLayout()`, allocations в custom drawing и неэффективные `RecyclerView` adapters.
+Типичные узкие места - повторные измерения, лишние вложенные layouts, overdraw, тяжёлая работа на main thread, allocations во время draw и дорогой binding в `RecyclerView`.
 
-Для оптимизации hierarchy используют `ConstraintLayout`, `merge` / `include` / `ViewStub`, flattening layouts и разумное переиспользование компонентов.
+Практические рекомендации:
 
-Для списков важно использовать `RecyclerView` с `DiffUtil` / `ListAdapter`, stable ids там, где это оправдано, и не делать тяжёлый bind на main thread.
-
-Для отрисовки полезно проверять overdraw, Layout Inspector, Android Profiler и frame rendering tools.
-
-**Коротко:** XML performance usually depends on hierarchy depth, layout passes, drawing cost and main-thread work.
+- упрощать иерархию там, где измерения показывают пользу; `ConstraintLayout` удобен для сложных связей, но не становится автоматически быстрее на любом экране;
+- использовать `<merge>`, `<include>` и `ViewStub`, когда они упрощают или откладывают создание иерархии;
+- применять `ListAdapter` / `DiffUtil` для точечных обновлений вместо `notifyDataSetChanged()`;
+- делать `onBindViewHolder()` дешёвым, вынося decoding, formatting и подготовку данных из горячего пути;
+- анализировать реальные кадры через Layout Inspector, Android Profiler и system tracing, а не оптимизировать только по глубине иерархии.
 
 ### Themes and Styles
 
-Theme задаёт внешний вид приложения или `Activity` на высоком уровне: цвета, typography, shape, status bar/navigation bar, default attributes для widgets и Material components.
+Theme задаёт высокоуровневые значения по умолчанию для приложения, `Activity` или части иерархии: цвета, typography, shapes, системные панели и атрибуты widgets.
 
-Style - набор атрибутов для конкретного `View` или семейства `View`. Style можно применить напрямую к элементу через `style="..."` или использовать как часть theme.
+Style - переиспользуемый набор атрибутов для конкретной `View` или семейства Views. Его можно назначить напрямую через `style="..."` или указать в theme как стандартный стиль компонента.
 
-Главная идея: theme отвечает за глобальный look and feel, а style - за переиспользуемое оформление конкретных компонентов.
-
-В XML UI часто используют theme attributes через `?attr/colorPrimary` или `?attr/textAppearanceBodyMedium`, чтобы компонент автоматически подстраивался под текущую тему, dark mode и branding.
-
-**Коротко:** theme is app/screen-level styling, style is view-level reusable styling; attributes connect components with the current theme.
+Если компонент должен адаптироваться к брендингу, dark theme или theme overlay, лучше использовать theme attributes вроде `?attr/colorPrimary` и `?attr/textAppearanceBodyMedium`, а не фиксированные значения.
 
 ### Spannable
 
-`Spannable` - Android API для текста с разными стилями внутри одной строки или одного `TextView`: цвет, размер, жирность, underline, clickable spans, иконки и custom spans.
+`Spannable` представляет текст, к диапазонам которого привязано оформление или поведение. Типичные spans: `ForegroundColorSpan`, `StyleSpan`, `UnderlineSpan`, `ClickableSpan`, `AbsoluteSizeSpan` и `ImageSpan`.
 
-`SpannableString` используется, когда текст неизменяемый по содержимому, но к нему нужно применить spans. `SpannableStringBuilder` удобен, когда текст собирается постепенно.
+`SpannableString` подходит, когда символы не меняются, а изменяются только spans. `SpannableStringBuilder` удобен, когда текст и spans собираются постепенно.
 
-Типичные spans: `ForegroundColorSpan`, `StyleSpan`, `UnderlineSpan`, `ClickableSpan`, `AbsoluteSizeSpan`, `ImageSpan`.
+Диапазоны spans задаются индексами, поэтому нельзя хардкодить offsets в расчёте на конкретный перевод. Диапазоны следует определять по локализованному содержимому или использовать аннотированные resources. Для `ClickableSpan` также нужен подходящий `movementMethod`, например `LinkMovementMethod`, и корректное accessibility-поведение.
 
-Важно: spans работают по диапазонам индексов, поэтому нужно аккуратно обрабатывать локализацию. Нельзя жёстко рассчитывать, что substring всегда будет на той же позиции в разных языках.
+## Связанные темы
 
-`ClickableSpan` требует настроить `movementMethod` у `TextView`, например `LinkMovementMethod`, иначе клик может не работать.
-
-**Коротко:** `Spannable` lets one `TextView` render rich text with multiple styles and clickable ranges without splitting text into many views.
+- [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
+- [Android Components](components.md)
+- [Performance & Memory](performance-memory.md)
+- [Android Canvas](canvas.md)
+- [Compose Basics](../compose/basics.md)

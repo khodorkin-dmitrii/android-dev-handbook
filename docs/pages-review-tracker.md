@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-04
+1. Last tracker update: 2026-09-05
 1. Total articles tracked: 71
-1. Updated: 19
-1. TODO: 52
+1. Updated: 20
+1. TODO: 51
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 16 | 10 |
+| P0 | 26 | 17 | 9 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -37,7 +37,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-09-03, `architecture/multi-module.md`, Multi-module Architecture, Streamlined modularization strategies, clarified module APIs and dependency rules, added Gradle api/implementation guidance, and made build-performance recommendations measurement-driven.
 1. P0, **UPDATED**, 2026-08-23, `android/activity-fragment-lifecycle.md`, Activity, Fragment & Lifecycle
 1. P0, **UPDATED**, 2026-09-04, `android/components.md`, Android Components, Clarified component entry points and exposure, service and receiver execution semantics, ContentProvider security, Intent resolution, Bundle size limits, and Parcelable usage.
-1. P0, **TODO**, , `android/view-system-xml-ui.md`, View System / XML UI
+1. P0, **UPDATED**, 2026-09-05, `android/view-system-xml-ui.md`, View System / XML UI, Clarified View measurement and rendering, custom View accessibility, DialogFragment state handling, RecyclerView recycling, binding trade-offs, and measurement-driven XML performance guidance.
 1. P0, **TODO**, , `android/background-work-system-behavior.md`, Background Work & System Behavior
 1. P0, **TODO**, , `android/gradle-build-system.md`, Gradle & Build System
 1. P0, **TODO**, , `android/performance-memory.md`, Performance & Memory

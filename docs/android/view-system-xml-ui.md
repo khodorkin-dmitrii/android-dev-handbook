@@ -1,62 +1,67 @@
 # View System / XML UI
 
-View System - the classic Android UI stack based on XML layout, `View`, `ViewGroup`, themes, styles and the rendering pipeline.
+The View System is Android's classic UI toolkit, built around XML layouts, `View`, `ViewGroup`, resources, themes, styles, and an imperative rendering pipeline. It remains important for existing applications, interoperability with Compose, custom widgets, and interviews.
 
 ## View lifecycle and custom UI
 
 ### View lifecycle: measure / layout / draw
 
-View lifecycle consists of three main phases: measure, layout and draw.
+Rendering a View hierarchy has three main phases: measure, layout, and draw.
 
-Measure determines what size a `View` should be. The parent calls `measure()` on a child `View` and passes a `MeasureSpec`: `EXACTLY`, `AT_MOST` or `UNSPECIFIED`. In a custom `View`, `onMeasure()` is usually overridden and `setMeasuredDimension()` is called.
+During **measure**, a parent calls `measure()` on each child with width and height `MeasureSpec` values:
 
-Layout determines the position of a `View` inside its parent. For a regular `View`, the parent does this, while a custom `ViewGroup` places its children in `onLayout()`.
+- `EXACTLY` - the parent requires a specific size;
+- `AT_MOST` - the child may use up to the given size;
+- `UNSPECIFIED` - the parent imposes no bound on that dimension.
 
-Draw renders the `View` on a `Canvas`. A custom `View` usually overrides `onDraw()`, but heavy calculations and allocations should not happen there.
+A custom `View` overrides `onMeasure()` only when the default measurement is insufficient, then reports its result with `setMeasuredDimension()`. Measurement may run more than once, so it must stay fast and deterministic.
 
-**In short:** measure calculates size, layout places the view, draw renders it on the screen.
+During **layout**, the parent assigns each child its final bounds. A custom `ViewGroup` implements `onLayout()` and usually coordinates it with child measurement in `onMeasure()`.
+
+During **draw**, the hierarchy renders into a `Canvas`. Custom content normally belongs in `onDraw()`. Create reusable `Paint`, `Path`, and similar objects outside this method, and move size-dependent calculations to `onSizeChanged()` when possible.
 
 ### `invalidate()` vs `requestLayout()`
 
-`invalidate()` asks the system to redraw a `View`. This is needed when only appearance changed: color, texture, progress, custom drawing, while size and position did not change.
+`invalidate()` marks a `View` as needing redraw. Use it when visual state changes but the measured size and position remain valid, for example after changing a custom color, progress value, or drawing data.
 
-`requestLayout()` asks the system to run measure/layout again for the `View` hierarchy. This is needed when size, layout params, size-affecting content or child positions changed.
+`requestLayout()` marks the hierarchy as needing another measure/layout pass. Use it when content, layout parameters, or state can change a View's size or the placement of children. This work can propagate through ancestors and is generally more expensive than redraw alone.
 
-`requestLayout()` is usually more expensive because it can affect measurement and placement of the `View` tree. If you only need to redraw the `Canvas`, `invalidate()` is enough.
-
-In a custom `View`, choose the right call: when drawing state changes - `invalidate()`; when measured size or layout-affecting state changes - `requestLayout()`.
+When both geometry and appearance change, layout and drawing may both be needed. Avoid calling either method repeatedly from code that runs during the same pass.
 
 ### Custom View and Custom ViewGroup
 
-Create a custom `View` when standard widgets are not enough and you need custom drawing, touch handling or special behavior. Usually it inherits from `View` and overrides `onMeasure()`, `onDraw()` and, when needed, `onTouchEvent()`.
+Create a custom `View` when standard widgets cannot provide the required drawing, input handling, or behavior. Typical overrides include `onMeasure()`, `onDraw()`, `onSizeChanged()`, and `onTouchEvent()`.
 
-Create a custom `ViewGroup` when you need your own rules for measuring and placing children. Usually it overrides `onMeasure()` and `onLayout()`.
+Create a custom `ViewGroup` when children need custom measurement and placement rules. It normally overrides both `onMeasure()` and `onLayout()`.
 
-Key pitfalls: avoid allocations in `onDraw()`, account for padding, handle `MeasureSpec` correctly, call `setMeasuredDimension()` in `onMeasure()`, support accessibility and remember `invalidate()` / `requestLayout()`.
+Common requirements and pitfalls:
 
-**In short:** custom `View` is mainly responsible for its own measurement and drawing, while custom `ViewGroup` additionally measures and places child `View`s.
+- respect padding, minimum size, and `MeasureSpec` constraints;
+- avoid allocations and expensive calculations during drawing;
+- read configurable values from styled attributes instead of hardcoding them;
+- expose meaningful content descriptions and accessibility actions;
+- when handling taps manually, call `performClick()` so accessibility services receive the action;
+- save custom transient state when it must survive recreation.
 
 ### Dialog vs DialogFragment
 
-`Dialog` - a basic UI component for showing a modal window. It can be created directly through `Dialog` or `AlertDialog`, but then the developer is responsible for lifecycle, state saving and correct behavior during configuration changes.
+`Dialog` is a window for modal UI. When it is created and shown directly, the caller owns dismissal, lifecycle coordination, and state restoration.
 
-`DialogFragment` - a `Fragment` wrapper around a `Dialog`. It is integrated with `FragmentManager`, has a lifecycle, handles rotation more correctly and is usually better for showing dialogs in an Android app.
+`DialogFragment` manages a `Dialog` through `FragmentManager`. It integrates the dialog with Fragment lifecycle events and back-stack behavior, making it the safer default for dialogs owned by a Fragment-based screen.
 
-In practice, `DialogFragment` is more convenient when the dialog is tied to navigation/lifecycle or should survive screen recreation. A plain `Dialog` may be enough for simple internal cases, but it is easier to bind it to a stale `Activity Context` and get a leak.
-
-**In short:** `Dialog` is just a window, `DialogFragment` manages that dialog through Fragment lifecycle and `FragmentManager`.
+`DialogFragment` does not make arbitrary state persistent automatically. Keep durable state in a `ViewModel` or saved state, and recreate the dialog from that state. Avoid retaining a plain `Dialog` or an old `Activity` context across configuration changes.
 
 ## Lists and recycling
 
 ### How RecyclerView works
 
-`RecyclerView` efficiently displays large data sets by creating and keeping only the item `View`s needed for the visible area and a small working set around it. Its main components have separate responsibilities:
+`RecyclerView` displays large or changing data sets using only the item Views needed for the viewport and a limited working set. Its main collaborators have distinct responsibilities:
 
-- `RecyclerView` is the `ViewGroup` container that coordinates layout, scrolling and recycling.
-- `LayoutManager` decides which item positions are needed, measures and places their `View`s, and implements the spatial behavior of scrolling.
-- `RecyclerView.Recycler` obtains a suitable `View` for a requested position. It reuses an existing `ViewHolder` when possible and involves the `Adapter` when a holder must be created or bound.
-- `Adapter` provides the item count, creates `ViewHolder`s and binds data to them.
-- `ViewHolder` wraps an item `View` and keeps references used during binding.
+- `RecyclerView` is the `ViewGroup` that coordinates scrolling, layout, animations, and recycling.
+- `LayoutManager` decides which item positions are needed, measures and places their Views, and defines scrolling behavior.
+- `RecyclerView.Recycler` supplies a View for a requested position, reusing a compatible `ViewHolder` when possible.
+- `Adapter` reports the item count, creates holders, and binds data to them.
+- `ViewHolder` owns an item View and caches references needed during binding.
 
 A useful conceptual request chain is:
 
@@ -64,64 +69,60 @@ A useful conceptual request chain is:
 RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder
 ```
 
-This is a collaboration flow, not an ownership hierarchy. During layout, the `LayoutManager` requests the `View`s required for the current viewport through the `Recycler`. During scrolling, it moves the attached children, recycles those that are no longer needed and requests `View`s for newly visible positions. The `Recycler` can reuse a compatible holder; otherwise the `Adapter` creates one, and it binds the holder when required.
+This describes collaboration, not ownership. During layout or scrolling, the `LayoutManager` obtains required Views through the `Recycler`. A compatible holder may come from attached scrap, cache, or a recycled-view pool. The `Adapter` creates a holder when none can be reused and binds it when its content must represent a position.
 
-The standard implementations cover most layouts:
+Standard implementations cover common layouts:
 
-- `LinearLayoutManager` - a vertical or horizontal list.
-- `GridLayoutManager` - a grid with a fixed number of spans.
-- `StaggeredGridLayoutManager` - a staggered grid where items may have different sizes.
+- `LinearLayoutManager` - vertical or horizontal list;
+- `GridLayoutManager` - grid with a configured span count;
+- `StaggeredGridLayoutManager` - grid whose items may have different sizes.
 
-The `LayoutManager` does not own the data or define item content. The `Adapter` describes how data is represented, while the `LayoutManager` determines where and when item `View`s appear.
-
-**In short:** `RecyclerView` coordinates the list, `LayoutManager` controls placement and scrolling, `Recycler` reuses item views, `Adapter` creates and binds holders, and `ViewHolder` stores an individual item `View`.
+The `LayoutManager` does not own the data or define item content. For changing lists, prefer `ListAdapter` or `AsyncListDiffer` with a correct `DiffUtil.ItemCallback`. Use stable IDs only when items really have stable, unique identities.
 
 ## Binding, performance and styling
 
 ### ViewBinding vs DataBinding
 
-`ViewBinding` generates a binding class for an XML layout and gives type-safe access to `View`s without `findViewById()`. It does not include binding expressions and adds almost no runtime overhead.
+`ViewBinding` generates a binding class for each enabled XML layout and provides type-safe references to Views with IDs. It replaces most `findViewById()` calls but does not evaluate XML expressions or observe data.
 
-`DataBinding` also generates a binding class, but additionally supports expressions in XML, binding adapters, two-way binding and binding observable data. It is more powerful, but harder to maintain, debug and compile.
+`DataBinding` also generates binding classes and supports XML expressions, binding adapters, observable data, and two-way binding. These features can reduce glue code, but they add build-time complexity and make data flow and debugging less explicit.
 
-`ViewBinding` is usually chosen when you simply need safe references to `View`s. `DataBinding` is used when a project intentionally builds UI through XML bindings, but in modern Android teams often prefer `ViewBinding` + `ViewModel` / `Flow` / `LiveData`, or move to Compose.
+Use `ViewBinding` when the screen only needs safe View references. Use `DataBinding` when its declarative binding model is an intentional project-wide choice rather than for a single convenience.
 
-It is important to clear binding in a `Fragment` in `onDestroyView()`, because the View lifecycle is shorter than the Fragment lifecycle.
+A Fragment's View lifecycle is shorter than the Fragment lifecycle. If binding is stored in a Fragment property, clear that reference in `onDestroyView()` and never access it outside the View lifecycle.
 
 ### XML UI performance
 
-Main XML UI performance problems: overly deep View hierarchy, unnecessary nested layouts, overdraw, heavy work on the main thread, frequent `requestLayout()`, allocations in custom drawing and inefficient `RecyclerView` adapters.
+Typical bottlenecks include repeated measurement, unnecessarily nested layouts, overdraw, expensive main-thread work, allocations during drawing, and heavy `RecyclerView` binding.
 
-To optimize hierarchy, use `ConstraintLayout`, `merge` / `include` / `ViewStub`, layout flattening and reasonable component reuse.
+Useful practices:
 
-For lists, it is important to use `RecyclerView` with `DiffUtil` / `ListAdapter`, stable ids where justified, and avoid heavy binding on the main thread.
-
-For rendering, it is useful to inspect overdraw, Layout Inspector, Android Profiler and frame rendering tools.
-
-**In short:** XML performance usually depends on hierarchy depth, layout passes, drawing cost and main-thread work.
+- flatten hierarchies where measurement shows a benefit; `ConstraintLayout` is useful for complex relationships but is not automatically faster for every screen;
+- use `<merge>`, `<include>`, and `ViewStub` where they simplify or defer hierarchy creation;
+- use `ListAdapter` / `DiffUtil` for targeted list updates instead of `notifyDataSetChanged()`;
+- keep `onBindViewHolder()` cheap and move decoding, formatting, and data preparation out of the hot path;
+- inspect actual frames with Layout Inspector, Android Profiler, and system tracing rather than optimizing only by hierarchy depth.
 
 ### Themes and Styles
 
-Theme defines the high-level appearance of an app or `Activity`: colors, typography, shape, status bar/navigation bar, default attributes for widgets and Material components.
+A theme defines high-level defaults for an application, activity, or subtree: colors, typography, shapes, system bars, and widget attributes.
 
-Style - a set of attributes for a specific `View` or family of `View`s. A style can be applied directly to an element through `style="..."` or used as part of a theme.
+A style is a reusable set of attributes applied to a particular View or family of Views. It can be assigned directly with `style="..."` or referenced by a theme as a default component style.
 
-The main idea: theme is responsible for global look and feel, while style is reusable styling for specific components.
-
-XML UI often uses theme attributes through `?attr/colorPrimary` or `?attr/textAppearanceBodyMedium`, so a component automatically adapts to the current theme, dark mode and branding.
-
-**In short:** theme is app/screen-level styling, style is view-level reusable styling; attributes connect components with the current theme.
+Prefer theme attributes such as `?attr/colorPrimary` and `?attr/textAppearanceBodyMedium` over fixed values when a component must adapt to branding, dark theme, or another theme overlay.
 
 ### Spannable
 
-`Spannable` - an Android API for text with different styles inside one string or one `TextView`: color, size, bold style, underline, clickable spans, icons and custom spans.
+`Spannable` represents text with style or behavior attached to ranges inside one string. Common spans include `ForegroundColorSpan`, `StyleSpan`, `UnderlineSpan`, `ClickableSpan`, `AbsoluteSizeSpan`, and `ImageSpan`.
 
-`SpannableString` is used when the text content is immutable, but spans need to be applied to it. `SpannableStringBuilder` is convenient when text is assembled gradually.
+Use `SpannableString` when the characters are fixed and only spans change. Use `SpannableStringBuilder` when both text and spans are assembled incrementally.
 
-Typical spans: `ForegroundColorSpan`, `StyleSpan`, `UnderlineSpan`, `ClickableSpan`, `AbsoluteSizeSpan`, `ImageSpan`.
+Span ranges are index-based, so do not hardcode offsets that assume a particular translation. Derive ranges from localized content or use annotated resources. A `ClickableSpan` also requires an appropriate `movementMethod`, such as `LinkMovementMethod`, and meaningful accessibility behavior.
 
-Important: spans work by index ranges, so localization must be handled carefully. Do not hardcode the assumption that a substring will always be at the same position in different languages.
+## Related topics
 
-`ClickableSpan` requires configuring `movementMethod` on `TextView`, for example `LinkMovementMethod`; otherwise clicks may not work.
-
-**In short:** `Spannable` lets one `TextView` render rich text with multiple styles and clickable ranges without splitting text into many views.
+- [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
+- [Android Components](components.md)
+- [Performance & Memory](performance-memory.md)
+- [Android Canvas](canvas.md)
+- [Compose Basics](../compose/basics.md)
