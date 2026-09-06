@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-05
+1. Last tracker update: 2026-09-06
 1. Total articles tracked: 71
-1. Updated: 20
-1. TODO: 51
+1. Updated: 21
+1. TODO: 50
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 17 | 9 |
+| P0 | 26 | 18 | 8 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -38,7 +38,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-08-23, `android/activity-fragment-lifecycle.md`, Activity, Fragment & Lifecycle
 1. P0, **UPDATED**, 2026-09-04, `android/components.md`, Android Components, Clarified component entry points and exposure, service and receiver execution semantics, ContentProvider security, Intent resolution, Bundle size limits, and Parcelable usage.
 1. P0, **UPDATED**, 2026-09-05, `android/view-system-xml-ui.md`, View System / XML UI, Clarified View measurement and rendering, custom View accessibility, DialogFragment state handling, RecyclerView recycling, binding trade-offs, and measurement-driven XML performance guidance.
-1. P0, **TODO**, , `android/background-work-system-behavior.md`, Background Work & System Behavior
+1. P0, **UPDATED**, 2026-09-06, `android/background-work-system-behavior.md`, Background Work & System Behavior, Clarified API selection, Doze behavior, WorkManager timing and expedited work, foreground service restrictions, exact alarms, FCM handling, and idempotent background execution.
 1. P0, **TODO**, , `android/gradle-build-system.md`, Gradle & Build System
 1. P0, **TODO**, , `android/performance-memory.md`, Performance & Memory
 1. P0, **TODO**, , `di/basics.md`, DI Basics

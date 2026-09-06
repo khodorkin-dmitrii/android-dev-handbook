@@ -1,49 +1,46 @@
 # Background Work & System Behavior
 
-Android restricts background work to save battery, protect the user and keep system behavior predictable.
+Android limits background execution to protect battery, privacy, and system health. An app process can be stopped at any time, so durable work should be handed to an appropriate system-aware API.
 
-## Background work
+## Choose the API by task
 
-### Doze Mode
+| Need | Preferred API |
+|---|---|
+| Deferrable, reliable work | `WorkManager` |
+| Immediate, user-visible ongoing work | Foreground service |
+| User-facing action at an exact time | `AlarmManager` when exactness is justified |
+| Server-triggered event | FCM, then schedule durable follow-up work if needed |
 
-Doze Mode - an Android power-saving mode that restricts background activity when the device has been unused for a long time, is stationary and the screen is off.
+## Doze Mode
 
-In Doze, the system delays normal background jobs, network access, sync and alarms. Periodically, maintenance windows open where apps can perform part of the deferred work.
+Doze restricts background CPU and network activity while the device is idle. The system defers regular jobs, synchronization, network access, and standard alarms, then periodically opens maintenance windows for batched work.
 
-For tasks that must run reliably, prefer `WorkManager` / `JobScheduler` over a raw background thread. For exact timing, alarms exist, but they come with restrictions and should be used carefully.
+Doze does not guarantee execution in the next window. Avoid polling and assumptions about continuous background execution. Use `WorkManager` or `JobScheduler` for work that can wait, and reserve exact alarms for time-critical user-facing cases.
 
-**In short:** Doze protects battery by batching and delaying background work, so apps should use system-aware APIs instead of assuming background execution is always available.
+## WorkManager
 
-### WorkManager
+`WorkManager` is the recommended Jetpack API for deferrable work that should eventually run after its constraints are met: synchronization, log uploads, cleanup, and retryable network operations.
 
-`WorkManager` - a Jetpack API for deferrable background work that should run reliably once constraints are met.
+It supports one-time and periodic work, constraints, unique work, chains, retries, backoff, and persistence across process death and device restart. It does not guarantee an exact start time. Periodic work is inexact and has a minimum interval.
 
-It fits tasks such as uploading logs, syncing data, cleanup and retryable network work. You can define constraints: network, charging, battery not low, storage not low.
+Expedited work suits short, important tasks that should start quickly but remains subject to quotas. Long-running user-visible work requires foreground execution rather than a hidden continuous worker.
 
-`WorkManager` supports one-time and periodic work, chaining, retries, backoff policy and persistence after process or device restart.
+## Foreground services
 
-**Important:** `WorkManager` is not intended for exact tasks like "run exactly at 12:00" and does not replace a foreground service for immediate user-visible work.
+A foreground service is for work the user is actively aware of, such as navigation, media playback, a call, location tracking, or communication with a connected device. It must display an ongoing notification.
 
-**In short:** `WorkManager` is the recommended API for reliable deferrable background work with constraints and retry support.
+A foreground service is not a separate thread: blocking work still belongs off the main thread. Modern Android restricts background starts and requires the appropriate service type and permissions. Run it only while the user-visible operation is active.
 
-### Foreground Service
+## Alarms, push, and restrictions
 
-Foreground Service - a `Service` for work the user should know about right now. It must show a persistent notification.
+Use `AlarmManager` when the user expects action at a specific time, such as an alarm clock. Exact alarms consume more power and may require special access; periodic synchronization should normally use `WorkManager`.
 
-Typical scenarios: navigation, media playback, active location tracking, ongoing call, connected device operation and long-running user-initiated task.
+FCM provides a short push-handling window, not unlimited background execution. Keep handling brief and schedule durable follow-up work when necessary.
 
-Foreground Service does not mean a separate thread: heavy work still needs to run outside the main thread.
+Restrictions also affect services, implicit broadcasts, location, jobs, and network access. Design for delays, process death, duplicate attempts, and retries; make background operations idempotent when possible.
 
-Newer Android versions add extra restrictions: you must declare a foreground service type, request the corresponding permissions and account for restrictions on starting a foreground service from the background.
+## Related topics
 
-**In short:** foreground service is for immediate user-visible ongoing work, while `WorkManager` is better for deferrable reliable background tasks.
-
-### Background restrictions
-
-Android has gradually strengthened background restrictions to save battery and protect the user from hidden background activity.
-
-Restrictions affect background services, implicit broadcasts, background location, exact alarms, foreground service launch, jobs, network access and battery optimizations.
-
-A practical approach is to choose the API by task type. For deferred reliable work - `WorkManager`. For exact alarms - `AlarmManager`, accounting for permissions/restrictions. For active user-visible work - foreground service. For push-triggered events - FCM, also with restrictions.
-
-Do not design an Android app as if it can run in the background indefinitely. The system may stop the process, defer work or restrict access to resources.
+- [Android Components](components.md)
+- [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
+- [Coroutine Scopes & Cancellation](../coroutines-flow/scopes-cancellation.md)
