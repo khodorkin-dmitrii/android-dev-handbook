@@ -121,6 +121,7 @@ Span ranges are index-based, so do not hardcode offsets that assume a particular
 
 ## Related topics
 
+- [`lateinit` vs `lazy`](../kotlin/lateinit-lazy.md)
 - [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
 - [Android Components](components.md)
 - [Performance & Memory](performance-memory.md)

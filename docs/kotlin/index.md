@@ -5,6 +5,7 @@ This section covers Kotlin in Android development: syntax, types, functions, cla
 ## Section structure
 
 - [Basics](basics.md)
+- [`lateinit` vs `lazy`](lateinit-lazy.md)
 - [Kotlin vs Java](kotlin-vs-java.md)
 - [Classes & Types](classes-and-types.md)
 - [Collections](collections.md)

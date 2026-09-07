@@ -107,3 +107,7 @@ class UserRepository : BaseRepository() {
 ```
 
 This approach forces extension points to be designed explicitly and reduces the risk of accidentally overriding behavior.
+
+## Related topics
+
+- [`lateinit` vs `lazy`](lateinit-lazy.md)

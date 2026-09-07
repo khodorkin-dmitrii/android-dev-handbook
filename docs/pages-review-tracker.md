@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-06
-1. Total articles tracked: 71
+1. Last tracker update: 2026-09-07
+1. Total articles tracked: 72
 1. Updated: 21
-1. TODO: 50
+1. TODO: 51
 
 | Priority | Total | Updated | TODO |
 |---|---|---|---|
-| P0 | 26 | 18 | 8 |
+| P0 | 27 | 18 | 9 |
 | P1 | 27 | 2 | 25 |
 | P2 | 18 | 1 | 17 |
 
@@ -47,6 +47,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **TODO**, , `testing/strategy.md`, Testing Strategy
 1. P0, **TODO**, , `testing/viewmodel-testing.md`, ViewModel Testing
 1. P0, **TODO**, , `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing
+1. P0, **TODO**, , `kotlin/lateinit-lazy.md`, lateinit vs lazy
 1. P1, **TODO**, , `kotlin/basics.md`, Kotlin Basics
 1. P1, **TODO**, , `kotlin/kotlin-vs-java.md`, Kotlin vs Java
 1. P1, **TODO**, , `kotlin/classes-and-types.md`, Classes & Types

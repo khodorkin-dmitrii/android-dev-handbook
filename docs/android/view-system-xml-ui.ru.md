@@ -121,6 +121,7 @@ Style - переиспользуемый набор атрибутов для к
 
 ## Связанные темы
 
+- [`lateinit` и `lazy`](../kotlin/lateinit-lazy.md)
 - [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
 - [Android Components](components.md)
 - [Performance & Memory](performance-memory.md)

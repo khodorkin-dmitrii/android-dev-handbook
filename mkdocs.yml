@@ -176,6 +176,7 @@ nav:
   - Kotlin:
       - Overview: kotlin/index.md
       - Basics: kotlin/basics.md
+      - lateinit vs lazy: kotlin/lateinit-lazy.md
       - Kotlin vs Java: kotlin/kotlin-vs-java.md
       - Classes & Types: kotlin/classes-and-types.md
       - Collections: kotlin/collections.md

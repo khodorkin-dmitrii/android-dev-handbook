@@ -5,6 +5,7 @@
 ## Структура раздела
 
 - [Basics](basics.md)
+- [`lateinit` и `lazy`](lateinit-lazy.md)
 - [Kotlin vs Java](kotlin-vs-java.md)
 - [Classes & Types](classes-and-types.md)
 - [Collections](collections.md)
