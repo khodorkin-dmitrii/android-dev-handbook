@@ -96,6 +96,10 @@ A memory leak happens when an object is no longer needed but is still reachable 
 
 A `val` reference cannot be reassigned after initialization, while a `var` can. However, `val` does not make the referenced object immutable: the contents of a mutable collection can still be changed.
 
+### What is the difference between `lateinit` and `lazy`?
+
+`lateinit var` is initialized manually later, and reading it too early throws `UninitializedPropertyAccessException`. `val by lazy` is initialized automatically on first access, and the result is cached.
+
 ### What are nullable types?
 
 In Kotlin, nullability is part of the type system: `String` cannot be `null`, while `String?` can. This reduces the risk of `NullPointerException` and requires missing values to be handled explicitly.

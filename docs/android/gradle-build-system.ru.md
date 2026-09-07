@@ -1,239 +1,117 @@
 # Gradle & Build System
 
-`Gradle` - build system, который используется в Android-проектах. Он резолвит dependencies, конфигурирует modules, запускает build tasks, собирает artifacts и координирует testing, lint, code generation и publishing workflows.
+Gradle - инструмент сборки Android-проектов. Он разрешает зависимости, настраивает модули, выбирает и выполняет задачи, а затем создаёт артефакты для тестирования или распространения. Android Gradle Plugin (AGP) добавляет Android-специфичные сущности: манифесты, ресурсы, уровни SDK, варианты сборки, подпись, lint и упаковку APK/AAB.
 
-`Android Gradle Plugin` (AGP) - Android-specific layer поверх Gradle. Gradle даёт общий build engine, а AGP понимает Android concepts: application/library modules, manifests, resources, build variants, APK/AAB packaging и Android-specific tasks.
+## Gradle, AGP и жизненный цикл сборки
 
-## Что такое Gradle в Android?
+Gradle - универсальный движок сборки, а AGP - плагин, который учит его собирать Android-приложения и библиотеки. Плагины Kotlin, KSP, сериализации и другие плагины добавляют собственные задачи и настройки.
 
-В Android-проекте Gradle описывает, как source code превращается в app или library artifact. Он знает, какие modules существуют, какие plugins применены, какие dependencies нужны и какие tasks должны выполниться для выбранного variant.
+Запуск Gradle состоит из трёх основных фаз:
 
-Большинство современных Android-проектов используют Kotlin DSL файлы с расширением `.gradle.kts`. Build configuration - это code, поэтому его можно структурировать и переиспользовать, но он всё равно должен оставаться readable и predictable.
+1. **Инициализация** - Gradle читает файл настроек и определяет проекты, участвующие в сборке.
+2. **Конфигурация** - выполняет логику сборки, применяет плагины и создаёт или настраивает граф задач.
+3. **Выполнение** - запускает выбранные задачи и их зависимости.
 
-**Коротко:** Gradle - build engine, а Android Gradle Plugin добавляет Android-specific build behavior.
+Это различие важно для производительности. Чтение файлов, преждевременное вычисление значений и запуск внешних процессов на фазе конфигурации замедляют каждый запуск и могут нарушить совместимость с configuration cache. Пользовательскую работу обычно следует оформлять как задачи с явно объявленными входами и выходами.
 
-## Android project structure
+## Структура проекта и репозитории
 
-Типичный Android-проект содержит несколько build-related файлов и папок:
+Типичный проект на Kotlin DSL содержит:
 
-- `settings.gradle.kts` - задаёт project name, plugin/dependency repositories и included modules;
-- root `build.gradle.kts` - хранит shared build setup, plugin aliases или common configuration;
-- module `build.gradle.kts` - конфигурирует app или library module;
-- `gradle/libs.versions.toml` - version catalog с dependency и plugin coordinates;
-- `app` - обычно основной application module;
-- feature modules - user-facing features, например profile, checkout или settings;
-- core modules - shared infrastructure, например network, database, design system или common models.
+- `settings.gradle.kts` - задаёт имя сборки, подключает модули и обычно настраивает репозитории плагинов и зависимостей;
+- корневой `build.gradle.kts` - объявляет общие версии плагинов или минимальную конфигурацию корневого проекта;
+- модульный `build.gradle.kts` - применяет плагины и настраивает один модуль приложения, библиотеки или функциональности;
+- `gradle/libs.versions.toml` - необязательный каталог версий с псевдонимами зависимостей и плагинов;
+- `gradle.properties` - общие свойства Gradle для проекта;
+- `gradle/wrapper` и `gradlew` / `gradlew.bat` - фиксируют и запускают версию Gradle проекта.
 
-Конкретная структура зависит от размера проекта. Маленькое приложение может начать с одного `app` module, а большой проект обычно растёт в feature и core modules.
-
-## Gradle files in a multi-module project
-
-В multi-module project файл `settings.gradle.kts` подключает modules:
+Репозитории плагинов и библиотек решают разные задачи:
 
 ```kotlin
-include(":app")
-include(":feature:profile")
-include(":core:network")
+// settings.gradle.kts
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+include(":app", ":feature:profile", ":core:network")
 ```
 
-Root configuration обычно хранит shared plugin/version setup и repositories. Module configuration определяет, чем является каждый module: `com.android.application`, `com.android.library`, `org.jetbrains.kotlin.android` и т.д.
+По возможности держи объявления репозиториев в одном месте. Произвольные репозитории внутри модулей усложняют аудит и воспроизводимость разрешения зависимостей.
 
-Dependencies должны быть направленными. Feature modules могут зависеть от core contracts, data modules могут предоставлять implementations, а app module связывает всё вместе. Cyclic dependencies - признак того, что границы modules нужно пересмотреть.
+## Модули и общая логика сборки
 
-Когда configuration копируется по многим modules, лучше использовать convention plugins вместо copy-paste. Convention plugins держат общие Android/Kotlin settings в одном месте и делают module files короче.
+Каждый модуль применяет плагины, определяющие его роль, например `com.android.application` или `com.android.library`. Зависимости должны иметь понятное направление: функциональные модули могут зависеть от стабильных API core-модулей, а модуль приложения выступает финальной точкой композиции. Циклы обычно указывают на неверно распределённые обязанности или отсутствующие контракты.
 
-**Важно:** multi-module builds помогают только при понятных module boundaries. Случайные dependencies между modules усложняют и build, и architecture.
+Если множество модулей повторяют одни и те же настройки Android и Kotlin, вынеси их в convention plugins, обычно в подключённую сборку вроде `build-logic`. Такие плагины дают типобезопасные и тестируемые общие настройки, сохраняя модульные скрипты короткими. Избегай крупного блока `subprojects {}`, который неявно изменяет все модули.
 
-## Android Gradle Plugin
+Модуляризация не ускоряет сборку автоматически. Она помогает, только если границы допускают параллельную работу и предотвращают массовую перекомпиляцию; избыток модулей и связей повышает стоимость конфигурации и сопровождения.
 
-`Android Gradle Plugin` связывает Gradle с Android toolchain. Он добавляет Android-specific DSL blocks, tasks и variant handling.
+## Конфигурация Android Gradle Plugin
 
-Типичная AGP configuration:
+AGP предоставляет DSL-блок `android`:
 
 ```kotlin
 android {
     namespace = "com.example.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
+        applicationId = "com.example.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0"
     }
 }
 ```
 
-AGP также отвечает за manifest merging, resource processing, generated `R` classes, `BuildConfig`, signing, packaging, lint integration и APK/AAB generation.
+- `compileSdk` определяет Android API, доступные при компиляции.
+- `minSdk` задаёт минимальный API level, на котором можно установить приложение.
+- `targetSdk` объявляет версию поведения Android, с которой приложение протестировано, и может включать новые изменения поведения платформы.
+- `namespace` используется для сгенерированных классов вроде `R`, а `applicationId` приложения идентифицирует установленное и опубликованное приложение.
 
-## Dependencies
+AGP также выполняет слияние манифестов, обработку ресурсов, генерацию кода, преобразование в DEX, подпись, lint-проверки, оптимизацию и упаковку. Версии Gradle, AGP, JDK, Kotlin и Android Studio имеют ограничения совместимости, поэтому обновлять их нужно вместе, сверяясь с официальными таблицами совместимости.
 
-Dependencies объявляются в module `build.gradle.kts` files. Они описывают, что нужно module для compilation, testing или runtime.
+## Конфигурации зависимостей
 
-Частые dependency configurations:
-
-- `implementation` - dependency используется внутри module;
-- `api` - dependency exposed как часть public API module;
-- `compileOnly` - dependency нужна только для compilation, но не попадает в runtime;
-- `runtimeOnly` - dependency нужна только в runtime;
-- `kapt` - annotation processing через Kotlin annotation processing;
-- `ksp` - Kotlin Symbol Processing, часто быстрее и Kotlin-friendly, чем `kapt`.
-
-Держи dependencies ближе к module, который реально их использует. Не стоит по умолчанию складывать все dependencies в app module или глобальный shared module.
-
-## implementation vs api
-
-По умолчанию предпочитай `implementation`. Он оставляет dependency внутренней для module и улучшает encapsulation.
-
-Используй `api` только когда types из dependency являются частью public contract module. Например, если public function возвращает type из другой library, consumers module должны иметь этот type на compile classpath.
+Зависимости должны находиться в модуле, который их использует:
 
 ```kotlin
 dependencies {
     implementation(libs.okhttp)
-    api(project(":core:model"))
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    ksp(libs.room.compiler)
 }
 ```
 
-Слишком частое использование `api` протаскивает implementation details наружу и может замедлять incremental builds, потому что больше downstream modules нужно recompilе-ить при изменениях dependency.
+Основные конфигурации:
 
-**Коротко:** `implementation` скрывает dependencies, `api` exposes их. Используй `api` только для public contracts.
+- `implementation` - зависимость доступна модулю, но не попадает в compile classpath его потребителей;
+- `api` - зависимость видна потребителям, потому что её типы входят в публичный API модуля;
+- `compileOnly` - нужна для компиляции, но отсутствует в runtime-пакете;
+- `runtimeOnly` - нужна во время выполнения, но не компиляции;
+- `testImplementation` и `androidTestImplementation` - зависимости локальных и инструментальных тестов;
+- `ksp` или `kapt` - зависимости, используемые соответствующим инструментом генерации кода.
 
-## Build types, flavors and variants
+По умолчанию выбирай `implementation`. Используй `api`, только если публичная сигнатура действительно содержит тип зависимости. Злоупотребление `api` ухудшает инкапсуляцию и может заставлять Gradle перекомпилировать больше зависимых модулей.
 
-`buildTypes` описывают, как приложение собирается для разных целей. Частые примеры - `debug` и `release`.
+KSP работает непосредственно с Kotlin-символами и обычно предпочтительнее, если библиотека его поддерживает. Но миграцию нужно проверять: KSP-реализация есть не у каждого процессора аннотаций, а поведение сгенерированного кода может отличаться.
 
-```kotlin
-android {
-    buildTypes {
-        debug {
-            isDebuggable = true
-        }
-        release {
-            isMinifyEnabled = true
-        }
-    }
-}
-```
+### Каталоги версий
 
-`productFlavors` описывают product dimensions, например environment, brand или distribution channel. Комбинация build types и flavors создаёт build variants. Например, `demoDebug`, `demoRelease`, `prodDebug` и `prodRelease`.
-
-Variants мощные, но слишком большое количество flavors умножает build complexity. Используй их, когда продукту действительно нужны разные builds, а не как замену runtime configuration.
-
-## APK, AAB and app size
-
-### Что такое APK?
-
-APK (Android Package) - устанавливаемый пакет Android-приложения.
-
-Это artifact, который Android может установить на устройство. Обычно APK содержит:
-
-- скомпилированный код приложения в виде `.dex` файлов;
-- Android resources и assets;
-- `AndroidManifest.xml`;
-- native libraries, если приложение их использует;
-- signing metadata.
-
-APK удобен для local testing, CI artifacts, внутреннего распространения и прямой установки через `adb install`. Например, debug builds часто собираются как APK и устанавливаются напрямую на emulator или физическое устройство.
-
-### Что такое AAB?
-
-AAB (Android App Bundle) - publishing format, а не пакет, который можно установить напрямую.
-
-App bundle содержит скомпилированный код и resources приложения, но генерация APK откладывается до Google Play. Когда пользователь устанавливает приложение, Google Play генерирует и отдаёт optimized APKs под configuration конкретного устройства.
-
-На практике это значит, что пользователю не нужно скачивать все возможные варианты resources, которые есть в приложении.
-
-### APK vs AAB
-
-Главное отличие - где создаётся финальный устанавливаемый APK.
-
-При традиционном APK разработчик собирает и распространяет один installable package. Если это universal APK, внутри могут быть resources и native libraries для разных device configurations: разных ABIs, screen densities и languages.
-
-При AAB разработчик загружает bundle в Google Play. Google Play затем создаёт набор optimized APKs для конкретного устройства. Установленное приложение может состоять из base APK, configuration APKs и, при необходимости, feature APKs.
-
-Коротко:
-
-- APK - устанавливаемый пакет;
-- AAB - publishing package, из которого генерируются optimized APKs.
-
-### Почему AAB может уменьшить размер приложения?
-
-AAB может уменьшить download size, потому что Google Play доставляет только код и resources, нужные конкретному устройству.
-
-Частые split dimensions:
-
-- CPU architecture / ABI, например `arm64-v8a`;
-- screen density, например `xxhdpi`;
-- language resources;
-- optional dynamic feature modules.
-
-Например, устройству не нужно скачивать native libraries для всех CPU architectures или изображения для всех screen densities. Ему нужны только части, которые соответствуют его configuration.
-
-Это особенно полезно для крупных приложений с большим количеством resources, translations, native libraries или optional features.
-
-### Dynamic features and asset delivery
-
-App bundles также поддерживают более гибкие delivery models.
-
-Dynamic feature modules позволяют доставлять часть функциональности только тогда, когда она нужна, или только для устройств, которые подходят под определённые условия. Это помогает уменьшить initial install и вынести редко используемые возможности из base module.
-
-Для games или приложений с крупным media content можно использовать Play Asset Delivery, чтобы доставлять большие assets гибче.
-
-Но это не значит, что любое приложение нужно дробить на множество modules. Dynamic delivery полезен, когда feature большая, optional или нужна только части аудитории. Для маленького приложения это может добавить лишнюю сложность.
-
-### Ограничения и практические заметки
-
-AAB - предпочтительный publishing format для Google Play, но он не заменяет APK во всех workflow.
-
-Важные практические моменты:
-
-- AAB нельзя установить напрямую через `adb install`;
-- для local testing из AAB нужны generated APKs или `bundletool`;
-- internal testing и sideloading часто проще делать через APK;
-- non-Google app stores могут всё ещё требовать APK или поддерживать собственный bundle format;
-- Play App Signing становится частью стандартного Google Play publishing flow.
-
-### App size optimization
-
-AAB помогает уменьшить delivered size, но не заменяет обычную оптимизацию размера приложения.
-
-Важные техники:
-
-- включай R8 для release builds;
-- удаляй unused code и resources;
-- включай resource shrinking;
-- избегай unnecessary dependencies;
-- оставляй native libraries только для поддерживаемых ABIs;
-- не поставляй unused assets, languages или большие raw resources;
-- выноси крупную optional functionality в dynamic feature modules только когда продукт реально выигрывает от этой сложности.
-
-R8 особенно важен, потому что он может удалять unreachable code, оптимизировать bytecode, сокращать names и уменьшать DEX size. Resource shrinking помогает удалить resources, которые больше не reachable из приложения.
-
-### Коротко
-
-APK - устанавливаемый Android package. Он содержит compiled code, resources, assets, manifest, native libraries и signing information.
-
-AAB - publishing format, который используется в Google Play. Разработчик загружает app bundle, а Google Play генерирует optimized APKs под configuration конкретного устройства. Это может уменьшить download size, потому что пользователь получает только нужные ABI, density, language resources и optional feature modules.
-
-В реальных проектах APK всё ещё полезен для local testing и direct installation, а AAB является стандартным форматом для распространения через Google Play.
-
-## Source sets
-
-`source sets` позволяют проекту предоставлять разный code и resources для разных variants.
-
-Частые source sets:
-
-- `src/main` - общий source для всех variants;
-- `src/debug` - debug-only source и resources;
-- `src/release` - release-only source и resources;
-- `src/test` - local unit tests;
-- `src/androidTest` - instrumented tests.
-
-Flavor и variant-specific source sets могут быть полезны, но они также могут прятать behavior. Держи variant-specific code маленьким и легко обнаруживаемым.
-
-## Version catalogs
-
-`version catalogs` хранят dependency и plugin coordinates в `gradle/libs.versions.toml`.
-
-Пример:
+Каталог версий централизует псевдонимы и координаты:
 
 ```toml
 [versions]
@@ -243,58 +121,83 @@ retrofit = "2.11.0"
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 ```
 
-После этого dependency можно использовать так:
-
 ```kotlin
 dependencies {
     implementation(libs.retrofit)
 }
 ```
 
-Version catalogs делают dependency names consistent и централизуют versions. Они не заменяют dependency discipline: unused, duplicated или incorrectly scoped dependencies всё равно нужно чистить.
+Каталоги делают имена единообразными, но не контролируют границы зависимостей и не гарантируют единственную версию каждой библиотеки. Для более строгой воспроизводимости или защиты цепочки поставки применяй блокировку или проверку зависимостей.
 
-## Gradle wrapper
+## Build types, product flavors, варианты и source sets
 
-`Gradle wrapper` - project-local способ запускать конкретную Gradle version. Он включает `gradlew`, `gradlew.bat` и files внутри `gradle/wrapper`.
+Build types обычно описывают этапы разработки, например `debug` и `release`. Product flavors описывают версии продукта: бренд, окружение или канал распространения. AGP создаёт вариант сборки из их комбинации.
 
-Developers и CI должны использовать wrapper вместо globally installed Gradle:
+```kotlin
+android {
+    flavorDimensions += "environment"
+    productFlavors {
+        create("staging") { dimension = "environment" }
+        create("production") { dimension = "environment" }
+    }
+    buildTypes {
+        release { isMinifyEnabled = true }
+    }
+}
+```
+
+Source sets предоставляют код и ресурсы для определённой области: `src/main`, `src/debug`, `src/release`, `src/test`, `src/androidTest` или каталога конкретного flavor/варианта. Дополнительные flavors умножают количество вариантов, задач, CI-работы и мест, где может скрываться разное поведение. Предпочитай runtime-конфигурацию, если отдельные артефакты действительно не нужны, и никогда не клади секреты в `BuildConfig` или ресурсы: значения из пакета можно извлечь.
+
+## APK, AAB и оптимизация
+
+APK - устанавливаемый пакет с DEX-кодом, ресурсами, манифестом и, при необходимости, нативными библиотеками. Он удобен для локальной установки, тестирования и распространения вне магазинов.
+
+Android App Bundle (AAB) - публикуемый артефакт, который нельзя напрямую установить командой `adb install`. Google Play создаёт из него APK для конкретного устройства, разделяя содержимое по ABI, плотности экрана, языку или динамическим модулям. Для анализа и тестирования APK, сгенерированных из bundle, используй `bundletool`.
+
+Доставка через AAB может уменьшить размер загрузки, но не заменяет оптимизацию приложения. В release-сборках обычно следует применять R8 и удаление неиспользуемых ресурсов вместе с протестированными keep rules. Также удаляй ненужные зависимости и assets, ограничивай упакованные ABI и языки, когда это уместно, а dynamic features вводи только тогда, когда выгода от доставки оправдывает сложность.
+
+## Wrapper и воспроизводимая сборка
+
+Разработчики и CI должны использовать добавленный в репозиторий Gradle Wrapper:
 
 ```shell
 ./gradlew assembleDebug
+./gradlew test
 ```
 
-Так builds остаются reproducible, потому что все используют одну Gradle version, настроенную проектом.
+Wrapper загружает версию из `gradle-wrapper.properties`, поэтому глобальная установка Gradle не нужна. Храни wrapper-файлы в репозитории, обновляй их осознанно и проверяй checksum дистрибутива. Воспроизводимость также зависит от фиксированных зависимостей, контролируемых репозиториев, согласованных версий JDK/toolchain и отсутствия логики сборки, зависящей от окружения.
 
-## Build performance basics
+## Производительность и диагностика сборки
 
-Build performance зависит от module graph, dependency scope, task configuration, annotation processing, caching и того, как часто tasks становятся invalidated.
+Оптимизируй измеренные узкие места, а не предположения. Build scans, профилирование Gradle, вывод задач и Android Studio Build Analyzer помогают найти медленную конфигурацию, неинкрементальные процессоры, промахи кэша и неожиданно повторно выполняемые задачи.
 
-Практические основы:
+Полезные принципы:
 
-- предпочитай `implementation` вместо `api`;
-- избегай unnecessary module dependencies;
-- держи annotation processors под контролем;
-- используй KSP вместо KAPT, когда libraries это поддерживают;
-- избегай тяжелой работы во время Gradle configuration phase;
-- держи convention build logic reusable;
-- включай и учитывай Gradle build/cache features там, где это уместно;
-- избегай постоянно меняющихся generated files, которые invalidates много tasks.
+- явно объявляй входы и выходы задач, чтобы работали up-to-date checks и кэширование;
+- используй build cache для повторного применения результатов задач, а configuration cache - результатов конфигурации: это разные механизмы;
+- избегай ненужных `clean`-сборок, динамических версий зависимостей и постоянно меняющихся сгенерированных файлов;
+- применяй ленивые Gradle API и не выполняй тяжёлую работу при конфигурации;
+- сокращай широкие межмодульные зависимости и переходи с KAPT на KSP там, где он поддерживается;
+- проверяй улучшения на репрезентативных локальных и CI-сборках.
 
-**Практический совет:** build performance обычно улучшается удалением ненужной работы, а не добавлением новой build logic.
+## Частые ошибки
 
-## Common pitfalls
+- путать Gradle с AGP или считать Android Studio системой сборки;
+- использовать несовместимые версии Gradle, AGP, JDK или Kotlin;
+- раскрывать внутренние зависимости через `api`;
+- создавать циклические или слишком широкие зависимости между модулями;
+- дублировать или скрывать общую конфигурацию модулей;
+- создавать слишком много flavors и вариант-специфичного поведения;
+- помещать секреты в build-файлы или упакованные константы;
+- создавать задачи без объявленных входов и выходов;
+- запускать сетевые запросы, процессы или генерацию файлов во время конфигурации;
+- считать кэш, переход на KSP или модуляризацию ускорением без измерений.
 
-Частые проблемы с Gradle и build system:
+**Главная мысль:** здоровая Android-сборка явна, воспроизводима и предсказуема. Её граф модулей, входы, выходы и различия вариантов должно быть легко объяснить.
 
-- cyclic или overly broad module dependencies;
-- использование `api`, когда достаточно `implementation`;
-- все dependencies сложены в app module;
-- одинаковый Android/Kotlin config копируется по многим modules;
-- слишком много flavors и variants;
-- hidden behavior в variant-specific source sets;
-- hardcoded versions вне version catalog;
-- slow annotation processing;
-- network или file generation work запускается во время configuration;
-- local Gradle или IDE state попадает в git.
+## Связанные темы
 
-**Главная мысль:** хороший Android build явный, направленный и скучный. Он должен делать modules понятными, а builds предсказуемыми.
+- [Мультимодульная архитектура](../architecture/multi-module.ru.md)
+- [Производительность и память](performance-memory.ru.md)
+- [Стратегия тестирования](../testing/strategy.ru.md)
+
