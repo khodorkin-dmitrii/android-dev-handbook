@@ -1,95 +1,62 @@
-# Performance & Memory
+# Производительность и память
 
-Performance и memory topics помогают понимать отзывчивость UI, rendering, leaks, profiling и ограничения Android runtime.
+Работа над производительностью помогает сохранять отзывчивость интерфейса, вовремя отрисовывать кадры и укладываться в ограничения памяти устройства. Начинайте с воспроизводимого пользовательского сценария и измерений, а оптимизируйте только после обнаружения реального узкого места.
 
-## Responsiveness и rendering
+## Отзывчивость и отрисовка
 
 ### ANR
 
-ANR (Application Not Responding) - состояние, когда Android считает приложение зависшим, потому что main thread слишком долго не отвечает на события.
+ANR (Application Not Responding) означает, что, по оценке системы, компонент приложения не ответил за отведённое время. Самый известный случай - ожидание обработки события ввода около пяти секунд, но у сервисов, `BroadcastReceiver` и callback-методов `JobService` тоже есть свои временные ограничения.
 
-Типичные причины: тяжёлая работа на main thread, синхронный I/O, долгие database/network операции, deadlock, блокировка main thread через `wait()` / `join()` / `sleep()` или слишком тяжёлый `BroadcastReceiver`.
+Типичные причины: синхронный ввод-вывод или тяжёлые вычисления в главном потоке, медленные Binder-вызовы, конкуренция за блокировки, взаимные блокировки и вызовы `wait()`, `join()` или `sleep()`. `BroadcastReceiver` также может вызвать ANR, если выполняет слишком много работы в `onReceive()` или вызывает `goAsync()`, но не завершает `PendingResult` вовремя.
 
-Для `Activity` ANR обычно возникает, если приложение не отвечает на input events около 5 секунд. Для `BroadcastReceiver` лимиты зависят от типа receiver и версии Android, поэтому лучше держать работу receiver короткой и делегировать длительные задачи в `WorkManager` / foreground service.
+Делайте callback-методы компонентов короткими, переносите блокирующий ввод-вывод и тяжёлые вычисления на подходящие диспетчеры или исполнители и не удерживайте блокировки во время медленных операций. В разработке используйте `StrictMode`, а для проблем в production изучайте ANR traces и Android vitals. Перенос работы из главного потока улучшает отзывчивость, но не исправляет небезопасное общее состояние или неограниченный объём работы.
 
-Профилактика: не блокировать main thread, переносить I/O и CPU-heavy work на подходящие dispatchers/thread pools, следить за locks, использовать `StrictMode`, traces и Android Studio Profiler.
-
-**Коротко:** ANR happens when the main thread is blocked long enough that the system cannot process input or lifecycle messages.
+Выбор между `WorkManager`, foreground service и другими фоновыми API разобран в статье [Фоновая работа и поведение системы](background-work-system-behavior.md).
 
 ### Jank
 
-Jank - заметные рывки UI, когда кадры не успевают отрисоваться вовремя.
+Jank - заметные рывки интерфейса из-за того, что кадры не укладываются в сроки отрисовки. При 60 Гц интервал кадра составляет около 16,7 мс, при 90 Гц - 11,1 мс, а при 120 Гц - 8,3 мс. На результат может влиять работа главного потока, RenderThread, GPU и других частей графического конвейера.
 
-При 60 Hz у приложения примерно 16.6 ms на кадр, при 120 Hz - около 8.3 ms. Если main thread или render thread заняты слишком долго, кадр пропускается и пользователь видит лаг.
+Типичные причины: дорогие проходы measure/layout/draw, тяжёлая композиция или привязка данных, синхронная работа в главном потоке, частые выделения памяти и сборка мусора, декодирование изображений и плохо согласованные анимации. Бюджет кадра - это общий срок для всего конвейера, а не допустимое время для одного метода приложения.
 
-Причины jank: тяжёлый layout/draw, глубокая hierarchy, синхронная работа на main thread, частые allocations и GC, сложный `RecyclerView` bind, большие images, неправильная работа с animations.
-
-Инструменты: Layout Inspector, Android Profiler, System Trace/Perfetto, Profile GPU Rendering, Macrobenchmark/JankStats.
-
-**Коротко:** jank is missed frame deadlines; fix it by reducing main-thread work, layout/draw cost, allocations and expensive binds.
+Воспроизводите проблему в сборке, близкой к release, желательно на типичном не самом быстром устройстве. Используйте System Trace или Perfetto, чтобы найти медленные кадры, а затем уточняйте причину с помощью Android Studio Profiler, Layout Inspector, собственных trace-секций, JankStats или Macrobenchmark. После изменения повторите измерение.
 
 ### Overdraw
 
-Overdraw - ситуация, когда один и тот же pixel рисуется несколько раз за один frame.
+Overdraw возникает, когда один и тот же пиксель рисуется несколько раз за кадр. Например, фон окна, фон корневого layout и непрозрачная карточка могут перекрывать друг друга, хотя отрисовываются все три.
 
-Например, если `Activity` background, root layout background и Card background перекрывают друг друга, GPU делает лишнюю работу.
+Некоторый overdraw нормален и сам по себе не означает проблему. Исследуйте его, когда traces или инструменты анализа GPU указывают на высокую стоимость заполнения, особенно на сложных экранах и слабых устройствах. Убирайте лишние фоны и невидимые слои, сокращайте ненужные перекрытия, осознанно используйте прозрачность, clipping, тени и внеэкранную отрисовку. Упрощать иерархию стоит только тогда, когда это уменьшает измеренную стоимость layout или draw.
 
-Overdraw не всегда критичен, но сильный overdraw может ухудшать rendering performance, особенно на слабых устройствах или сложных экранах.
+## Память и инструменты
 
-Оптимизация: убрать лишние backgrounds, flatten hierarchy, не рисовать невидимые слои, аккуратно использовать alpha/shadows, проверять UI через debugging tools и profiler.
+### Утечки памяти и давление на память
 
-**Коротко:** overdraw is drawing the same pixels multiple times; reduce redundant backgrounds and unnecessary overlapping layers.
+Утечка памяти возникает, когда объект уже не нужен, но остаётся достижимым по сильным ссылкам от GC root. Типичные Android-примеры: singleton удерживает `Activity`, callback не удаляется, долгоживущая coroutine захватывает `View`, или binding представления фрагмента сохраняется после `onDestroyView()`.
 
-## Memory и tooling
+`Fragment` может жить дольше своего представления. Очищайте binding, принадлежащие представлению адаптеры и listeners в `onDestroyView()`, а данные для UI собирайте с учётом `viewLifecycleOwner`. Долгоживущим объектам передавайте `applicationContext`, если его достаточно, а `ViewModel` не должен хранить `Activity`, `Fragment` или `View`. Слабые ссылки не заменяют правильное владение объектами.
 
-### Memory leaks in Android
+Высокое потребление памяти не всегда означает утечку. Большие bitmap, неограниченные кэши, слишком частые выделения памяти или загрузка всего набора данных могут вызвать частую сборку мусора или `OutOfMemoryError`, даже если объекты со временем освобождаются. Перед исправлением отличите удерживаемые объекты от временного потока аллокаций.
 
-Memory leak в Android возникает, когда объект уже не нужен, но всё ещё удерживается через strong reference и не может быть собран GC.
+### Android Studio Profiler
 
-Классические причины: хранение `Activity` / `Fragment` / `View Context` в singleton, static references на `View`, callback/listener без отписки, долгоживущая coroutine с reference на UI, `Handler` / `Runnable`, `ViewBinding` после `onDestroyView()`.
+Инструменты профилирования Android Studio помогают проверять гипотезы. CPU recordings показывают горячие участки, активность потоков, конкуренцию за блокировки и работу главного потока. Heap dump и запись аллокаций показывают количество объектов, места их создания и цепочки ссылок. Network Inspector помогает изучать время запросов и размер данных.
 
-Особенно важно помнить Fragment view lifecycle: `Fragment` может жить дольше своей `View`, поэтому binding нужно очищать в `onDestroyView()`, а UI observers привязывать к `viewLifecycleOwner`.
+Профилируйте конкретный сценарий: холодный запуск, прокрутку, открытие тяжёлого экрана, загрузку или анимацию данных. Debug-сборки и инструментальная трассировка методов создают дополнительные накладные расходы, поэтому для оценки пользовательского опыта используйте release-like или profileable build. Сравнивайте один и тот же сценарий до и после оптимизации.
 
-Профилактика: использовать `applicationContext` для долгоживущих объектов, lifecycle-aware collection, weak references только когда это действительно подходит, clear callbacks/listeners, не хранить `View` в `ViewModel`.
-
-**Коротко:** leaks happen when obsolete Android components remain reachable from GC roots, often through singletons, callbacks, static references or wrong lifecycle scope.
-
-### Android Profiler
-
-Android Profiler - инструмент Android Studio для анализа CPU, memory, network, energy и поведения приложения во время выполнения.
-
-CPU profiler помогает искать долгие методы, hot paths, main-thread блокировки и expensive frames. Memory profiler показывает allocations, heap usage, GC activity и помогает найти удерживаемые объекты.
-
-Network profiler полезен для оценки запросов, payload size и timing, хотя для OkHttp/Retrofit часто также используют logging/interceptors и backend tracing.
-
-Profiler лучше использовать вместе с реальными сценариями: slow startup, scrolling, opening heavy screen, loading data, animation.
-
-**Коротко:** Android Profiler helps verify performance hypotheses instead of guessing; it shows CPU, memory, network and energy behavior under real app usage.
-
-Практический workflow, разделяющий investigation и repeatable measurement, описан в [Performance Profiling and Benchmarking](../tools/performance-profiling.md). Работа с утечками разобрана в [Memory Leak Detection](../tools/memory-leaks.md).
+Повторяемый процесс описан в статье [Профилирование и бенчмаркинг производительности](../tools/performance-profiling.md). Поиск утечек разобран в [Обнаружении утечек памяти](../tools/memory-leaks.md).
 
 ### LeakCanary
 
-LeakCanary - библиотека для автоматического обнаружения memory leaks в Android debug builds.
+LeakCanary обнаруживает в debug-сборках объекты, которые уже должны были стать доступными для сборки мусора. Если отслеживаемый объект остаётся удержанным, библиотека анализирует heap dump и показывает путь ссылок от GC root до этого объекта.
 
-Она отслеживает уничтоженные `Activity`, `Fragment`, `View` и другие объекты, которые должны быть garbage collected, но остаются reachable.
+Типичные находки: утечка binding представления фрагмента, неочищенный listener, адаптер, удерживающий уничтоженное представление, контекст `Activity` в singleton или coroutine, захватившая UI. LeakCanary показывает цепочку удержания, но разработчик всё равно должен найти неправильного владельца или ошибку жизненного цикла и исправить её. Не каждый временно удерживаемый объект является постоянной утечкой, поэтому проверяйте сценарий и путь ссылок.
 
-Если объект не собирается, LeakCanary анализирует heap dump и показывает reference chain от GC root до leaked object.
+### DEX и multidex
 
-Типичные находки: Fragment view binding leak, listener/callback leak, retained `Activity` context, adapter/view reference, coroutine или lambda, удерживающая UI.
+DEX (Dalvik Executable) - формат байткода, который выполняет Android Runtime. Инструменты сборки Android преобразуют скомпилированный байткод Java и Kotlin в один или несколько DEX-файлов.
 
-LeakCanary не чинит leak автоматически, но быстро показывает цепочку ссылок и помогает найти владельца лишней reference.
+Один DEX-файл может содержать ссылки максимум на 65 536 методов. Приложения с `minSdk` 21 и выше имеют встроенную поддержку multidex; для более старых версий нужны библиотека multidex и специальная обработка запуска. Современные проекты часто пересекают эту границу без ручной настройки, но рост зависимостей всё равно влияет на время сборки, размер загрузки, запуск и сопровождаемость.
 
-**Коротко:** LeakCanary detects retained objects and shows the reference path that keeps them alive.
+Предпочитайте узкие зависимости, удаляйте неиспользуемые библиотеки и включайте R8 shrinking для release-сборок. Multidex - это поддержка упаковки, а не замена контролю зависимостей. Keep rules влияют на то, что R8 может удалить, поэтому проверяйте оптимизированные release-сборки тестами.
 
-### dex / multidex
-
-DEX (Dalvik Executable) - формат bytecode, который выполняет Android Runtime. Java/Kotlin code компилируется в JVM bytecode, а затем Android build tools преобразуют его в DEX.
-
-У DEX есть историческое ограничение около 65K method references на один dex-файл. Если приложение превышает этот лимит, нужен multidex: приложение разбивается на несколько dex-файлов.
-
-На Android 5.0+ ART поддерживает loading multiple dex files нативно. На более старых версиях требовалась support library multidex и специальная инициализация.
-
-Причины роста method count: большие libraries, Google Play Services целиком, DI/generated code, legacy dependencies. Решения: удалить лишние зависимости, использовать более узкие artifacts, R8 shrinking, minification, proguard rules и modularization.
-
-**Коротко:** multidex is a solution for the 64K DEX method reference limit, but first you should reduce method count with dependency cleanup and shrinking.
