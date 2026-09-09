@@ -1,72 +1,98 @@
-# DI Basics
+# Основы DI
 
-Dependency Injection (DI) - подход, при котором класс не создаёт свои dependencies сам, а получает их извне: через constructor, factory, framework или composition root.
+Dependency Injection (DI), или внедрение зависимостей, - это приём проектирования, при котором объект получает зависимости извне, а не создаёт и не ищет их самостоятельно. DI можно реализовать вручную или с помощью Hilt, Dagger, Koin и других фреймворков.
 
-## Основы DI
+## Зачем нужен DI?
 
-### Зачем нужен DI?
+DI делает зависимости явными, уменьшает связанность и упрощает тестирование. В Android объект может зависеть от репозиториев, API-клиентов, базы данных, `DataStore`, аналитики, диспетчеров корутин или feature flags. Если каждый класс сам создаёт следующий, логика сборки расползается по проекту, а реализации становится сложно заменять.
 
-DI нужен для слабой связности, тестируемости и явного управления зависимостями. В Android это особенно полезно из-за слоёв, lifecycle, `ViewModel`, repositories, API clients, database, `DataStore`, analytics, dispatchers и feature flags.
+При DI классы описывают, что им требуется, а создание объектов переносится в **composition root** - место, где приложение собирает граф зависимостей. Это может быть ручной контейнер или DI-фреймворк.
 
-Без DI `ViewModel` может сама создавать repository, repository - Retrofit service, а service - OkHttp client. Это приводит к tight coupling: зависимости сложно заменить, мокнуть в тестах и контролировать по lifecycle.
+DI не гарантирует хорошую архитектуру. Большое число параметров конструктора может указывать на лишние обязанности, а интерфейс полезен только тогда, когда задаёт осмысленную границу или предполагает несколько реализаций.
 
-Хороший DI делает dependencies видимыми через constructor/API, позволяет подставить fake implementation в тестах, централизует wiring и помогает соблюдать Dependency Inversion Principle.
+## Внедрение через конструктор
 
-**Коротко:** DI is not just about avoiding `new`; it reduces coupling, improves testability and gives controlled lifecycle for dependencies.
-
-### Dependency Injection vs Service Locator
-
-Dependency Injection означает, что dependency передаётся объекту извне. Класс явно объявляет, что ему нужно, обычно через constructor parameters, а composition root или DI container создаёт object graph.
-
-Service Locator - объект-реестр, из которого класс сам запрашивает dependency: например, `ServiceLocator.getRepository()`. Это проще для маленького проекта, но dependency становится менее явной.
-
-Главная разница: при DI зависимости видны в API класса, а при Service Locator класс скрыто знает о глобальном registry. Это усложняет тестирование, reasoning и поиск реальных зависимостей.
-
-Service Locator не всегда зло: он может быть временным решением в legacy-коде или manual DI. Но в больших Android-проектах обычно лучше явный DI через constructor injection и Hilt/Dagger.
-
-**Коротко:** DI pushes dependencies into a class, Service Locator lets the class pull them from a registry; DI is usually more explicit and testable.
-
-### Constructor injection
-
-Constructor injection - способ DI, при котором все обязательные dependencies передаются через constructor.
-
-Это предпочтительный вариант по умолчанию: объект нельзя создать без нужных dependencies, зависимости явно видны, их легко заменить в unit tests, а класс не зависит от конкретного DI framework внутри своей logic.
-
-В Android через Hilt/Dagger constructor injection часто выглядит так:
+Для классов, которыми управляет приложение, внедрение через конструктор - предпочтительный вариант:
 
 ```kotlin
-class UserRepository @Inject constructor(
+class UserRepository(
     private val api: ApiService,
-    private val dao: UserDao
+    private val dao: UserDao,
+    private val ioDispatcher: CoroutineDispatcher
 )
 ```
 
-Если класс принадлежит нам и его можно создать через constructor, обычно не нужен отдельный `@Provides` method.
+Зависимости видны в API класса, объект нельзя создать в некорректном состоянии, а в тестах легко передать fake-реализации:
 
-Constructor injection хуже подходит, когда объект создаётся Android framework-ом напрямую, нужен runtime parameter, builder/factory или external SDK. Тогда используют assisted injection, factory, provider method или module.
+```kotlin
+val repository = UserRepository(
+    api = FakeApiService(),
+    dao = FakeUserDao(),
+    ioDispatcher = StandardTestDispatcher(testScheduler)
+)
+```
 
-**Коротко:** constructor injection is the default choice because it makes required dependencies explicit and keeps classes easy to test.
+В Hilt или Dagger аннотация `@Inject constructor` сообщает фреймворку, как создать класс. Provider нужен, например, для сторонних типов, builder API или нестандартной настройки.
 
-### Scope в DI
+Android сам создаёт такие классы, как `Activity` и `Service`, поэтому для их внедрения нужна интеграция с фреймворком. Runtime-значения, например ID документа, являются данными, а не зависимостями графа. Их передают через navigation state, метод или assisted factory.
 
-Scope в DI определяет lifetime зависимости и границы переиспользования одного instance внутри object graph.
+## Ручной DI и контейнеры
 
-Без scope dependency обычно создаётся каждый раз, когда она нужна. Scoped dependency переиспользуется внутри своего компонента/lifecycle: например, application-level singleton, `ViewModel`-scoped object или `Activity`-scoped object.
+Для DI не обязательна библиотека. Простой контейнер может создавать общую инфраструктуру и предоставлять фабрики для объектов с меньшим временем жизни:
 
-Scope нужно выбирать по реальному владельцу состояния. Stateless API client или database обычно может быть application-scoped, а объект с screen-specific state лучше держать ближе к `ViewModel` или feature scope.
+```kotlin
+class AppContainer {
+    private val api = createApiService()
+    private val database = createDatabase()
 
-Неправильный scope может привести к memory leak, stale state или неожиданному shared mutable state. Например, нельзя хранить `Activity Context` в Singleton-scoped объекте.
+    val userRepository = UserRepository(
+        api = api,
+        dao = database.userDao(),
+        ioDispatcher = Dispatchers.IO
+    )
+}
+```
 
-**Коротко:** scope is about object lifetime; good DI is not "make everything singleton", but matching dependency lifetime to the owner lifecycle.
+Ручной DI прозрачен и подходит для небольших графов. По мере роста проекта увеличивается объём кода для фабрик, scope и интеграции с Android lifecycle. DI-фреймворки сокращают этот код и могут проверять граф.
 
-### Почему не стоит делать всё singleton?
+## DI и Service Locator
 
-Делать всё singleton не стоит, потому что singleton расширяет lifetime объекта до всего приложения и может случайно удерживать state, `Context`, callbacks или heavy resources дольше, чем нужно.
+При DI зависимости передаются классу и видны в его API. При Service Locator класс сам запрашивает их из реестра:
 
-Singleton удобен для stateless/shared infrastructure: Retrofit/OkHttp clients, database, `DataStore`, analytics, configuration providers. Но screen-specific state, user flow state, temporary caches и objects with lifecycle-sensitive references не должны жить application-wide без причины.
+```kotlin
+class UserRepository {
+    private val api = ServiceLocator.apiService
+}
+```
 
-Избыточные singleton-ы увеличивают связанность, усложняют тесты, создают hidden global state и могут приводить к bugs между сессиями, пользователями или features.
+Локатор скрывает зависимости, связывает бизнес-код с глобальной инфраструктурой и усложняет изолированные тесты. Реестр может быть практичным на границе legacy-кода или внутри composition root, но feature-классам обычно не следует обращаться к нему напрямую.
 
-Хороший подход - scoped dependencies по необходимости: singleton только для truly application-wide объектов, shorter scopes для lifecycle-specific logic, а transient objects оставлять unscoped.
+## Scope и время жизни объектов
 
-**Коротко:** singleton is a lifecycle decision, not a default optimization; use it only when one application-wide instance is actually correct.
+Для binding без scope обычно создаётся новый экземпляр при каждом запросе. Binding со scope переиспользует один экземпляр внутри определённого контейнера или компонента. Поэтому время жизни компонента ограничивает период, в течение которого этот экземпляр может быть общим.
+
+Scope выбирают по владельцу и требуемой идентичности объекта:
+
+| Зависимость | Типичное время жизни |
+| --- | --- |
+| База данных, настроенный HTTP-клиент | Приложение |
+| Stateful-объект, общий для одного пользовательского сценария | Flow или retained activity |
+| Объект, общий внутри графа одного `ViewModel` | `ViewModel` |
+| Stateless mapper или use case | Часто без scope |
+
+Scope оправдан, когда потребители должны разделять состояние или ресурс, для синхронизации нужен единый экземпляр либо измеренная стоимость создания действительно важна.
+
+## Почему не стоит делать всё singleton?
+
+Singleton живёт в графе приложения и предоставляет один экземпляр несвязанным потребителям. Это подходит для действительно общей инфраструктуры, но опасно для изменяемого состояния экрана, временных кэшей, callback-ов и ссылок, зависящих от lifecycle.
+
+Объект уровня приложения не должен удерживать `Activity`, `Fragment` или `View`. Если ему нужен `Context`, следует предпочесть application context. Избыточные singleton-ы также связывают тесты и сохраняют устаревшее состояние между пользователями или сценариями.
+
+Практичный вариант по умолчанию - внедрение через конструктор и объекты без scope. Scope стоит добавлять только при реальной потребности в общем экземпляре и выбирать максимально узкую подходящую область.
+
+## Связанные темы
+
+- [Dagger / Hilt](dagger-hilt.md)
+- [Koin](koin.md)
+- [Стратегия тестирования](../testing/strategy.md)
+- [Основы архитектуры](../architecture/basics.md)

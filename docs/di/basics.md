@@ -1,72 +1,98 @@
 # DI Basics
 
-Dependency Injection (DI) is an approach where a class does not create its dependencies itself, but receives them from the outside: through a constructor, factory, framework or composition root.
+Dependency Injection (DI) is a design technique in which an object receives its dependencies from the outside instead of creating or locating them itself. DI can be implemented manually or with a framework such as Hilt, Dagger or Koin.
 
-## DI Basics
+## Why use DI?
 
-### Why is DI needed?
+DI makes dependencies explicit, reduces coupling and improves testability. In Android, an object may depend on repositories, API clients, databases, `DataStore`, analytics, dispatchers or feature flags. If every class constructs the next one, creation logic spreads through the codebase and implementations become difficult to replace.
 
-DI is needed for loose coupling, testability and explicit dependency management. In Android this is especially useful because of layers, lifecycle, `ViewModel`, repositories, API clients, database, `DataStore`, analytics, dispatchers and feature flags.
+With DI, classes describe what they need while object creation moves to a **composition root** - the place where the application assembles the object graph. This can be a manual container or a DI framework.
 
-Without DI, `ViewModel` may create repository itself, repository may create a Retrofit service, and the service may create an OkHttp client. This leads to tight coupling: dependencies are hard to replace, mock in tests and control by lifecycle.
+DI does not guarantee good architecture. Too many constructor parameters may still indicate too many responsibilities, and an interface is useful only when it represents a meaningful boundary or variation.
 
-Good DI makes dependencies visible through constructors/API, allows fake implementations in tests, centralizes wiring and helps follow the Dependency Inversion Principle.
+## Constructor injection
 
-**In short:** DI is not just about avoiding `new`; it reduces coupling, improves testability and gives controlled lifecycle for dependencies.
-
-### Dependency Injection vs Service Locator
-
-Dependency Injection means a dependency is passed into an object from the outside. The class explicitly declares what it needs, usually through constructor parameters, while the composition root or DI container creates the object graph.
-
-Service Locator is a registry object from which a class requests a dependency itself, for example `ServiceLocator.getRepository()`. This is simpler for a small project, but the dependency becomes less explicit.
-
-The main difference: with DI, dependencies are visible in the class API; with Service Locator, the class secretly knows about a global registry. This complicates testing, reasoning and finding real dependencies.
-
-Service Locator is not always bad: it can be a temporary solution in legacy code or manual DI. But in large Android projects, explicit DI through constructor injection and Hilt/Dagger is usually better.
-
-**In short:** DI pushes dependencies into a class, Service Locator lets the class pull them from a registry; DI is usually more explicit and testable.
-
-### Constructor injection
-
-Constructor injection is a DI style where all required dependencies are passed through the constructor.
-
-This is the preferred default: the object cannot be created without required dependencies, dependencies are explicit, they are easy to replace in unit tests, and the class does not depend on a specific DI framework inside its logic.
-
-In Android with Hilt/Dagger, constructor injection often looks like this:
+Constructor injection is the preferred default for classes the application owns:
 
 ```kotlin
-class UserRepository @Inject constructor(
+class UserRepository(
     private val api: ApiService,
-    private val dao: UserDao
+    private val dao: UserDao,
+    private val ioDispatcher: CoroutineDispatcher
 )
 ```
 
-If the class belongs to us and can be created through the constructor, a separate `@Provides` method is usually not needed.
+Dependencies are visible, the object cannot be created in an invalid state, and tests can pass fakes directly:
 
-Constructor injection is less suitable when the object is created directly by the Android framework, needs a runtime parameter, uses a builder/factory or comes from an external SDK. In those cases use assisted injection, factory, provider method or module.
+```kotlin
+val repository = UserRepository(
+    api = FakeApiService(),
+    dao = FakeUserDao(),
+    ioDispatcher = StandardTestDispatcher(testScheduler)
+)
+```
 
-**In short:** constructor injection is the default choice because it makes required dependencies explicit and keeps classes easy to test.
+With Hilt or Dagger, `@Inject constructor` tells the framework how to create the class. A provider is needed for cases such as third-party types, builders or custom setup.
 
-### Scope in DI
+Android creates classes such as `Activity` and `Service`, so their injection entry points require framework integration. Runtime values, such as a selected document ID, are data rather than graph dependencies; pass them through navigation state, a method or an assisted factory.
 
-Scope in DI defines a dependency lifetime and the boundaries for reusing one instance inside the object graph.
+## Manual DI and containers
 
-Without a scope, a dependency is usually created each time it is needed. A scoped dependency is reused inside its component/lifecycle: for example, an application-level singleton, a `ViewModel`-scoped object or an `Activity`-scoped object.
+DI does not require a library. A simple container can create shared infrastructure and expose factories for shorter-lived objects:
 
-Choose scope based on the real owner of state. A stateless API client or database can usually be application-scoped, while an object with screen-specific state should live closer to `ViewModel` or feature scope.
+```kotlin
+class AppContainer {
+    private val api = createApiService()
+    private val database = createDatabase()
 
-An incorrect scope can lead to memory leak, stale state or unexpected shared mutable state. For example, an `Activity Context` must not be stored in a Singleton-scoped object.
+    val userRepository = UserRepository(
+        api = api,
+        dao = database.userDao(),
+        ioDispatcher = Dispatchers.IO
+    )
+}
+```
 
-**In short:** scope is about object lifetime; good DI is not "make everything singleton", but matching dependency lifetime to the owner lifecycle.
+Manual DI is transparent and suits small graphs. As the graph grows, factories, scopes and Android lifecycle integration create more wiring; frameworks reduce that boilerplate and can validate the graph.
 
-### Why not make everything singleton?
+## DI vs Service Locator
 
-Making everything singleton is a bad default because singleton extends an object's lifetime to the whole application and can accidentally retain state, `Context`, callbacks or heavy resources longer than needed.
+With DI, dependencies are supplied to a class and appear in its API. With Service Locator, the class requests them from a registry:
 
-Singleton is convenient for stateless/shared infrastructure: Retrofit/OkHttp clients, database, `DataStore`, analytics, configuration providers. But screen-specific state, user flow state, temporary caches and objects with lifecycle-sensitive references should not live application-wide without a reason.
+```kotlin
+class UserRepository {
+    private val api = ServiceLocator.apiService
+}
+```
 
-Excessive singletons increase coupling, complicate tests, create hidden global state and can cause bugs across sessions, users or features.
+The locator hides dependencies, couples business code to global infrastructure and makes isolated tests harder. A registry can be pragmatic at a legacy boundary or inside a composition root, but feature classes should generally not call it directly.
 
-A good approach is scoped dependencies as needed: singleton only for truly application-wide objects, shorter scopes for lifecycle-specific logic, and transient objects left unscoped.
+## Scopes and object lifetime
 
-**In short:** singleton is a lifecycle decision, not a default optimization; use it only when one application-wide instance is actually correct.
+An unscoped binding usually creates a new instance for each request. A scoped binding reuses one instance within a particular container or component. The component's lifetime therefore limits how long that instance can be shared.
+
+Choose a scope according to ownership and required identity:
+
+| Dependency | Typical lifetime |
+| --- | --- |
+| Database, configured HTTP client | Application |
+| Stateful object shared across one user flow | Flow or retained activity |
+| Object shared inside one `ViewModel` graph | `ViewModel` |
+| Stateless mapper or use case | Often unscoped |
+
+Scope an object when consumers must share state or a resource, synchronization requires one instance, or measured creation cost matters.
+
+## Why not make everything a singleton?
+
+A singleton lives for the application graph and shares one instance across unrelated consumers. This is appropriate for truly application-wide infrastructure, but it is risky for mutable screen state, temporary caches, callbacks and lifecycle-sensitive references.
+
+An application-scoped object must not retain an `Activity`, `Fragment` or `View`. If it needs a `Context`, prefer the application context. Excessive singletons can also couple tests and preserve stale state between users or flows.
+
+The practical default is constructor injection plus unscoped objects. Add the narrowest scope that matches a real sharing requirement.
+
+## Related topics
+
+- [Dagger / Hilt](dagger-hilt.md)
+- [Koin](koin.md)
+- [Testing Strategy](../testing/strategy.md)
+- [Architecture Basics](../architecture/basics.md)
