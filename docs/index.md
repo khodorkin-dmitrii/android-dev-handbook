@@ -40,7 +40,7 @@ _Last updated: {{LAST_UPDATED}}_
 |---|---:|---:|
 | Domains | 14 | 14 |
 | Pages | 94 | 94 |
-| Sections | 344 | 344 |
-| Topics | 327 | 327 |
-| Words | 67766 | 61726 |
+| Sections | 346 | 346 |
+| Topics | 328 | 328 |
+| Words | 67710 | 61704 |
 <!-- END GENERATED HANDBOOK STATS -->

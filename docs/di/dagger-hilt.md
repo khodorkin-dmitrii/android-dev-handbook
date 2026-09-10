@@ -1,107 +1,156 @@
 # Dagger / Hilt
 
-Hilt is an Android-focused DI layer on top of Dagger. It reduces boilerplate, defines a standard component hierarchy and connects the DI graph to the Android lifecycle.
+Hilt is an Android-focused dependency injection layer built on top of Dagger. It keeps Dagger's generated code and compile-time graph validation, while providing a standard component hierarchy tied to Android lifecycles.
 
 ## Hilt and Dagger
 
 ### What is Hilt?
 
-Hilt is a DI framework for Android built on top of Dagger. It simplifies dependency injection integration in an Android app and provides ready-made entry points, components and scopes for the Android lifecycle.
+Hilt standardizes how a Dagger graph is connected to an Android app:
 
-Hilt is usually connected through `@HiltAndroidApp` on `Application`, `@AndroidEntryPoint` on `Activity` / `Fragment` / `Service` / `Receiver`, `@HiltViewModel` for `ViewModel` and constructor injection with `@Inject`.
+- `@HiltAndroidApp` creates the application-level container.
+- `@AndroidEntryPoint` enables injection into framework-created Android classes such as activities, fragments, services and receivers.
+- `@HiltViewModel` integrates a `ViewModel` with `ViewModelProvider`.
+- `@Inject` marks injectable constructors or fields.
 
-The main benefit of Hilt is less manual Dagger boilerplate: for most standard cases, there is no need to manually define `AppComponent`, subcomponents, component factories and Android-specific wiring.
-
-But Hilt does not remove the need to understand Dagger: object graph, bindings, modules, scopes, qualifiers and compile-time errors still matter.
-
-**In short:** Hilt is the recommended Android DI layer on top of Dagger; it reduces Android boilerplate while keeping Dagger's compile-time graph validation.
+For common Android applications, this removes the need to define an application component, Android subcomponents and their factories manually. It does not remove the underlying Dagger concepts: bindings, modules, qualifiers, scopes and dependency graph errors still matter.
 
 ### Hilt vs Dagger
 
-Dagger is a general-purpose compile-time DI framework. It generates code for the dependency graph and validates bindings at compile time.
+Dagger is a general-purpose compile-time DI framework. It generates the code that creates objects and validates that every requested dependency has exactly one valid binding and that the graph has no dependency cycles.
 
-Hilt is an opinionated Android integration on top of Dagger. It provides a standard component hierarchy, connects it to the Android lifecycle and gives convenient annotations for Android entry points.
-
-With pure Dagger, a team has more flexibility: components, scopes, factories and multi-module setup can be fully controlled. The cost is more boilerplate and more complex setup.
-
-Hilt is usually better for modern Android apps that need standard Application/Activity/Fragment/ViewModel scopes and less manual wiring. Pure Dagger can be useful in legacy code, non-Android modules or complex custom graph architecture.
-
-**In short:** Dagger is the underlying DI engine, Hilt is the Android-focused layer that standardizes components and removes much of the setup boilerplate.
+Hilt is an opinionated Android integration built on Dagger. It supplies predefined components and connects them to Android lifecycle owners. Hilt is usually the practical default for a modern Android application. Pure Dagger remains useful in legacy graphs, non-Android code or architectures that require custom component ownership beyond Hilt's hierarchy.
 
 ## Bindings
 
 ### `@Inject`
 
-`@Inject` is used in two main places: on a constructor so Dagger/Hilt can create the object, and on fields/methods to inject into an object that is not created by the DI container.
-
-Constructor injection is the preferred option for classes we own: repositories, use cases, mappers, managers, validators.
+Constructor injection is preferred for classes we own because dependencies are explicit and the object is easy to instantiate in tests:
 
 ```kotlin
 class UserRepository @Inject constructor(
     private val api: ApiService,
-    private val dao: UserDao
+    private val dao: UserDao,
 )
 ```
 
-If a class has an `@Inject constructor` and all its dependencies are known to the graph, a separate `@Provides` method is usually not needed.
+If every constructor parameter has a binding, no separate provider is required. Keep creation dependencies in the constructor and pass changing operation data to methods instead of putting every runtime value into the DI graph.
 
-Field injection in Android is mostly needed for framework-created classes such as `Activity`, `Fragment`, `Service` or `BroadcastReceiver` after `@AndroidEntryPoint`. For regular classes, constructor injection is better because dependencies are visible and the object is easier to test.
-
-**In short:** use `@Inject constructor` for classes you own; field injection is mostly for Android classes created by the framework.
+Field injection is mainly for objects created by the Android framework. An injected field cannot be `private`, and it is unavailable before Hilt performs injection in the corresponding lifecycle callback. Regular application classes should normally use constructor injection.
 
 ### `@Provides` vs `@Binds`
 
-`@Provides` is a method in `@Module` that manually creates a dependency. It is needed when an object cannot be created through an `@Inject constructor`: external SDK, Retrofit, OkHttp, Room database, `DataStore`, builder/factory API, runtime configuration.
+Use `@Binds` to map an injectable implementation to an abstraction:
 
-`@Binds` is an abstract method in `@Module` that tells the graph: when an interface/base type is requested, use this implementation. It fits cases where the implementation is already created through an `@Inject constructor`.
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+    @Binds
+    abstract fun bindUserRepository(
+        implementation: DefaultUserRepository,
+    ): UserRepository
+}
+```
 
-`@Binds` is usually preferable for interface -> implementation bindings: less code, less manual object creation, and it is clearer that this is just an alias binding.
+Use `@Provides` when construction requires code or the class cannot have an `@Inject` constructor, for example Retrofit, OkHttp, Room, DataStore or an external SDK:
 
-`@Provides` can contain creation logic, but business logic should not be hidden there. A module should handle wiring, not application rules.
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+    @Provides
+    @Singleton
+    fun provideApi(client: OkHttpClient): ApiService =
+        Retrofit.Builder()
+            .baseUrl("https://example.com/")
+            .client(client)
+            .build()
+            .create(ApiService::class.java)
+}
+```
 
-**In short:** `@Provides` creates an object manually, `@Binds` maps an abstraction to an existing injectable implementation.
+Provider methods should contain object construction and wiring, not business rules. `@Binds` does not automatically make an instance singleton, and `@Provides` does not either: lifetime is controlled separately by a scope annotation.
+
+### Qualifiers
+
+When the graph contains several bindings of the same type, distinguish them with a qualifier. Prefer a domain-specific custom qualifier over relying on `@Named` strings, which are easier to mistype.
+
+```kotlin
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class AuthenticatedClient
+
+@Provides
+@AuthenticatedClient
+fun provideAuthenticatedClient(
+    authInterceptor: AuthInterceptor,
+): OkHttpClient = OkHttpClient.Builder()
+    .addInterceptor(authInterceptor)
+    .build()
+```
+
+The same qualifier must be present at both the binding and injection site. Qualify all bindings of that type consistently to make selection explicit.
 
 ### `@Module` / `@InstallIn`
 
-`@Module` groups binding methods that explain to Dagger/Hilt how to provide dependencies when constructor injection is not enough.
+`@Module` groups bindings that cannot be expressed with constructor injection. `@InstallIn` selects the generated Hilt component that owns the bindings and determines where they are visible.
 
-In Hilt, `@InstallIn` specifies which Hilt component the module is installed into: for example `SingletonComponent`, `ActivityRetainedComponent`, `ViewModelComponent` or `ActivityComponent`. This determines where the binding is available and which scope can be used.
+A binding installed in a parent component is available to its child components, but a child binding is not visible to its parent or siblings. Install a binding in the lowest component that covers all consumers. This avoids exposing a screen-specific dependency application-wide and prevents invalid dependencies such as an activity context inside a singleton object.
 
-If a binding is needed by the whole app, the module is often installed into `SingletonComponent`. If a dependency is needed only by `ViewModel`, consider `ViewModelComponent` to avoid extending lifetime unnecessarily.
-
-Common pitfalls: installing a module too high in the graph and accidentally making a screen-specific dependency application-wide; trying to inject `Activity Context` into a Singleton-scoped object.
-
-**In short:** `@Module` defines bindings, `@InstallIn` chooses the Hilt component where those bindings live.
+For types that Hilt already knows, use its predefined bindings and qualifiers, such as `@ApplicationContext` and `@ActivityContext`, instead of creating duplicate context providers.
 
 ## Components and ViewModel
 
 ### Hilt components and scopes
 
-Hilt components are generated Dagger components tied to the Android lifecycle. Main levels: `SingletonComponent` for application, `ActivityRetainedComponent` for state between configuration changes, `ViewModelComponent` for `ViewModel`, `ActivityComponent`, `FragmentComponent`, `ViewComponent` and `ServiceComponent`.
+The most common component and scope pairs are:
 
-Scope limits an instance lifetime inside the corresponding component. For example, `@Singleton` lives in `SingletonComponent`, `@ActivityRetainedScoped` lives while the retained activity graph lives, `@ViewModelScoped` lives while a specific `ViewModel` lives, and `@ActivityScoped` lives while the `Activity` instance lives.
+| Component | Typical lifetime | Matching scope |
+|---|---|---|
+| `SingletonComponent` | Application process graph | `@Singleton` |
+| `ActivityRetainedComponent` | Logical activity across configuration changes | `@ActivityRetainedScoped` |
+| `ViewModelComponent` | One `ViewModel` | `@ViewModelScoped` |
+| `ActivityComponent` | One activity instance | `@ActivityScoped` |
+| `FragmentComponent` | One fragment instance | `@FragmentScoped` |
+| `ServiceComponent` | One service instance | `@ServiceScoped` |
 
-It is important to distinguish `ActivityRetainedComponent` and `ActivityComponent`: retained survives configuration change, while `ActivityComponent` belongs to a specific `Activity` instance after recreation.
+A scope means one instance per component instance, not one instance globally. Unscoped bindings may create a new object for each injection request. Scope only objects that require shared identity, own resources or are expensive to create. Stateless use cases and mappers often do not need a scope.
 
-Choose scope by owner lifecycle. An API client or database is usually application-wide, a stateless use case can be unscoped, and screen-specific state is better kept in ViewModel scope or directly in `ViewModel` state.
-
-**In short:** Hilt scopes should match the Android lifecycle owner; scope is about correctness of lifetime, not just caching instances.
+`ActivityRetainedComponent` survives configuration changes; `ActivityComponent` does not. Neither should be used to store UI state that belongs in a `ViewModel` or saved state.
 
 ### ViewModel injection
 
-In Hilt, `ViewModel` is usually annotated with `@HiltViewModel`, and dependencies are passed through an `@Inject constructor`. `Activity` or `Fragment` must be `@AndroidEntryPoint` to obtain the `ViewModel` through standard APIs.
+Annotate a ViewModel with `@HiltViewModel` and inject dependencies through its constructor:
 
 ```kotlin
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val repository: UserRepository
+    private val repository: UserRepository,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel()
 ```
 
-Hilt creates `ViewModel` through integration with `ViewModelProvider` and can provide dependencies from suitable components. For dependencies that should live as long as `ViewModel`, use `ViewModelComponent` and `@ViewModelScoped`.
+The hosting activity or fragment must be an `@AndroidEntryPoint`. In Compose, the composable itself is not annotated; obtain the ViewModel through the Hilt-aware ViewModel API under an appropriate navigation or activity owner.
 
-If `ViewModel` needs a runtime argument, `SavedStateHandle` is usually used for navigation args/state, or assisted injection/factory if the parameter is not part of the standard saved state approach.
+Use `SavedStateHandle` for navigation arguments and restorable screen state. Use Hilt-assisted injection when a required runtime argument does not belong in saved state. Do not inject or store an `Activity`, `Fragment`, `View` or UI context in a ViewModel. If application-level access is unavoidable, use an abstraction or `@ApplicationContext` and keep UI work outside the ViewModel.
 
-**Important:** `ViewModel` must not store `Activity`, `Fragment`, `View` or a regular UI `Context`. If `Context` is needed for resources/application-level API, inject `@ApplicationContext`, though often it is better to move this into a mapper/provider.
+## Diagnosing graph errors
 
-**In short:** Hilt injects `ViewModel` dependencies through `@HiltViewModel` and constructor injection; runtime screen arguments usually come from `SavedStateHandle`.
+Hilt failures are usually compile-time graph errors. Read from the first missing or duplicate binding, then trace the dependency path shown by Dagger.
+
+Common causes include:
+
+- a constructor or module binding is missing;
+- two bindings have the same type and no qualifier;
+- the qualifier differs between provider and consumer;
+- a binding is installed in a component that is not an ancestor of the consumer;
+- a scoped binding depends on an object from a shorter-lived component;
+- a Gradle module containing bindings is not in the application's transitive dependency graph.
+
+## Related topics
+
+- [DI Basics](basics.md)
+- [Koin](koin.md)
+- [Multi-module Architecture](../architecture/multi-module.md)
+- [ViewModel Testing](../testing/viewmodel-testing.md)
