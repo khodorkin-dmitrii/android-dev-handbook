@@ -38,6 +38,8 @@ Filament uses a graphics backend under the hood. Depending on platform and setti
 
 For Android, this means Filament can use the GPU through a backend, but the app does not have to write OpenGL ES or Vulkan code directly.
 
+For a UI-local programmable fragment effect without a 3D scene, [AGSL and `RuntimeShader`](agsl-runtime-shader.md) are a smaller and more direct option.
+
 This abstraction layer is useful: the rendering engine handles shader generation, material model, lighting, resource management and some platform-specific details.
 
 But abstraction does not remove basic graphics constraints: GPU memory, texture size, frame budget, lighting cost, overdraw, asset complexity and lifecycle still matter.

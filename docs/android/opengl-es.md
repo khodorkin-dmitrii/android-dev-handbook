@@ -133,3 +133,5 @@ Simplified OpenGL ES pipeline:
 Performance depends on draw call count, vertices, fragment cost, overdraw, texture bandwidth, state changes and CPU/GPU synchronization.
 
 **In short:** OpenGL ES pipeline turns vertex data and shader programs into pixels on the screen through a sequence of GPU stages.
+
+For UI-local shader effects that do not require geometry or a complete graphics pipeline, see [AGSL and `RuntimeShader`](agsl-runtime-shader.md).

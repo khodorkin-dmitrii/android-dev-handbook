@@ -106,6 +106,6 @@ Main Canvas performance rules:
 - minimize overdraw and complex clipping/shadow operations;
 - prepare heavy data outside the main thread and draw an already prepared result.
 
-If custom drawing becomes too complex and the screen needs many objects, animations or 3D, consider OpenGL ES, Filament or Compose Canvas/graphics APIs depending on the task.
+If custom drawing needs programmable per-fragment control while remaining inside Android UI, consider [AGSL and `RuntimeShader`](agsl-runtime-shader.md). For many objects, a custom rendering pipeline or 3D, consider OpenGL ES or Filament depending on the task.
 
 **In short:** Canvas is fast for moderate 2D drawing, but it is easy to slow it down with allocations, heavy calculations and large bitmaps on the main thread.

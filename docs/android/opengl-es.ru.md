@@ -133,3 +133,5 @@ model coordinates -> world -> view -> clip -> screen
 Performance зависит от количества draw calls, vertices, fragment cost, overdraw, texture bandwidth, state changes и синхронизации CPU/GPU.
 
 **Коротко:** OpenGL ES pipeline превращает vertex data и shader programs в pixels на экране через последовательность GPU stages.
+
+Для локальных shader effects внутри UI, которым не нужны geometry и полноценный graphics pipeline, смотри [AGSL и `RuntimeShader`](agsl-runtime-shader.md).

@@ -1,6 +1,6 @@
 # 2D and 3D Rendering
 
-Rendering in Android can be done at different levels: regular UI through View/Compose, custom 2D through Canvas, low-level GPU through OpenGL ES/Vulkan or high-level 3D through Filament.
+Rendering in Android can be done at different levels: regular UI through View/Compose, custom 2D through Canvas, programmable per-fragment UI effects through AGSL, low-level GPU work through OpenGL ES/Vulkan or high-level 3D through Filament.
 
 ## Rendering choices
 
@@ -33,6 +33,12 @@ Canvas integrates well with View System and is simpler than OpenGL ES. It fits w
 If drawing happens often, watch `onDraw()` performance: do not allocate, do not decode bitmap, do not run heavy calculations and do not call unnecessary `requestLayout()`.
 
 **In short:** Canvas is a good choice for custom 2D drawing when integration with regular Android UI is needed and a full 3D engine is not.
+
+### When to use AGSL
+
+[AGSL and `RuntimeShader`](agsl-runtime-shader.md) fit between Canvas and a full graphics API when Android UI needs programmable per-fragment effects such as custom gradients, distortion, transitions or local post-processing. AGSL integrates with Canvas, Compose and `RenderEffect`, but does not provide geometry, a vertex pipeline or a 3D scene.
+
+**In short:** choose AGSL for shader effects integrated into Android UI when Canvas alone is not flexible enough and a complete OpenGL ES pipeline would be excessive.
 
 ### When to use OpenGL
 

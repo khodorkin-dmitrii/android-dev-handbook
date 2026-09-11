@@ -8,16 +8,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-10
-1. Total articles tracked: 72
-1. Updated: 25
+1. Last tracker update: 2026-09-11
+1. Total articles tracked: 73
+1. Updated: 26
 1. TODO: 47
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 22      | 5    |
 | P1 | 27 | 2       | 25   |
-| P2 | 18 | 1       | 17   |
+| P2 | 19 | 2       | 17   |
 
 ## Tracker
 
@@ -89,6 +89,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **TODO**, , `legacy/index.md`, Legacy Overview
 1. P2, **TODO**, , `compose/testing.md`, Compose Testing
 1. P2, **TODO**, , `android/canvas.md`, Android Canvas
+1. P2, **UPDATED**, 2026-09-11, `android/agsl-runtime-shader.md`, AGSL and RuntimeShader, Added AGSL fundamentals, RuntimeShader uniforms, Compose ShaderBrush and RenderEffect integration, API 33 fallback, color and coordinate handling, performance guidance, and comparison with OpenGL ES and Filament.
 1. P2, **TODO**, , `android/opengl-es.md`, OpenGL ES
 1. P2, **TODO**, , `android/vulkan.md`, Vulkan
 1. P2, **TODO**, , `android/google-filament.md`, Google Filament

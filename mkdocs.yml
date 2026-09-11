@@ -60,6 +60,7 @@ plugins:
             Storage: Storage
             Performance & Memory: Performance & Memory
             Android Canvas: Android Canvas
+            AGSL and RuntimeShader: AGSL и RuntimeShader
             OpenGL ES: OpenGL ES
             Vulkan: Vulkan
             Google Filament: Google Filament
@@ -169,6 +170,7 @@ nav:
       - Storage: android/storage.md
       - Performance & Memory: android/performance-memory.md
       - Android Canvas: android/canvas.md
+      - AGSL and RuntimeShader: android/agsl-runtime-shader.md
       - OpenGL ES: android/opengl-es.md
       - Vulkan: android/vulkan.md
       - Google Filament: android/google-filament.md

@@ -106,6 +106,6 @@ canvas.drawCircle(100f, 100f, 80f, paint)
 - минимизировать overdraw и сложные clipping/shadow operations;
 - подготавливать heavy data вне main thread, а рисовать уже готовый результат.
 
-Если custom drawing становится слишком сложным, а экран требует много объектов, анимаций или 3D, стоит рассмотреть OpenGL ES, Filament или Compose Canvas/graphics APIs в зависимости от задачи.
+Если custom drawing требует программируемого per-fragment контроля внутри Android UI, стоит рассмотреть [AGSL и `RuntimeShader`](agsl-runtime-shader.md). Для большого числа объектов, собственного rendering pipeline или 3D лучше выбрать OpenGL ES или Filament в зависимости от задачи.
 
 **Коротко:** Canvas быстрый для умеренного 2D drawing, но его легко замедлить allocations, heavy calculations и большими bitmap на main thread.
