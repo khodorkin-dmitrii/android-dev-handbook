@@ -39,8 +39,8 @@ _Последнее обновление: {{LAST_UPDATED}}_
 | Metric | English | Russian |
 |---|---:|---:|
 | Domains | 14 | 14 |
-| Pages | 94 | 94 |
-| Sections | 346 | 346 |
-| Topics | 328 | 328 |
-| Words | 67710 | 61704 |
+| Pages | 95 | 95 |
+| Sections | 360 | 360 |
+| Topics | 325 | 325 |
+| Words | 69438 | 63357 |
 <!-- END GENERATED HANDBOOK STATS -->

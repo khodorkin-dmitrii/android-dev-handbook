@@ -1,56 +1,87 @@
 # Koin
 
-Koin is a Kotlin-first dependency injection framework commonly used in Android projects. It describes modules and dependencies with a Kotlin DSL instead of the same annotation-heavy setup used by Dagger/Hilt.
+Koin is a dependency injection framework designed for Kotlin. Its classic API describes modules and object creation with a Kotlin DSL, without requiring annotations or generated components. Koin supports Android, Kotlin Multiplatform and other Kotlin targets.
 
-Koin is a good fit for smaller and medium Android apps, prototypes, pet projects and teams that prefer simple configuration. It is also relevant for Kotlin Multiplatform-oriented architecture, although Android remains the main focus here.
+Koin is easy to introduce, but it is still a container whose ownership, lifetimes and startup configuration must be designed deliberately.
 
 ## Koin basics
 
+A module groups definitions. Prefer constructor references when they keep the graph readable:
+
 ```kotlin
 val appModule = module {
-    single { ApiService(get()) }
-    single { UserRepository(get()) }
-    viewModel { UserViewModel(get()) }
+    singleOf(::DefaultUserRepository) bind UserRepository::class
+    factoryOf(::LoadUserUseCase)
+    viewModelOf(::UserViewModel)
 }
 ```
 
-`module {}` groups dependency definitions. `single {}` creates an application-level singleton. `factory {}` creates a new instance each time. `viewModel {}` integrates with Android `ViewModel` creation. `get()` resolves another dependency from the Koin container.
+The main definition types are:
 
-Koin is usually started from the `Application` class:
+| Definition | Behavior | Typical use |
+|---|---|---|
+| `single` | One instance per Koin container | Database, API client, repository |
+| `factory` | New instance for every resolution | Lightweight, independent objects |
+| `scoped` | One instance inside an explicit scope | Session- or screen-owned objects |
+| `viewModel` | Created through Android `ViewModelProvider` | Android ViewModels |
+
+`single` does not mean a JVM-global singleton. Its instance belongs to the Koin application that contains the definition and is created lazily by default.
+
+Start Koin once, normally from `Application`:
 
 ```kotlin
-startKoin {
-    modules(appModule)
+class App : Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        startKoin {
+            androidContext(this@App)
+            modules(appModule)
+        }
+    }
 }
 ```
+
+Keep ordinary classes independent of Koin and use constructor injection. Resolve dependencies at composition roots such as Android entry points, rather than calling `get()` throughout business code. This keeps dependencies visible and makes unit tests simple.
+
+## Qualifiers
+
+Use a qualifier when several definitions have the same type:
+
+```kotlin
+val networkModule = module {
+    single(named("authenticated")) { authenticatedClient(get()) }
+    single(named("public")) { publicClient() }
+}
+```
+
+String qualifiers are concise but can be mistyped, so centralize them or prefer typed qualifiers in larger graphs. Values known only at the call site can be supplied with `parametersOf(...)`; reserve this mechanism for real runtime input rather than hiding long-lived configuration.
+
+## Validation and testing
+
+With the classic DSL, missing definitions, wrong qualifiers and some cycles may appear only when the affected dependency is resolved. Validate modules in tests and exercise important entry points, not just application startup.
+
+Modern Koin also offers annotations and compiler-plugin-based DSL options that can generate wiring and catch more errors during the build. These improve safety, but they are separate from the behavior of the classic runtime DSL and should not be assumed unless the project enables them.
+
+Tests can use test modules, but direct constructor injection is often simpler for unit tests. Isolate the Koin application between tests to avoid shared state and order-dependent failures.
 
 ## Koin vs Hilt
 
-| Topic | Hilt | Koin |
-| --- | --- | --- |
-| Configuration style | Annotations and generated Dagger code | Kotlin DSL modules |
-| Compile-time vs runtime behavior | Compile-time graph generation and validation | Runtime dependency resolution |
-| Boilerplate | More setup concepts, less manual Dagger wiring | Usually less setup and very readable modules |
-| Android integration | Strong standard integration with Android lifecycle components | Android integrations for `ViewModel`, scopes and common app setup |
-| Error detection | Many graph problems fail during build | Misconfigured modules are more likely to fail at runtime |
-| Refactoring safety | Stronger because generated code and compile-time checks catch many mistakes | Good readability, but more discipline and tests are needed |
-| Learning curve | More concepts: components, scopes, modules, qualifiers | Easier to start if the team knows Kotlin |
-| Best fit | Large, complex, long-lived production Android apps | Small and medium apps, prototypes and KMP-friendly codebases |
+| Topic | Hilt | Koin classic DSL |
+|---|---|---|
+| Graph construction | Generated Dagger components | Runtime container |
+| Error detection | Strong compile-time validation | Primarily resolution-time; module checks help |
+| Configuration | Annotations, modules and predefined components | Kotlin DSL definitions |
+| Android lifetimes | Standard generated component hierarchy | ViewModel integration and explicit scopes |
+| Multiplatform | Dagger/Hilt graph is Android/JVM-oriented | Koin Core supports Kotlin Multiplatform |
 
-Hilt is built on top of Dagger and is usually the default recommendation for large production Android apps because it provides stronger compile-time guarantees. Koin is a valid modern alternative when simplicity, fast setup, Kotlin DSL or Kotlin Multiplatform-friendly architecture matters.
+Hilt is a strong default when a large Android graph benefits from strict compile-time validation and standardized lifecycle components. Koin is attractive when a team values concise Kotlin configuration, fast adoption or shared Kotlin Multiplatform infrastructure.
 
-Modern Koin has tools and features that improve module validation, but the core trade-off remains: Koin is simpler and more dynamic, while Hilt is stricter and safer for large dependency graphs.
+Do not choose only by project size. Consider team experience, build tooling, failure detection, lifecycle ownership, test strategy and whether the dependency graph crosses platform boundaries.
 
-## Practical recommendation
+## Related topics
 
-### When to use Koin
-
-Use Koin when the project is small or medium-sized, the team wants DI without heavy annotation processing or code generation setup, or the codebase is oriented toward Kotlin Multiplatform.
-
-Koin also works well for pet projects, prototypes and apps where runtime DI trade-offs are acceptable and readable Kotlin configuration is more valuable than strict compile-time graph validation.
-
-### When Hilt is usually better
-
-Hilt is usually better for large production Android apps with complex dependency graphs, many modules and many developers.
-
-Choose Hilt when strong compile-time validation is important or the team already follows the Google-recommended Android architecture stack.
+- [DI Basics](basics.md)
+- [Dagger / Hilt](dagger-hilt.md)
+- [Multi-module Architecture](../architecture/multi-module.md)
+- [ViewModel Testing](../testing/viewmodel-testing.md)

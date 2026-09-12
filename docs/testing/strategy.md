@@ -1,47 +1,60 @@
 # Testing Strategy
 
-Testing strategy helps choose what to test first, which test levels to use and how to keep the test suite fast and stable.
+A testing strategy decides what to test, at which level, and how to keep feedback fast and reliable. The goal is confidence in important behavior, not a particular coverage percentage or the largest possible test suite.
 
-## Testing Priorities
+## Testing priorities
 
 ### What should be tested first?
 
-Test high-business-value and high-risk code first: business logic, use cases, mappers, validators, reducers, error mapping and `ViewModel` state transitions.
+Prioritize by impact and probability of failure. Start with behavior that is expensive to break or difficult to verify manually:
 
-Not everything needs the same level of coverage. A good strategy starts with questions: what breaks often, what is expensive to break in production, where there are complex conditions, edge cases, money, authorization, offline/cache or critical user flow.
+- business rules, calculations and state transitions;
+- error handling, retries and boundary conditions;
+- mapping between network, database, domain and UI models;
+- persistence, migrations, caching and offline behavior;
+- authentication, payments and other critical user flows;
+- regressions for bugs that have already reached users.
 
-UI and framework glue are usually tested selectively instead of trying to cover every `Activity` or composable with unit tests. Observable behavior matters more than private implementation details.
+Test observable behavior through public APIs. Tests coupled to private methods or an exact internal call sequence often fail during harmless refactoring without finding a real regression.
 
-**In short:** prioritize tests by risk and value: business logic, mapping, state transitions and critical flows first, then UI/integration tests for important user scenarios.
+Coverage is a diagnostic signal, not the target. A highly covered low-risk mapper may matter less than one missing test for a destructive migration or payment state transition.
 
-### Unit tests vs UI tests
+### Test size and execution environment
 
-Unit tests check small pieces of logic quickly and in isolation: use cases, mappers, validators, reducers, `ViewModel` logic, error handling. They are cheap, fast and well suited for most business logic.
+Test size and where a test runs are separate decisions:
 
-UI tests check app behavior closer to the user: screen rendering, clicks, navigation, forms, happy path and critical regression scenarios. But they are slower, more expensive to maintain and more often flaky.
+| Scope | Purpose | Typical Android examples |
+|---|---|---|
+| Small / unit | One unit in isolation | Mapper, validator, reducer, use case, ViewModel |
+| Medium / integration | Several real collaborators | Repository with a database, serialization, navigation contract |
+| Large / end-to-end | User-visible flow across layers | Sign-in, checkout, offline recovery |
 
-A practical approach: cover most logic with unit tests, and keep UI tests for key user scenarios where UI + state + navigation integration matters.
+Local tests run on the host JVM and are usually fast. Instrumented tests run on a device or emulator and can use the real Android framework. A local test can still cover several units with Robolectric, while an instrumented test can narrowly verify one framework integration such as Room migration behavior.
 
-**In short:** unit tests are fast and good for logic, UI tests are slower but useful for critical user flows and integration behavior.
+Use the cheapest environment that faithfully exercises the behavior. Keep pure Kotlin logic in local tests; use Robolectric when host-side Android behavior is sufficient; use instrumented tests when correctness depends on the actual framework, device, database implementation or rendering.
 
-### Mocks vs fakes
+The test pyramid is a cost model, not a quota: use many fast tests for deterministic logic, fewer integration tests for boundaries such as Room, serialization and repository cache policy, and a small number of UI/end-to-end tests for critical flows. Do not repeat every business-rule combination through the UI when lower-level tests provide the same confidence.
 
-Mock is a test object that usually verifies interactions: whether a method was called, with which parameters and how many times.
+## Test doubles
 
-Fake is a simplified working implementation of a dependency, for example an in-memory repository or test data source.
+A test double replaces a dependency:
 
-In Android, fakes are usually preferable when they are simple: the test becomes closer to real behavior and depends less on internal calls. Mocks are useful in focused cases where a specific interaction matters, for example analytics event, navigation callback or retry call.
+- a **fake** is a lightweight working implementation, such as an in-memory repository;
+- a **stub** returns predefined answers;
+- a **mock** records interactions and verifies calls.
 
-**Important:** if everything is mocked, the test becomes fragile and starts checking implementation details instead of behavior. A good test usually provides input/action and checks observable output/state.
+Prefer fakes or stubs when result or state matters. Use mocks when the interaction itself is the requirement, for example sending one analytics event. Mocking every collaborator makes tests mirror implementation details and may hide integration problems.
 
-**In short:** prefer fakes for readable behavior-based tests and use mocks only when interaction verification is actually important.
+## Keeping the suite reliable
 
-### Test pyramid / testing priorities
+A useful test is deterministic, isolated, readable and fast enough for its feedback loop. Control time, dispatchers, randomness and external I/O. Do not use arbitrary delays; wait for observable conditions or use virtual time where possible. Reset databases, dependency containers and global state between tests.
 
-Test pyramid is the idea that most tests should be fast unit tests, fewer should be integration tests, and even fewer should be expensive end-to-end/UI tests.
+Run fast tests on every change and broader suites in CI. Treat flaky tests as defects: fix or quarantine them with an owner and deadline instead of normalizing retries.
 
-For Android this usually means many unit tests for domain/data/`ViewModel` logic, a moderate number of integration tests for repository/database/network boundaries, and a small number of UI tests for critical flows.
+## Related topics
 
-Priorities: business-critical logic, state transitions, error cases, edge cases, mapping between layers, persistence/migrations, authentication/payment-like flows and bugs that have already broken before.
-
-**In short:** test pyramid keeps the suite fast and stable: many unit tests, fewer integration tests, and a small number of UI/E2E tests for critical paths.
+- [ViewModel Testing](viewmodel-testing.md)
+- [Coroutines & Flow Testing](coroutines-flow-testing.md)
+- [Android UI Testing](android-ui-testing.md)
+- [Compose Testing](../compose/testing.md)
+- [Architecture Basics](../architecture/basics.md)

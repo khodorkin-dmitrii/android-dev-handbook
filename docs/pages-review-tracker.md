@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-11
+1. Last tracker update: 2026-09-12
 1. Total articles tracked: 73
-1. Updated: 26
-1. TODO: 47
+1. Updated: 28
+1. TODO: 45
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
-| P0 | 27 | 22      | 5    |
+| P0 | 27 | 24      | 3    |
 | P1 | 27 | 2       | 25   |
 | P2 | 19 | 2       | 17   |
 
@@ -43,8 +43,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-09-08, `android/performance-memory.md`, Performance & Memory, Clarified ANR conditions, frame deadlines and jank diagnosis, distinguished leaks from allocation pressure, improved profiling guidance, and updated LeakCanary, DEX, multidex, and R8 recommendations.
 1. P0, **UPDATED**, 2026-09-09, `di/basics.md`, DI Basics, Distinguished DI from frameworks, introduced composition roots and manual DI, clarified constructor injection, runtime values, Service Locator trade-offs, scopes, and singleton lifetime risks.
 1. P0, **UPDATED**, 2026-09-10, `di/dagger-hilt.md`, Dagger / Hilt, Clarified Hilt and Dagger responsibilities, constructor and module bindings, qualifiers, component visibility and scopes, ViewModel runtime arguments, and compile-time graph diagnostics.
-1. P0, **TODO**, , `di/koin.md`, Koin
-1. P0, **TODO**, , `testing/strategy.md`, Testing Strategy
+1. P0, **UPDATED**, 2026-09-12, `di/koin.md`, Koin, Clarified definition lifetimes, constructor DSL, qualifiers and runtime parameters, module validation, compiler-plugin safety, test isolation, and practical criteria for choosing Koin or Hilt.
+1. P0, **UPDATED**, 2026-09-12, `testing/strategy.md`, Testing Strategy, Clarified risk-based priorities, separated test scope from execution environment, refined the test-pyramid model and test doubles, and added deterministic, isolated, and flaky-test guidance.
 1. P0, **TODO**, , `testing/viewmodel-testing.md`, ViewModel Testing
 1. P0, **TODO**, , `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing
 1. P0, **TODO**, , `kotlin/lateinit-lazy.md`, lateinit vs lazy
