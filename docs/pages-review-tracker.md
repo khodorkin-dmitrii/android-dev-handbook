@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-12
+1. Last tracker update: 2026-09-13
 1. Total articles tracked: 73
-1. Updated: 28
-1. TODO: 45
+1. Updated: 29
+1. TODO: 44
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
-| P0 | 27 | 24      | 3    |
+| P0 | 27 | 25      | 2    |
 | P1 | 27 | 2       | 25   |
 | P2 | 19 | 2       | 17   |
 
