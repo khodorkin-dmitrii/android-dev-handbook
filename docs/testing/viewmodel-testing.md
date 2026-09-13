@@ -1,30 +1,18 @@
 # ViewModel Testing
 
-This section covers `ViewModel` testing: state transitions, user actions, loading/error/content states and one-off events/effects.
+Test a `ViewModel` as a Kotlin class: provide controlled dependencies, call its public actions and assert the state or output visible to the UI. The purpose is to verify the UI contract, not coroutine launches or private method calls.
 
-## ViewModel tests
+## Test setup
 
-### How to test ViewModel?
+### Replace `Dispatchers.Main`
 
-`ViewModel` is usually tested like a regular Kotlin class: create fake dependencies, call public actions and check observable output, most often `StateFlow<UiState>` and an events/effects stream.
-
-The main goal is to verify behavior, not internal implementation. The test should answer: "if the user performed an action or repository returned a result, which state/effect will UI observe?"
-
-Usually the test needs:
-
-- fake repository/use case;
-- test dispatcher for coroutines;
-- replacement for `Dispatchers.Main` if `ViewModel` uses `viewModelScope`;
-- checks for initial state, state transitions and one-off events.
-
-Example rule for replacing Main dispatcher:
+`viewModelScope` uses `Dispatchers.Main`, which is unavailable in a local JVM test. Replace it with a `TestDispatcher` and reset it after every test:
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainDispatcherRule(
-    val testDispatcher: TestDispatcher = StandardTestDispatcher()
+    val testDispatcher: TestDispatcher = StandardTestDispatcher(),
 ) : TestWatcher() {
-
     override fun starting(description: Description) {
         Dispatchers.setMain(testDispatcher)
     }
@@ -35,78 +23,56 @@ class MainDispatcherRule(
 }
 ```
 
-Example test:
+Use `runTest` for coroutine-based tests. Every `TestDispatcher` used by the test and its dependencies should share the same `TestCoroutineScheduler`; otherwise advancing virtual time may run only part of the work. Dispatchers created after `Dispatchers.setMain(testDispatcher)` can inherit its scheduler, or the test can pass `testScheduler` explicitly.
+
+`StandardTestDispatcher` queues newly launched coroutines and gives precise scheduling control. `UnconfinedTestDispatcher` starts them eagerly and can simplify basic tests, but its execution order differs from production. Prefer the standard dispatcher when ordering or concurrency matters.
+
+### Arrange before creating the ViewModel
+
+Configure fakes before constructing a `ViewModel`, especially if work starts in `init`:
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
-
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val repository = FakeProfileRepository()
-
     @Test
-    fun `load profile shows content`() = runTest {
-        repository.result = User("Ada")
+    fun `load profile exposes content`() = runTest {
+        val repository = FakeProfileRepository(
+            result = User("Ada"),
+        )
         val viewModel = ProfileViewModel(repository)
 
         viewModel.load()
         advanceUntilIdle()
 
         assertEquals(
-            ProfileUiState(isLoading = false, userName = "Ada"),
-            viewModel.uiState.value
+            ProfileUiState(userName = "Ada"),
+            viewModel.uiState.value,
         )
     }
 }
 ```
 
-**Important:** if `ViewModel` starts loading in `init`, fake dependencies must be configured before creating `ViewModel`, otherwise the test may verify the wrong scenario.
+Use `advanceUntilIdle()` when the contract requires all queued work to finish. Use `runCurrent()` or `advanceTimeBy()` when the timing itself matters. Repeatedly advancing until idle can hide an API that starts work without exposing a completion signal; prefer suspending functions, returned jobs or observable state when callers need to know when work is complete.
 
-**In short:** test `ViewModel` through public actions and observable state/effects, using fakes and test dispatchers instead of real network/database dependencies.
+## Testing UI state
 
-### Testing UiState transitions
+### Final state
 
-UiState transitions are the sequence of states a screen goes through: for example initial -> loading -> content or initial -> loading -> error.
+For most scenarios, assert the current `StateFlow.value` after the action completes. Cover the initial state and meaningful outcomes such as content, empty data, validation failure, repository error, retry and cancellation.
 
-For simple synchronous scenarios, checking the final `uiState.value` is enough. But if the sequence itself matters, collect emissions.
+Avoid asserting fields that the UI does not consume. A single state assertion is usually more resilient than verifying the exact calls made by the `ViewModel`.
 
-Example with manual collection:
+### State transitions
 
-```kotlin
-@Test
-fun `load emits loading then content`() = runTest {
-    val repository = FakeProfileRepository(result = User("Ada"))
-    val viewModel = ProfileViewModel(repository)
-
-    val states = mutableListOf<ProfileUiState>()
-    val job = launch {
-        viewModel.uiState.toList(states)
-    }
-
-    viewModel.load()
-    advanceUntilIdle()
-
-    assertEquals(
-        listOf(
-            ProfileUiState(),
-            ProfileUiState(isLoading = true),
-            ProfileUiState(isLoading = false, userName = "Ada")
-        ),
-        states.take(3)
-    )
-
-    job.cancel()
-}
-```
-
-In practice, `Flow` and `StateFlow` tests often use Turbine because it makes assertions over emissions more convenient and readable:
+Collect emissions only when the sequence is part of the UI contract, for example when loading must be visible before an asynchronous result. Turbine keeps collection and cleanup explicit:
 
 ```kotlin
 @Test
-fun `load emits loading then error`() = runTest {
-    val repository = FakeProfileRepository(error = IOException())
+fun `load exposes loading then error`() = runTest {
+    val repository = ControllableProfileRepository()
     val viewModel = ProfileViewModel(repository)
 
     viewModel.uiState.test {
@@ -114,48 +80,68 @@ fun `load emits loading then error`() = runTest {
 
         viewModel.load()
 
-        assertEquals(ProfileUiState(isLoading = true), awaitItem())
-        assertEquals(ProfileUiState(errorMessage = "Network error"), awaitItem())
+        assertEquals(
+            ProfileUiState(isLoading = true),
+            awaitItem(),
+        )
+
+        repository.completeWithError(IOException())
+
+        assertEquals(
+            ProfileUiState(errorMessage = "Network error"),
+            awaitItem(),
+        )
         cancelAndIgnoreRemainingEvents()
     }
 }
 ```
 
-**Important:** do not make a state test depend on every small intermediate detail if it is not part of the screen contract. Sometimes checking the final user-visible state is enough.
+Here the fake suspends the request until `completeWithError()` is called, so loading is a real observable state rather than a scheduler accident.
 
-**In short:** state transition tests are useful for loading/content/error, retry, validation and complex flows, but they should verify observable UI contract, not internal implementation steps.
+`StateFlow` is conflated: a slow collector may skip intermediate values and always receives the latest state. Do not write a test that requires every rapid assignment unless those states are genuinely observable by design. If only the final screen state matters, assert `.value` instead.
 
-### Testing events/effects
+When a `StateFlow` is produced with `stateIn(WhileSubscribed(...))`, it may require an active collector before its upstream starts. Keep a background collector running during the test, or test the upstream flow separately.
 
-Events/effects are one-off commands for UI: navigation, snackbar, toast, permission request, scroll command. They are usually published through `SharedFlow`, `Channel` or callback.
+## Testing effects and events
 
-The test should verify that a specific action makes `ViewModel` send the expected effect, and that durable `UiState` is not used as a one-off command.
-
-Example with `SharedFlow`:
+Navigation, snackbars and permission requests are sometimes represented as an effect stream. Subscribe before triggering the action when using a `SharedFlow` with `replay = 0`:
 
 ```kotlin
 @Test
-fun `save success emits navigate back event`() = runTest {
-    val repository = FakeProfileRepository(saveResult = Result.success(Unit))
-    val viewModel = ProfileViewModel(repository)
+fun `successful save requests navigation back`() = runTest {
+    val viewModel = ProfileViewModel(
+        FakeProfileRepository(saveSucceeds = true),
+    )
 
-    viewModel.events.test {
+    viewModel.effects.test {
         viewModel.onSaveClicked()
-        assertEquals(UiEvent.NavigateBack, awaitItem())
+        assertEquals(UiEffect.NavigateBack, awaitItem())
         cancelAndIgnoreRemainingEvents()
     }
 }
 ```
 
-If `Channel` is used, the public API often exposes `receiveAsFlow()`:
+This test also documents delivery semantics. A non-replayed `SharedFlow` may lose an effect when no collector is active; a buffered `Channel` has different behavior and still does not provide durable process-death delivery. If an outcome must survive collector absence or recreation, model it as durable state or use an explicit acknowledgement/persistence protocol.
+
+Test that an action produces the intended effect and, when relevant, that repeated actions do not create duplicates. Do not test the private transport mechanism unless it is part of the contract.
+
+## Saved state and boundaries
+
+Pass a real `SavedStateHandle` with controlled values when the `ViewModel` reads navigation arguments or saves lightweight restorable state:
 
 ```kotlin
-private val _events = Channel<UiEvent>(Channel.BUFFERED)
-val events = _events.receiveAsFlow()
+val savedStateHandle = SavedStateHandle(
+    mapOf("profileId" to "42"),
+)
+val viewModel = ProfileViewModel(repository, savedStateHandle)
 ```
 
-It is tested the same way as a regular `Flow`.
+A local `ViewModel` test verifies how the class reads and writes the handle, not Android process recreation itself. Use an integration or instrumented test when the contract depends on Navigation, `SavedStateRegistry` or actual lifecycle restoration.
 
-**Important:** event tests often depend on buffering. `MutableSharedFlow` with `replay = 0` can lose an event if the collector has not subscribed yet. In a test, start collection first, then call the action.
+## Related topics
 
-**In short:** one-off events are tested by collecting the event stream: subscribe first, then call the action, then assert the specific effect.
+- [Testing Strategy](strategy.md)
+- [Coroutines & Flow Testing](coroutines-flow-testing.md)
+- [Android UI Testing](android-ui-testing.md)
+- [UI State Architecture](../architecture/ui-state.md)
+- [StateFlow & SharedFlow](../coroutines-flow/stateflow-sharedflow.md)

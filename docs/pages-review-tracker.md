@@ -45,7 +45,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-09-10, `di/dagger-hilt.md`, Dagger / Hilt, Clarified Hilt and Dagger responsibilities, constructor and module bindings, qualifiers, component visibility and scopes, ViewModel runtime arguments, and compile-time graph diagnostics.
 1. P0, **UPDATED**, 2026-09-12, `di/koin.md`, Koin, Clarified definition lifetimes, constructor DSL, qualifiers and runtime parameters, module validation, compiler-plugin safety, test isolation, and practical criteria for choosing Koin or Hilt.
 1. P0, **UPDATED**, 2026-09-12, `testing/strategy.md`, Testing Strategy, Clarified risk-based priorities, separated test scope from execution environment, refined the test-pyramid model and test doubles, and added deterministic, isolated, and flaky-test guidance.
-1. P0, **TODO**, , `testing/viewmodel-testing.md`, ViewModel Testing
+1. P0, **UPDATED**, 2026-09-13, `testing/viewmodel-testing.md`, ViewModel Testing, Clarified coroutine scheduler setup, final-state versus emission testing, StateFlow conflation, effect delivery semantics, controlled fakes, and SavedStateHandle test boundaries.
 1. P0, **TODO**, , `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing
 1. P0, **TODO**, , `kotlin/lateinit-lazy.md`, lateinit vs lazy
 1. P1, **TODO**, , `kotlin/basics.md`, Kotlin Basics
