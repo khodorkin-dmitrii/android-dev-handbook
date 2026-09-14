@@ -1,33 +1,16 @@
 # Coroutines & Flow Testing
 
-This section covers testing coroutines and `Flow`: virtual time, test dispatchers, `runTest`, collection, cancellation and emission checks.
+Coroutine tests should control execution order, virtual time and completion. Flow tests additionally need an explicit collection strategy because a stream may be cold, hot, finite or never-ending.
 
-## Coroutines and Flow
+## Testing coroutines
 
-### `runTest`
+### `runTest` and virtual time
 
-`runTest` is the main API from `kotlinx-coroutines-test` for testing suspend code and coroutines.
-
-It creates a test coroutine scope, supports virtual time, correctly waits for child coroutines and helps detect unfinished jobs. Unlike `runBlocking`, `runTest` does not force the test to actually wait for `delay()`.
-
-Example:
+`runTest` is the main entry point from `kotlinx-coroutines-test`. It creates a `TestScope`, uses a `TestDispatcher`, skips delays controlled by its scheduler and waits for child coroutines before returning.
 
 ```kotlin
 @Test
-fun `load returns user`() = runTest {
-    val repository = FakeUserRepository()
-
-    val user = repository.loadUser()
-
-    assertEquals("Ada", user.name)
-}
-```
-
-If the code contains `delay(1_000)`, `runTest` can advance through it virtually:
-
-```kotlin
-@Test
-fun `timer emits after delay`() = runTest {
+fun `timer completes after one second`() = runTest {
     var completed = false
 
     launch {
@@ -35,72 +18,67 @@ fun `timer emits after delay`() = runTest {
         completed = true
     }
 
+    runCurrent()
     assertFalse(completed)
+
     advanceTimeBy(1_000)
+    runCurrent()
+
     assertTrue(completed)
 }
 ```
 
-Useful functions:
+`advanceTimeBy(1_000)` moves virtual time forward and runs work scheduled before the target time. `runCurrent()` then executes work scheduled exactly at the current time. Other useful operations are:
 
-- `advanceUntilIdle()` - run everything scheduled until idle state;
-- `advanceTimeBy(time)` - advance virtual time;
-- `runCurrent()` - run tasks scheduled for the current virtual time.
+- `runCurrent()` - run tasks scheduled for the current virtual time;
+- `advanceTimeBy(duration)` - move virtual time by a specific amount;
+- `advanceUntilIdle()` - run scheduled work until no tasks remain.
 
-**Important:** `runTest` controls only coroutines that use the test scheduler. If code switches to real `Dispatchers.IO` or creates its own unmanaged threads, the test can become flaky again.
+Use the narrowest operation that expresses the expectation. Calling `advanceUntilIdle()` everywhere can hide which step should complete the work.
 
-**In short:** `runTest` provides a controlled coroutine test scope and virtual time, so suspend code is tested quickly and predictably.
+`runTest` controls only coroutines using its `TestCoroutineScheduler`. Real dispatchers, unmanaged scopes and threads remain outside virtual time and can make tests slow or flaky.
 
-### `TestDispatcher`
+### Test dispatchers and one scheduler
 
-`TestDispatcher` is a dispatcher for coroutine tests that works with `TestCoroutineScheduler` and lets the test control task execution.
+The two common dispatchers have different scheduling behavior:
 
-Most common options:
+- `StandardTestDispatcher` queues new coroutines and gives the test explicit control. It is a good default and exposes ordering assumptions.
+- `UnconfinedTestDispatcher` starts new coroutines eagerly until their first suspension. It can simplify basic collection tests, but does not reproduce production ordering.
 
-- `StandardTestDispatcher` - tasks run in a controlled way, and the test explicitly advances the scheduler through `advanceUntilIdle()`, `runCurrent()` or `advanceTimeBy()`;
-- `UnconfinedTestDispatcher` - starts tasks more eagerly and is convenient for some simple tests, but can hide ordering issues.
-
-For `ViewModel` tests, `Dispatchers.Main` is often replaced:
-
-```kotlin
-@OptIn(ExperimentalCoroutinesApi::class)
-class MainDispatcherRule(
-    val dispatcher: TestDispatcher = StandardTestDispatcher()
-) : TestWatcher() {
-
-    override fun starting(description: Description) {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    override fun finished(description: Description) {
-        Dispatchers.resetMain()
-    }
-}
-```
-
-Good architecture does not hardcode dispatchers inside classes. It is better to pass a dispatcher or `DispatcherProvider` through DI:
-
-```kotlin
-interface DispatcherProvider {
-    val io: CoroutineDispatcher
-    val default: CoroutineDispatcher
-    val main: CoroutineDispatcher
-}
-```
-
-In tests, test dispatchers can be substituted so the code does not depend on real threads.
-
-**In short:** `TestDispatcher` makes coroutine execution controllable; for stable tests, inject dispatchers and avoid hardcoding `Dispatchers.IO` inside logic.
-
-### Testing Flow
-
-`Flow` is tested by collecting emissions and checking the result. For finite flows, use `toList()`, `first()`, `single()`. For long-running flows, Turbine or manual collection with cancellation is more convenient.
-
-Example finite flow:
+All `TestDispatcher` instances in one test should share the same scheduler:
 
 ```kotlin
 @Test
-fun `flow emits mapped values`() = runTest {
+fun `repository finishes initialization`() = runTest {
+    val ioDispatcher = StandardTestDispatcher(testScheduler)
+    val repository = UserRepository(ioDispatcher)
+
+    repository.initialize()
+    advanceUntilIdle()
+
+    assertTrue(repository.isInitialized)
+}
+```
+
+Inject dispatchers or a dispatcher provider instead of hardcoding `Dispatchers.IO` or `Dispatchers.Default`. For local tests of code using `Dispatchers.Main`, replace Main with a `TestDispatcher` and reset it after the test. See [ViewModel Testing](viewmodel-testing.md) for a reusable JUnit rule.
+
+If callers must know when launched work finishes, prefer a suspending API or return a completion handle. A test that can only guess when background work is done often exposes an unclear production API.
+
+### Failure and cancellation
+
+Test failures as observable results: a returned error, thrown exception or error state. Use `assertFailsWith` for an exception contract and avoid catching exceptions only to make the test pass.
+
+For cancellation-sensitive code, cancel the job and verify the relevant cleanup or absence of later output. The code under test must cooperate with cancellation; CPU-heavy loops need suspension points or explicit checks such as `ensureActive()`.
+
+## Testing Flow
+
+### Finite cold flows
+
+For a finite flow, collect a terminal result with `toList()`, `first()` or `single()`:
+
+```kotlin
+@Test
+fun `flow maps all values`() = runTest {
     val values = flowOf(1, 2, 3)
         .map { it * 2 }
         .toList()
@@ -109,11 +87,15 @@ fun `flow emits mapped values`() = runTest {
 }
 ```
 
-Example `StateFlow`:
+Use `first()` when only the first matching value is part of the contract. Use `single()` only when the flow must emit exactly one element and complete.
+
+### Hot and never-ending flows
+
+For `StateFlow`, `SharedFlow` and other long-running streams, use Turbine or launch a collector that the test cancels. Turbine makes subscription, assertions and cleanup explicit:
 
 ```kotlin
 @Test
-fun `state flow emits content`() = runTest {
+fun `state exposes loaded items`() = runTest {
     val viewModel = ItemsViewModel(FakeItemsRepository())
 
     viewModel.uiState.test {
@@ -121,50 +103,61 @@ fun `state flow emits content`() = runTest {
 
         viewModel.load()
 
-        assertEquals(ItemsUiState.Content(listOf("A", "B")), awaitItem())
+        assertEquals(
+            ItemsUiState.Content(listOf("A", "B")),
+            awaitItem(),
+        )
         cancelAndIgnoreRemainingEvents()
     }
 }
 ```
 
-For hot flows, subscribe first and then call the action that emits a value. Otherwise `SharedFlow` with `replay = 0` can lose the emission.
+Subscribe before triggering a `SharedFlow` with `replay = 0`, because it does not retain values for future subscribers. `StateFlow` always exposes its current value, suppresses updates equal to the current value and conflates rapid updates, so collectors are not guaranteed to observe every intermediate assignment.
 
-Also remember `StateFlow`: it always has a current value and may not emit a new value if it is `equals()` to the old one.
+When manual collection must continue for the whole test, launch it in `backgroundScope`. `runTest` cancels that scope at the end, preventing an infinite collector from blocking completion:
 
-**Important:** the test must finish collection of a long-running flow. Otherwise the test coroutine can hang or `runTest` can report unfinished work.
+```kotlin
+val values = mutableListOf<Int>()
+backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+    repository.scores.toList(values)
+}
+```
 
-**In short:** Flow tests check emissions; for finite flows, `toList()` / `first()` is enough, while hot and long-running flows are easier with Turbine or controlled collection with cancellation.
+For a `StateFlow` created with `stateIn(WhileSubscribed(...))`, keep an active collector while asserting `.value`; otherwise the upstream may never start.
 
-### Why not use `Thread.sleep` in tests?
+### Time-based operators
 
-`Thread.sleep` in tests makes the suite slow, flaky and dependent on machine speed, CI, CPU load and real threads.
-
-If a test waits "just in case", it either sometimes fails because sleep is too short, or always slows down because sleep is too long.
-
-In coroutine tests, virtual time is used instead of `Thread.sleep`:
+Test `debounce`, `timeout`, retry delays and similar operators with virtual time, not real waiting:
 
 ```kotlin
 @Test
 fun `debounce emits latest value`() = runTest {
-    val results = mutableListOf<String>()
     val input = MutableSharedFlow<String>()
 
-    val job = launch {
-        input
-            .debounce(300)
-            .toList(results)
+    input.debounce(300).test {
+        input.emit("a")
+        advanceTimeBy(100)
+        input.emit("ab")
+
+        advanceTimeBy(300)
+        runCurrent()
+
+        assertEquals("ab", awaitItem())
+        cancelAndIgnoreRemainingEvents()
     }
-
-    input.emit("a")
-    advanceTimeBy(100)
-    input.emit("ab")
-    advanceTimeBy(300)
-
-    assertEquals(listOf("ab"), results)
-    job.cancel()
 }
 ```
 
-For UI tests, use idling resources, Compose test synchronization, `mainClock`, explicit assertions with waiting APIs or controlled fake dependencies instead of sleep.
+The operator and the test must use dispatchers backed by the same scheduler. If production code switches to a real dispatcher, virtual time cannot control that part.
 
-**In short:** `Thread.sleep` waits for real time and makes tests unstable; coroutine tests should use virtual time, and UI tests should use synchronization mechanisms.
+## Avoid real-time waiting
+
+Do not use `Thread.sleep()` or arbitrary delays to wait "just in case". They slow the suite and make results depend on CPU load and CI speed. Coroutine tests should use virtual time or completion signals. UI tests should use Espresso idling resources, Compose synchronization, `mainClock` or condition-based waiting APIs.
+
+## Related topics
+
+- [Testing Strategy](strategy.md)
+- [ViewModel Testing](viewmodel-testing.md)
+- [Flow Basics](../coroutines-flow/flow-basics.md)
+- [StateFlow & SharedFlow](../coroutines-flow/stateflow-sharedflow.md)
+- [Coroutine Scopes & Cancellation](../coroutines-flow/scopes-cancellation.md)

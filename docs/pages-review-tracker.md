@@ -8,14 +8,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-13
+1. Last tracker update: 2026-09-14
 1. Total articles tracked: 73
-1. Updated: 29
-1. TODO: 44
+1. Updated: 31
+1. TODO: 42
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
-| P0 | 27 | 25      | 2    |
+| P0 | 27 | 27      | 0    |
 | P1 | 27 | 2       | 25   |
 | P2 | 19 | 2       | 17   |
 
@@ -46,8 +46,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-09-12, `di/koin.md`, Koin, Clarified definition lifetimes, constructor DSL, qualifiers and runtime parameters, module validation, compiler-plugin safety, test isolation, and practical criteria for choosing Koin or Hilt.
 1. P0, **UPDATED**, 2026-09-12, `testing/strategy.md`, Testing Strategy, Clarified risk-based priorities, separated test scope from execution environment, refined the test-pyramid model and test doubles, and added deterministic, isolated, and flaky-test guidance.
 1. P0, **UPDATED**, 2026-09-13, `testing/viewmodel-testing.md`, ViewModel Testing, Clarified coroutine scheduler setup, final-state versus emission testing, StateFlow conflation, effect delivery semantics, controlled fakes, and SavedStateHandle test boundaries.
-1. P0, **TODO**, , `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing
-1. P0, **TODO**, , `kotlin/lateinit-lazy.md`, lateinit vs lazy
+1. P0, **UPDATED**, 2026-09-14, `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing, Corrected virtual-time scheduling, unified TestCoroutineScheduler usage, clarified dispatcher behavior, cancellation and failure testing, hot-flow collection, StateFlow conflation, backgroundScope, and debounce tests.
+1. P0, **UPDATED**, 2026-09-14, `kotlin/lateinit-lazy.md`, lateinit vs lazy, Verified lateinit restrictions, lazy initialization and thread-safety semantics, refined isInitialized guidance, and improved Russian terminology.
 1. P1, **TODO**, , `kotlin/basics.md`, Kotlin Basics
 1. P1, **TODO**, , `kotlin/kotlin-vs-java.md`, Kotlin vs Java
 1. P1, **TODO**, , `kotlin/classes-and-types.md`, Classes & Types

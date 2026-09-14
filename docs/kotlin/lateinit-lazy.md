@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
 Reading an uninitialized property throws `UninitializedPropertyAccessException`. A `lateinit` property:
 
 - must be a `var`;
-- must have a non-null reference type, so primitive types such as `Int` are not supported;
+- must have a non-null, non-primitive type, so types such as `Int` are not supported;
 - may be top-level, local, or declared in a class body, but cannot be declared in a primary constructor or have a custom getter or setter;
 - can be assigned again after initialization.
 
@@ -35,7 +35,7 @@ if (this::binding.isInitialized) {
 }
 ```
 
-`isInitialized` should not be the default way to organize runtime control flow. Its use is limited to an accessible backing field: a property declared in the same class, an outer class, or as a top-level property in the same file. Usually it is clearer to design the initialization order explicitly.
+`isInitialized` should not be the default way to organize runtime control flow. It can be used only where the property's backing field is accessible: in the same class, an outer class, or for a top-level property in the same file. Usually it is clearer to design the initialization order explicitly.
 
 ## `val by lazy`
 
@@ -72,7 +72,7 @@ private val cache by lazy(LazyThreadSafetyMode.NONE) {
 | Who starts initialization | Developer | First read |
 | Mutability | Can be assigned repeatedly | Read-only property |
 | Read before initialization | Throws an exception | Runs the initializer |
-| Type restrictions | Non-null reference type | Supports nullable and primitive values |
+| Type restrictions | Non-null, non-primitive type | Supports nullable and primitive values |
 | Thread-safety | Not provided | Configured by mode |
 | Automatic reset | No | No |
 
