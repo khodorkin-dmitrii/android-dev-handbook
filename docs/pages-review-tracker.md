@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-14
+1. Last tracker update: 2026-09-15
 1. Total articles tracked: 73
-1. Updated: 31
-1. TODO: 42
+1. Updated: 33
+1. TODO: 40
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 27 | 2       | 25   |
+| P1 | 27 | 4       | 23   |
 | P2 | 19 | 2       | 17   |
 
 ## Tracker
@@ -48,8 +48,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P0, **UPDATED**, 2026-09-13, `testing/viewmodel-testing.md`, ViewModel Testing, Clarified coroutine scheduler setup, final-state versus emission testing, StateFlow conflation, effect delivery semantics, controlled fakes, and SavedStateHandle test boundaries.
 1. P0, **UPDATED**, 2026-09-14, `testing/coroutines-flow-testing.md`, Coroutines & Flow Testing, Corrected virtual-time scheduling, unified TestCoroutineScheduler usage, clarified dispatcher behavior, cancellation and failure testing, hot-flow collection, StateFlow conflation, backgroundScope, and debounce tests.
 1. P0, **UPDATED**, 2026-09-14, `kotlin/lateinit-lazy.md`, lateinit vs lazy, Verified lateinit restrictions, lazy initialization and thread-safety semantics, refined isInitialized guidance, and improved Russian terminology.
-1. P1, **TODO**, , `kotlin/basics.md`, Kotlin Basics
-1. P1, **TODO**, , `kotlin/kotlin-vs-java.md`, Kotlin vs Java
+1. P1, **UPDATED**, 2026-09-15, `kotlin/basics.md`, Kotlin Basics, Clarified mutability and null-safety boundaries, Java platform types, Any/Unit/Nothing semantics, array equality, safe and unsafe casts, and final-by-default inheritance rules.
+1. P1, **UPDATED**, 2026-09-15, `kotlin/kotlin-vs-java.md`, Kotlin vs Java, Clarified visibility, nullability, JVM property mapping, interop annotations, inheritance, sealed hierarchies, and data classes versus records; synchronized EN/RU and removed repetition.
 1. P1, **TODO**, , `kotlin/classes-and-types.md`, Classes & Types
 1. P1, **TODO**, , `kotlin/collections.md`, Collections
 1. P1, **TODO**, , `kotlin/functions.md`, Functions
