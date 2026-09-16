@@ -1,14 +1,14 @@
 # Classes & Types
 
-Раздел про классы, объектные декларации и специальные типы Kotlin, которые часто используются в Android-коде для моделей данных, состояния UI и API.
+Классы, объявления объектов и типы-значения Kotlin используются в Android для моделей данных, состояния UI и API. Выбирать тип стоит по его смыслу, а не только по количеству сэкономленного шаблонного кода.
 
 ## Классы и модели
 
 ### `data class`
 
-`data class` - это класс для хранения данных, для которого Kotlin автоматически генерирует `equals()`, `hashCode()`, `toString()`, `copy()` и `componentN()` по свойствам primary constructor.
+Для `data class` обычно генерируются `equals()`, `hashCode()`, `toString()`, `copy()` и `componentN()` на основе свойств первичного конструктора. Собственные реализации первых трёх функций или унаследованные final-реализации могут заменять их генерацию.
 
-Минимальное требование: в primary constructor должен быть хотя бы один параметр, помеченный `val` или `var`.
+В первичном конструкторе нужен хотя бы один параметр, причём **все** его параметры должны быть `val` или `var`.
 
 ```kotlin
 data class User(
@@ -17,39 +17,43 @@ data class User(
 )
 ```
 
-**Важно:** свойства, объявленные в body класса, не участвуют в generated `equals()`, `hashCode()`, `copy()` и `componentN()`. `copy()` делает shallow copy, а не deep copy.
+Свойства в теле класса не участвуют в этих сгенерированных функциях. `copy()` не переносит их текущие значения. Копирование поверхностное: вложенные объекты остаются общими, а не клонируются рекурсивно.
 
-`data class` не может быть `open`, `abstract`, `sealed` или `inner`. В Android `data class` часто используют для DTO, domain models и UI state.
+Data class не становится неизменяемым автоматически. Для состояния UI предпочтительны `val` и неизменяемое содержимое. Изменение свойства, участвующего в вычислении хеша, пока объект служит ключом map или элементом set, нарушает предпосылки корректного поиска.
 
-**Коротко:** `data class` reduces boilerplate for value-like models, but it does not make objects deeply immutable automatically.
+Data class нельзя объявить `open`, `abstract`, `sealed` или `inner`, но он может наследовать другой класс и реализовывать интерфейсы. Типичные применения: DTO, доменные модели и состояние UI.
 
 ### `sealed class` vs `enum class`
 
-`enum class` описывает фиксированный набор singleton-констант одного типа. Он удобен для простых состояний без сложных данных или с одинаковым набором свойств и методов.
+Enum задаёт фиксированный набор именованных экземпляров. Константы могут иметь свойства и собственное поведение, но не являются отдельными контейнерами для результата каждого запроса.
 
-`sealed class` или `sealed interface` описывает закрытую иерархию типов. Каждый subtype может быть отдельным `class`, `object` или `data class` и хранить разные данные.
-
-Главное преимущество `sealed` - exhaustive `when`: Kotlin может проверить, что все варианты обработаны без `else`.
+Sealed-иерархия описывает варианты, способные хранить разные данные:
 
 ```kotlin
-sealed class Result {
-    data class Success(val data: User) : Result()
-    data class Error(val message: String) : Result()
-    object Loading : Result()
+sealed interface UserResult {
+    data class Success(val user: User) : UserResult
+    data class Error(val message: String) : UserResult
+    data object Loading : UserResult
+}
+
+fun label(result: UserResult): String = when (result) {
+    is UserResult.Success -> result.user.name
+    is UserResult.Error -> result.message
+    UserResult.Loading -> "Loading"
 }
 ```
 
-`enum` подходит для `Loading` / `Success` / `Error`, только если у вариантов нет разных payload. `sealed` лучше, если `Success` хранит data, а `Error` хранит `Throwable` или message.
+Прямые подтипы должны быть именованными и находиться в том же пакете и модуле, но не обязательно в том же файле. Открытый подтип без `sealed` может разрешать дальнейшее наследование за этими границами. В multiplatform-проектах действуют дополнительные ограничения наборов исходников.
 
-**Коротко:** `enum` is a fixed set of constants, `sealed` is a restricted type hierarchy with different subclasses and payloads.
+Sealed class может хранить общее состояние через конструктор; sealed interface позволяет реализации иметь другой суперкласс. Исчерпывающий `when` не требует `else`, если обработаны все варианты; для nullable-входа нужна также ветка null.
+
+Enum подходит для фиксированных вариантов, например порядка сортировки; sealed-типы - для результатов и состояний с разными данными. Для варианта без данных удобен `data object`: он получает читаемый `toString()` и структурное равенство, но не `copy()` или `componentN()`.
 
 ## Объекты
 
-### `object` keyword
+### Ключевое слово `object`
 
-`object` в Kotlin используется для трех основных сценариев: anonymous objects, object declarations и companion objects.
-
-Anonymous object создается прямо в месте использования. Он удобен для одноразовой реализации interface или небольшого объекта без отдельного named class.
+Выражение object создаёт анонимный экземпляр при каждом выполнении и удобно для разовых реализаций:
 
 ```kotlin
 val helloWorld = object {
@@ -60,17 +64,19 @@ val helloWorld = object {
 }
 ```
 
-Object declaration объявляет singleton. Такой объект инициализируется лениво, при первом доступе, и его инициализация thread-safe.
+Объявление object задаёт singleton, инициализируемый при первом обращении. Инициализация потокобезопасна, но последующие операции с изменяемым состоянием **не** синхронизируются автоматически.
 
 ```kotlin
-object DataProviderManager {
-    fun registerDataProvider(provider: DataProvider) {
-        // ...
-    }
+object UserNames {
+    fun display(user: User): String = user.name.ifBlank { "Unknown" }
 }
 ```
 
-Companion object связан с классом. Его members можно вызывать через имя класса, а сам companion object инициализируется при загрузке или разрешении соответствующего класса, что близко к Java static initializer semantics.
+На JVM singleton относится к определившему его загрузчику классов, а не ко всем процессам Android. Не храните ссылки на Activity или View в долгоживущих объектах. Глобальное изменяемое состояние также мешает изоляции тестов.
+
+### `object` / `companion object` / `class`
+
+Класс позволяет создавать отдельные экземпляры вызовами конструктора. Объявление object предоставляет общий экземпляр. Companion object связан с классом: новый экземпляр внешнего класса не создаёт новый companion.
 
 ```kotlin
 class MyClass {
@@ -82,37 +88,36 @@ class MyClass {
 val instance = MyClass.create()
 ```
 
-Если имя companion object не указано, он получает имя `Companion`.
+Без явно заданного имени companion называется `Companion`. Его члены принадлежат экземпляру, хотя Kotlin разрешает обращаться к ним через имя класса. На JVM инициализация следует правилам статической инициализации внешнего класса; одна лишь загрузка класса не обязательно запускает её.
 
-**Коротко:** anonymous object инициализируется сразу при использовании, object declaration - лениво при первом доступе, companion object - вместе с соответствующим классом.
-
-### `object` / `companion object` / `class`
-
-`class` описывает blueprint для объектов. Каждый вызов constructor создает новый instance.
-
-`object declaration` создает singleton: один лениво инициализируемый instance на все приложение или classloader. Это удобно для stateless helpers, constants или simple singletons, но global state может усложнить тестирование.
-
-`companion object` - singleton, связанный с конкретным классом. Из Kotlin его members можно вызывать как `ClassName.member()`, но это не то же самое, что Java `static` на уровне языка.
-
-Для Java interop иногда используют `@JvmStatic`, `@JvmField` или `const val`, чтобы companion / object API выглядел привычнее для Java.
-
-**Коротко:** `class` creates instances, `object` creates a singleton, `companion object` provides class-associated members.
+Для вызовов из Java `@JvmStatic` предоставляет статические методы, `@JvmField` открывает подходящие свойства как поля, а `const val` объявляет константы времени компиляции. Эти механизмы не взаимозаменяемы.
 
 ## Специальные типы
 
 ### `inline class` / `value class`
 
-Value class - это Kotlin-класс-обертка вокруг одного value, объявленный как `@JvmInline value class`. Раньше эта возможность называлась inline class.
-
-Основная идея - дать доменный тип без лишней runtime allocation там, где компилятор может заменить wrapper на underlying value.
+Value class вводит отдельный тип вокруг одного значения. На JVM используется `@JvmInline`:
 
 ```kotlin
 @JvmInline
 value class UserId(val value: String)
 ```
 
-Такой тип помогает не путать `UserId` с обычной `String`, даже если внутри хранится строковое значение.
+В отличие от псевдонима типа, `UserId` не взаимозаменяем со `String`. Это защищает от случайного смешивания доменных идентификаторов.
 
-Ограничения: value class должен иметь ровно одно property в primary constructor, не имеет identity, не может хранить backing fields кроме underlying value, а boxing все равно возможен в generics, nullable types и interface usage.
+В первичном конструкторе value class должно быть одно read-only-свойство. Допустимы методы, вычисляемые свойства и проверки в `init`, но не дополнительные поля хранения. Он может реализовывать интерфейсы, не может наследовать другой класс и является final.
 
-**Коротко:** value class improves type-safety with low overhead, but it is not a normal wrapper object in all runtime scenarios.
+Компилятор может использовать исходное значение без обёртки, но при работе с обобщениями, интерфейсами и nullable-типами возможен boxing. Нельзя обещать отсутствие выделений памяти во всех случаях. Value class не имеет ссылочной идентичности; `===` запрещён. Для публичных API также важны преобразование имён функций на JVM и ограничения вызова из Java.
+
+## Связанные темы
+
+- [Основы Kotlin](basics.ru.md)
+- [Kotlin vs Java](kotlin-vs-java.ru.md)
+- [Архитектура состояния UI](../architecture/ui-state.ru.md)
+
+## Источники
+
+- [Kotlin: Data classes](https://kotlinlang.org/docs/data-classes.html)
+- [Kotlin: Sealed classes and interfaces](https://kotlinlang.org/docs/sealed-classes.html)
+- [Kotlin: Object declarations and expressions](https://kotlinlang.org/docs/object-declarations.html)
+- [Kotlin: Inline value classes](https://kotlinlang.org/docs/inline-classes.html)
