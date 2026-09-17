@@ -48,6 +48,7 @@ plugins:
           link: /ru/
           site_description: Структурированный справочник по Android-разработке
           nav_translations:
+            AI on Android: AI на Android
             Overview: Обзор
             Android Components: Компоненты Android
             Platform Internals: Внутреннее устройство платформы
@@ -175,6 +176,10 @@ nav:
       - Vulkan: android/vulkan.md
       - Google Filament: android/google-filament.md
       - 2D and 3D Rendering: android/2d-3d-rendering.md
+  - AI:
+      - AI on Android: ai/overview.md
+      - ML Kit: ai/ml-kit.md
+      - LiteRT: ai/litert.md
   - Kotlin:
       - Overview: kotlin/index.md
       - Basics: kotlin/basics.md

@@ -1,14 +1,20 @@
 # Collections
 
-This section covers Kotlin collections: read-only and mutable interfaces, real immutability and basic operations over data sets.
+Kotlin provides `List`, `Set`, and `Map` collection types, each with read-only and mutable interfaces. The interface controls which operations are available through a reference; it does not by itself guarantee immutability.
 
 ## Core collections
 
+### `List`, `Set`, and `Map`
+
+- `List<T>` preserves element order, supports indexed access, and allows duplicates.
+- `Set<T>` stores unique elements. Do not depend on iteration order unless the concrete implementation defines it.
+- `Map<K, V>` stores key-value pairs with unique keys. It is a collection type, but does not extend `Collection`.
+
+Choose by semantics. For example, use a list for ordered UI items, a set for selected IDs, and a map for lookup by ID.
+
 ### `List` vs `MutableList`
 
-`List<T>` in Kotlin is a read-only interface: through such a reference, you cannot call `add()`, `remove()` or `set()`. `MutableList<T>` is a mutable interface that allows changing the collection.
-
-**Important:** read-only does not mean immutable. If the same mutable list is passed as `List<T>`, the owner of the mutable reference can still change the data.
+`List<T>` is a read-only interface: it does not expose `add()`, `remove()`, or indexed assignment. `MutableList<T>` extends it with write operations.
 
 ```kotlin
 val mutable = mutableListOf(1, 2)
@@ -18,42 +24,55 @@ mutable.add(3)
 println(readOnly) // [1, 2, 3]
 ```
 
-In APIs, prefer returning `List<T>` when caller code should not mutate the collection, and `MutableList<T>` only when mutation is part of the contract.
+Read-only does not mean immutable. Both references point to the same object, so mutations through another reference remain visible. Likewise, `val` prevents reassigning a variable, not changing a mutable collection:
 
-**In short:** `List` is read-only from this reference, `MutableList` allows mutation, but `List` is not a deep immutability guarantee.
+```kotlin
+val items = mutableListOf("A")
+items += "B" // allowed
+```
 
-### Read-only vs immutable collections
-
-Read-only collection means the collection cannot be changed through the given interface. Immutable collection means the collection cannot change at all after creation.
-
-Standard Kotlin `List`, `Set` and `Map` are read-only interfaces, but a mutable implementation may be underneath.
-
-For example, `val list: List<Int> = mutableListOf(1, 2)` does not allow calling `list.add()`, but the original mutable reference can add elements.
-
-For a truly immutable model, control the owner of the mutable collection, make defensive copies or use immutable collections if they are available in the project.
-
-**In short:** Kotlin read-only collections protect the API surface, but they do not guarantee true immutability of the underlying object.
+Expose `List<T>` when callers should not mutate the collection. If they also need a stable snapshot, create a defensive copy such as `source.toList()` and do not retain or expose a mutable alias. This is still shallow: mutable elements can change. Persistent immutable collections are available through a separate library when stronger guarantees are required.
 
 ## Operations
 
-### `map` / `flatMap` / `filter` / `fold` / `forEach`
+### Transform, select, and aggregate
 
-`map` transforms each collection element and returns a new collection of results.
+Common operations are expressive when their intent is clear:
 
-`filter` keeps only elements that match the predicate.
-
-`flatMap` first transforms each element into a collection or iterable result, then flattens the results into one list.
-
-`fold` accumulates one final value by traversing the collection with an initial value and accumulator function.
-
-`forEach` performs a side effect for each element and usually should not be used to build a new result.
+- `map` transforms every element.
+- `filter` keeps matching elements.
+- `flatMap` transforms elements into iterables and flattens them.
+- `fold` combines elements starting with an initial accumulator.
+- `forEach` performs side effects; use transformations to build values.
 
 ```kotlin
 val names = users
     .filter { it.isActive }
     .map { it.name }
 
-val totalAge = users.fold(0) { acc, user -> acc + user.age }
+val totalAge = users.fold(0) { total, user -> total + user.age }
 ```
 
-**In short:** `map` transforms, `filter` selects, `flatMap` transforms and flattens, `fold` accumulates, `forEach` is for side effects.
+These operations return results without changing the source collection. Functions such as `sort()` mutate a mutable list in place, while `sorted()` returns a new list. Make that distinction explicit in state-management code.
+
+Collection pipelines are eager and can create intermediate collections. `asSequence()` processes a pipeline lazily and may avoid intermediates or stop early, for example before `first()` or after `take()`. It also adds overhead, so do not assume it is faster for small collections or simple chains; measure performance-sensitive paths.
+
+## Practical guidance
+
+- Keep mutable collections inside their owner and expose read-only views or snapshots.
+- Avoid mutating a collection while iterating over it unless the API explicitly supports that operation.
+- Do not use mutable objects as set elements or map keys if fields involved in `equals()` or `hashCode()` can change.
+- Prefer operations that communicate intent, but use a loop when it is clearer or avoids unnecessary allocations in a hot path.
+
+## Related topics
+
+- [Kotlin Basics](basics.md)
+- [Functions](functions.md)
+- [Generics](generics.md)
+- [UI State Architecture](../architecture/ui-state.md)
+
+## References
+
+- [Kotlin collections overview](https://kotlinlang.org/docs/collections-overview.html)
+- [Collection operations overview](https://kotlinlang.org/docs/collection-operations.html)
+- [Sequences](https://kotlinlang.org/docs/sequences.html)

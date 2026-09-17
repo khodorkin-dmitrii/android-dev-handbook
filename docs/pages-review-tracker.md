@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-16
-1. Total articles tracked: 73
-1. Updated: 34
-1. TODO: 39
+1. Last tracker update: 2026-09-17
+1. Total articles tracked: 76
+1. Updated: 35
+1. TODO: 41
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 27 | 5       | 22   |
+| P1 | 30 | 6       | 24   |
 | P2 | 19 | 2       | 17   |
 
 ## Tracker
@@ -51,7 +51,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-15, `kotlin/basics.md`, Kotlin Basics, Clarified mutability and null-safety boundaries, Java platform types, Any/Unit/Nothing semantics, array equality, safe and unsafe casts, and final-by-default inheritance rules.
 1. P1, **UPDATED**, 2026-09-15, `kotlin/kotlin-vs-java.md`, Kotlin vs Java, Clarified visibility, nullability, JVM property mapping, interop annotations, inheritance, sealed hierarchies, and data classes versus records; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-16, `kotlin/classes-and-types.md`, Classes & Types, Corrected data-class constructor requirements; clarified shallow copying, sealed hierarchies, object initialization and thread safety, companion semantics, and value-class boxing; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `kotlin/collections.md`, Collections
+1. P1, **UPDATED**, 2026-09-17, `kotlin/collections.md`, Collections, Clarified collection-type selection, read-only versus immutable semantics, defensive snapshots, transforming versus mutating operations, Sequence trade-offs, and mutable-key risks; synchronized EN/RU and removed repetition.
 1. P1, **TODO**, , `kotlin/functions.md`, Functions
 1. P1, **TODO**, , `kotlin/generics.md`, Generics
 1. P1, **TODO**, , `java/core.md`, Java Core
@@ -75,6 +75,9 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **TODO**, , `architecture/legacy-refactoring.md`, Legacy & Refactoring
 1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
 1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
+1. P1, **TODO**, , `ai/overview.md`, AI on Android
+1. P1, **TODO**, , `ai/ml-kit.md`, ML Kit
+1. P1, **TODO**, , `ai/litert.md`, LiteRT
 1. P2, **UPDATED**, 2026-06-30, `index.md`, Home, Added GitHub repository link to the author/support block.
 1. P2, **TODO**, , `android/index.md`, Android Overview
 1. P2, **TODO**, , `kotlin/index.md`, Kotlin Overview
