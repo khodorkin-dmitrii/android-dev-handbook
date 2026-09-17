@@ -7,13 +7,16 @@ The goal of the project is to collect practical explanations, compact notes, imp
 ## Sections
 
 * [Android](android/index.md) - Android SDK, app components, lifecycle, View System, storage, background work, performance, platform behavior and rendering.
+* [AI](ai/overview.md) - on-device AI on Android, ML Kit, LiteRT, model integration, inference and practical API selection.
 * [Kotlin](kotlin/index.md) - Kotlin basics, Kotlin vs Java, classes and types, collections, functions, generics and idiomatic Kotlin.
+* [KMP](kotlin-multiplatform/overview.md) - Kotlin Multiplatform architecture, project structure, shared and platform-specific code, UI strategies and adoption trade-offs.
 * [Jetpack Compose](compose/index.md) - declarative UI, state, recomposition, side effects, performance and Compose UI testing.
 * [Coroutines & Flow](coroutines-flow/index.md) - coroutines, structured concurrency, cancellation, Flow operators, `StateFlow`, `SharedFlow` and lifecycle-aware collection.
 * [Architecture](architecture/index.md) - modern Android architecture, Clean Architecture, MVVM, MVI, UI state, modularization and legacy refactoring.
 * [Java](java/index.md) - Java core, collections, exceptions, concurrency, JVM and Android Runtime specifics.
 * [DI](di/index.md) - Dependency Injection, Hilt, Dagger, scopes, modules and dependency graph.
 * [Networking](networking/index.md) - HTTP, REST, Retrofit, OkHttp, serialization, error handling, GraphQL, gRPC and Protocol Buffers.
+* [Security](security/index.md) - Android security basics, HTTPS and TLS, certificate pinning, secure storage, OAuth, PKCE and token management.
 * [Tools](tools/overview.md) - debugging, diagnostics, profiling, benchmarking, production monitoring and QA-friendly internal builds.
 * [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso and Compose UI tests.
 * [Engineering](engineering/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory and runtime concepts.

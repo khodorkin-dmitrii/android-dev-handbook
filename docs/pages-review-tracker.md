@@ -9,15 +9,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 
 ## Current snapshot
 1. Last tracker update: 2026-09-17
-1. Total articles tracked: 76
+1. Total articles tracked: 99
 1. Updated: 35
-1. TODO: 41
+1. TODO: 64
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 30 | 6       | 24   |
-| P2 | 19 | 2       | 17   |
+| P1 | 31 | 7       | 24   |
+| P2 | 41 | 1       | 40   |
 
 ## Tracker
 
@@ -52,6 +52,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-15, `kotlin/kotlin-vs-java.md`, Kotlin vs Java, Clarified visibility, nullability, JVM property mapping, interop annotations, inheritance, sealed hierarchies, and data classes versus records; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-16, `kotlin/classes-and-types.md`, Classes & Types, Corrected data-class constructor requirements; clarified shallow copying, sealed hierarchies, object initialization and thread safety, companion semantics, and value-class boxing; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-17, `kotlin/collections.md`, Collections, Clarified collection-type selection, read-only versus immutable semantics, defensive snapshots, transforming versus mutating operations, Sequence trade-offs, and mutable-key risks; synchronized EN/RU and removed repetition.
+1. P1, **UPDATED**, 2026-09-17, `index.md`, Home, Added navigation for the AI, KMP, and Security domains and synchronized the English and Russian section lists.
 1. P1, **TODO**, , `kotlin/functions.md`, Functions
 1. P1, **TODO**, , `kotlin/generics.md`, Generics
 1. P1, **TODO**, , `java/core.md`, Java Core
@@ -78,7 +79,6 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **TODO**, , `ai/overview.md`, AI on Android
 1. P1, **TODO**, , `ai/ml-kit.md`, ML Kit
 1. P1, **TODO**, , `ai/litert.md`, LiteRT
-1. P2, **UPDATED**, 2026-06-30, `index.md`, Home, Added GitHub repository link to the author/support block.
 1. P2, **TODO**, , `android/index.md`, Android Overview
 1. P2, **TODO**, , `kotlin/index.md`, Kotlin Overview
 1. P2, **TODO**, , `compose/index.md`, Compose Overview
@@ -97,3 +97,26 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **TODO**, , `android/vulkan.md`, Vulkan
 1. P2, **TODO**, , `android/google-filament.md`, Google Filament
 1. P2, **TODO**, , `android/2d-3d-rendering.md`, 2D and 3D Rendering
+1. P2, **TODO**, , `android/android-system-services.md`, Android System Services
+1. P2, **TODO**, , `android/binder-ipc-aidl.md`, Binder IPC and AIDL
+1. P2, **TODO**, , `compose/navigation.md`, Compose Navigation
+1. P2, **TODO**, , `coroutines-flow/channels.md`, Channels
+1. P2, **TODO**, , `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview
+1. P2, **TODO**, , `kotlin-multiplatform/kmp-kmm-compose.md`, KMP, KMM, and Compose Multiplatform
+1. P2, **TODO**, , `kotlin-multiplatform/project-structure.md`, Project Structure
+1. P2, **TODO**, , `kotlin-multiplatform/shared-platform-code.md`, Shared and Platform-specific Code
+1. P2, **TODO**, , `kotlin-multiplatform/architecture-ui.md`, Architecture and UI Integration
+1. P2, **TODO**, , `kotlin-multiplatform/adoption-tradeoffs.md`, Adoption Strategy and Trade-offs
+1. P2, **TODO**, , `security/index.md`, Security Overview
+1. P2, **TODO**, , `security/https-tls-certificates.md`, HTTPS, TLS, and Certificates
+1. P2, **TODO**, , `security/certificate-pinning.md`, Certificate Pinning
+1. P2, **TODO**, , `security/keystore-secure-storage.md`, Android Keystore and Secure Storage
+1. P2, **TODO**, , `security/oauth-pkce-token-management.md`, OAuth, PKCE, and Token Management
+1. P2, **TODO**, , `tools/overview.md`, Tools Overview
+1. P2, **TODO**, , `tools/logging-diagnostics.md`, Logging and Diagnostics
+1. P2, **TODO**, , `tools/network-inspection.md`, Network Inspection
+1. P2, **TODO**, , `tools/memory-leaks.md`, Memory Leak Detection
+1. P2, **TODO**, , `tools/performance-profiling.md`, Performance Profiling and Benchmarking
+1. P2, **TODO**, , `tools/crash-monitoring.md`, Crash Monitoring
+1. P2, **TODO**, , `tools/qa-debug-builds.md`, QA and Debug Builds
+1. P2, **TODO**, , `tools/in-app-debug-menus.md`, In-app Debug Menus
