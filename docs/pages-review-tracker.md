@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-17
+1. Last tracker update: 2026-09-18
 1. Total articles tracked: 99
-1. Updated: 35
-1. TODO: 64
+1. Updated: 37
+1. TODO: 62
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 7       | 24   |
+| P1 | 31 | 9       | 22   |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -53,8 +53,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-16, `kotlin/classes-and-types.md`, Classes & Types, Corrected data-class constructor requirements; clarified shallow copying, sealed hierarchies, object initialization and thread safety, companion semantics, and value-class boxing; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-17, `kotlin/collections.md`, Collections, Clarified collection-type selection, read-only versus immutable semantics, defensive snapshots, transforming versus mutating operations, Sequence trade-offs, and mutable-key risks; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-17, `index.md`, Home, Added navigation for the AI, KMP, and Security domains and synchronized the English and Russian section lists.
-1. P1, **TODO**, , `kotlin/functions.md`, Functions
-1. P1, **TODO**, , `kotlin/generics.md`, Generics
+1. P1, **UPDATED**, 2026-09-18, `kotlin/functions.md`, Functions, Clarified extension resolution, function types and captured state, scope-function selection, inline/noinline/crossinline semantics, non-local returns, and reified type-erasure boundaries; synchronized EN/RU and removed repetition.
+1. P1, **UPDATED**, 2026-09-18, `kotlin/generics.md`, Generics, Clarified variance and type projections; added upper bounds, nullability, star projections, and type-erasure/reified limitations with Kotlin examples; synchronized EN/RU and removed repetition.
 1. P1, **TODO**, , `java/core.md`, Java Core
 1. P1, **TODO**, , `java/concurrency.md`, Java Concurrency
 1. P1, **TODO**, , `java/exceptions.md`, Java Exceptions

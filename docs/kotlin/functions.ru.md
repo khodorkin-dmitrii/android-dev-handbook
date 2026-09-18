@@ -1,69 +1,61 @@
 # Functions
 
-Раздел про функции Kotlin: extension functions, lambdas, higher-order functions, scope functions и inline-механизмы.
+В Kotlin функции являются значениями: их можно хранить, передавать и возвращать. На этом основаны callbacks, операции над коллекциями, builders, Compose API и повторно используемый control flow.
 
-## Функции
+## Расширения и функциональные значения
 
-### Extension functions
+### Функции-расширения
 
-Extension function позволяет добавить функцию к существующему типу без наследования и без изменения исходного класса.
-
-Например, `fun String.isEmail(): Boolean` можно вызывать как `"text".isEmail()`.
+Функция-расширение позволяет вызывать функцию на существующем типе без наследования и изменения самого типа:
 
 ```kotlin
-fun String.isEmail(): Boolean =
-    contains("@") && contains(".")
+fun String.looksLikeEmail(): Boolean =
+    contains("@") && substringAfterLast("@").contains(".")
 ```
 
-**Важно:** extension functions resolved statically по compile-time типу receiver, а не виртуально как overridden methods. Они не имеют доступа к private members класса.
+Это лишь простая проверка для UI, а не полноценная валидация email. Важнее то, что расширения разрешаются статически по объявленному типу получателя. Они не имеют доступа к его private- или protected-членам, а совместимая функция-член всегда имеет приоритет над расширением.
 
-Если member function и extension function имеют одинаковую сигнатуру, member выигрывает.
+Расширения делают API удобнее, но слишком общие расширения для типов вроде `String` засоряют автодополнение и скрывают доменный смысл. Держите их связными и размещайте рядом с владеющей функциональностью или API.
 
-**Коротко:** extensions improve readability and API ergonomics, but they do not actually modify the class and are statically dispatched.
+### Лямбды и функциональные типы
 
-### Lambda functions
-
-Lambda - это function literal, который можно сохранить в переменную, передать как аргумент или вернуть из функции.
-
-В Kotlin lambda часто используется в callbacks, collection operators, builders, Compose и coroutines APIs.
-
-Синтаксис: `{ value -> value * 2 }`. Если параметр один и его имя не указано, можно использовать `it`.
+Лямбда - это функциональный литерал, который можно сохранить, передать или вернуть:
 
 ```kotlin
-val doubled = numbers.map { it * 2 }
+val transform: (Int) -> Int = { value -> value * 2 }
+val doubled = numbers.map(transform)
 ```
 
-Lambda может захватывать переменные из внешней области видимости. Важно помнить, что захват mutable state может усложнить reasoning и threading.
+`(A, B) -> C` описывает функцию, принимающую `A` и `B` и возвращающую `C`. У `() -> Unit` нет параметров; `suspend () -> T` описывает приостанавливаемую функцию; `A.(B) -> C` имеет получатель `A` и часто используется в типобезопасных builders и DSL в стиле Compose.
 
-**Коротко:** lambda is an anonymous function value that enables concise callbacks and functional-style APIs.
+Для единственного выводимого параметра вместо явного имени можно использовать `it`. Вложенным или нетривиальным лямбдам лучше давать понятные имена параметров. Лямбды могут захватывать внешние переменные; захват изменяемого состояния усложняет рассуждения о lifecycle, конкурентности и recomposition.
 
-### Higher-order functions
+### Функции высшего порядка
 
-Higher-order function - это функция, которая принимает другую функцию как параметр или возвращает функцию.
+Функция высшего порядка принимает или возвращает функцию:
 
-Примеры в Kotlin: `map`, `filter`, `fold`, `onClick` callbacks, custom `retry(block: () -> T)`, Compose content lambdas.
+```kotlin
+fun repeatAction(times: Int, action: (index: Int) -> Unit) {
+    require(times >= 0)
+    repeat(times) { index -> action(index) }
+}
+```
 
-Такие функции позволяют отделить общий control flow от конкретного поведения, но могут создавать overhead из-за function objects.
+Они отделяют повторно используемый control flow от конкретного поведения. Функциональные значения могут создавать объекты и вызываться косвенно, хотя компилятор и runtime оптимизируют многие случаи. Используйте `inline` выборочно, когда его семантика или измеримый выигрыш оправданы.
 
-Для performance-sensitive случаев Kotlin предлагает inline functions, которые могут убрать часть overhead.
-
-**Коротко:** higher-order functions make behavior configurable by passing functions as values.
-
-## Scope и inline
+## Scope и inline-функции
 
 ### Scope functions: `let` / `run` / `with` / `apply` / `also`
 
-Scope functions временно создают scope вокруг объекта и помогают писать более компактный код. Они отличаются receiver-ом (`this` или `it`) и возвращаемым значением.
+Scope functions различаются главным образом способом доступа к контекстному объекту и возвращаемым значением:
 
-`let` использует `it` и возвращает результат lambda. Часто применяется для nullable chain и transformation.
-
-`run` использует `this` и возвращает результат lambda. Удобен для вычисления результата из нескольких операций над объектом.
-
-`with` похож на `run`, но вызывается как обычная функция: `with(obj) { ... }`. Возвращает результат lambda.
-
-`apply` использует `this` и возвращает сам объект. Часто используется для configuration или building.
-
-`also` использует `it` и возвращает сам объект. Удобен для side effects: logging, debug, additional actions.
+| Функция | Контекст | Возвращает | Типичное назначение |
+|---|---|---|---|
+| `let` | `it` | Результат лямбды | Null-safe преобразование |
+| `run` | `this` | Результат лямбды | Настройка и вычисление результата |
+| `with(obj)` | `this` | Результат лямбды | Группа вызовов на существующем объекте |
+| `apply` | `this` | Контекстный объект | Настройка объекта |
+| `also` | `it` | Контекстный объект | Дополнительный побочный эффект, например логирование |
 
 ```kotlin
 val user = User().apply {
@@ -71,31 +63,43 @@ val user = User().apply {
     isActive = true
 }
 
-val length = user.name?.let { it.length } ?: 0
+val length = user.name.takeIf { it.isNotBlank() }?.length ?: 0
 ```
 
-**Коротко:** use `let` / `run` / `with` when you need lambda result, `apply` / `also` when you need the original object; `this` vs `it` affects readability.
+Scope functions не добавляют новых возможностей языку. Выбирайте функцию, которая ясно показывает владельца и возвращаемое значение. Избегайте длинных цепочек, вложенных scopes и неоднозначных ссылок `this` или `it`.
 
-### `inline` / `noinline` / `crossinline`
+### `inline`, `noinline` и `crossinline`
 
-`inline` просит компилятор встроить тело функции и lambda-аргументы в место вызова. Это может уменьшить overhead higher-order functions и позволяет использовать reified type parameters.
+Модификатор `inline` просит компилятор встроить функцию и подходящие лямбда-аргументы в места вызова. Это может устранить расходы на функциональные объекты и виртуальные вызовы, разрешает нелокальные возвраты из подходящих лямбд и позволяет использовать `reified`. Компилятор может предупредить, если встраивание вряд ли принесёт пользу.
 
-`noinline` запрещает inline для конкретного lambda-параметра внутри inline function. Это нужно, если lambda надо сохранить в переменную, передать дальше или использовать как обычный function object.
+Внутри inline-функции:
 
-`crossinline` запрещает non-local return из lambda. Это нужно, когда lambda вызывается не напрямую, например внутри другого object или `Runnable`.
+- `noinline` оставляет лямбду обычным значением, чтобы её можно было сохранить или передать туда, где требуется объект.
+- `crossinline` запрещает нелокальный `return`; он нужен, если лямбда может выполняться из другого контекста, например внутри `Runnable`.
 
-**Важно:** `inline` не нужно использовать везде. Оно увеличивает bytecode size и полезно в основном для маленьких higher-order functions, performance-sensitive APIs и reified generics.
-
-**Коротко:** `inline` removes some lambda overhead and enables `reified`, `noinline` keeps a lambda as an object, `crossinline` forbids non-local returns.
+Встраивание может увеличить объём сгенерированного кода. Оно подходит прежде всего для небольших API высшего порядка и reified-утилит, а не как стандартная оптимизационная аннотация.
 
 ### `reified`
 
-`reified` type parameter можно использовать только в inline function. Он позволяет обращаться к generic type `T` в runtime, например `value is T` или `T::class`.
+Параметр типа может быть `reified` только у inline-функции:
 
-Обычно из-за type erasure generic type недоступен в runtime. `inline` + `reified` работает потому, что компилятор подставляет реальный тип в место вызова.
+```kotlin
+inline fun <reified T> Any?.isType(): Boolean = this is T
+```
 
-Пример применения: `inline fun <reified T> Gson.fromJson(json: String): T` или `filterIsInstance<T>()`.
+Поскольку конкретный тип подставляется в месте вызова, внутри можно использовать `T::class`, `is T` и API вроде `filterIsInstance<T>()` без явной передачи `Class<T>` или `KClass<T>`.
 
-Без `reified` часто приходится передавать `Class<T>` или `KClass<T>` явно.
+Это не сохраняет все вложенные аргументы типов во время выполнения. Например, проверка `value is List<T>` не доказывает runtime-типы всех элементов списка, потому что эти аргументы по-прежнему стираются.
 
-**Коротко:** `reified` keeps generic type information available inside an inline function despite JVM type erasure.
+## Связанные темы
+
+- [Коллекции](collections.ru.md)
+- [Обобщения](generics.ru.md)
+- [Основы Compose](../compose/basics.ru.md)
+
+## Источники
+
+- [Kotlin extensions](https://kotlinlang.org/docs/extensions.html)
+- [Higher-order functions and lambdas](https://kotlinlang.org/docs/lambdas.html)
+- [Scope functions](https://kotlinlang.org/docs/scope-functions.html)
+- [Inline functions](https://kotlinlang.org/docs/inline-functions.html)
