@@ -1,113 +1,119 @@
 # Java Core
 
-Core Java topics that matter in Android development: `Object`, object equality, collections, generics, access modifiers, type casting and singleton.
+Core Java topics for Android development: object equality, collections, generics, access control, casts, and singleton lifetime.
 
 ## Objects and Equality
 
-### `Object` class
+### The `Object` class
 
-`Object` is the base class for all reference types in Java. If a class does not explicitly extend another class, it implicitly extends `Object`.
+`Object` is the root of Java's class hierarchy. Ordinary classes without an explicit superclass extend it implicitly; arrays are objects too. Primitives are not objects, and interfaces do not extend `Object` as a superclass.
 
-Key `Object` methods: `toString()`, `equals()`, `hashCode()`, `getClass()`, `clone()`, `wait()`, `notify()` and `notifyAll()`. `wait()` / `notify()` are related to monitor locks and concurrency, while `clone()` is rarely used and requires caution.
+Useful methods include `toString()`, `equals()`, `hashCode()`, and `getClass()`. `Object.clone()` performs a shallow copy and normally requires `Cloneable`. Prefer explicit copying when ownership matters.
 
-**Important:** `finalize()` appears in old materials, but modern Java/Android code should not rely on it for cleanup. For resources, prefer `try-with-resources`, `close()`, lifecycle-aware cleanup or explicit resource management.
+`wait()`, `notify()`, and `notifyAll()` require ownership of the object's monitor; see [Java Concurrency](concurrency.md). Do not rely on `finalize()` for resource cleanup. Use explicit closing or `try-with-resources`; see [Java Exceptions](exceptions.md).
 
-### `equals()` / `hashCode()` contract
+### The `equals()` / `hashCode()` contract
 
-`equals()` defines logical equality of objects, while `hashCode()` returns a numeric hash used by `HashMap`, `HashSet` and other hash-based collections.
+For references, Java `==` compares identity. `Object.equals()` does the same by default; classes such as `String` override it to compare values. Use `Objects.equals(a, b)` for null-safe equality. Arrays need `Arrays.equals()` or `Arrays.deepEquals()` for content comparison.
 
-The main contract: if `a.equals(b) == true`, then `a.hashCode()` must be equal to `b.hashCode()`. The opposite is not guaranteed: the same `hashCode()` does not mean objects are equal, because collisions are possible.
+A valid `equals()` is reflexive, symmetric, transitive, and consistent while relevant state is unchanged; a non-null object must not equal `null`.
 
-If you override `equals()`, you almost always need to override `hashCode()`. Otherwise the object may behave incorrectly in `HashMap` / `HashSet`: it can be added, but later not found.
+**Equal objects must have equal hashes.** Unequal objects may share a hash. When defining value equality, implement `equals()` and `hashCode()` together using compatible state.
 
-### Class as a `HashMap` key
+### A class as a `HashMap` key
 
-If a custom class is used as a key in `HashMap`, it needs correct `equals()` and `hashCode()` implementations.
+Overriding these methods is necessary for custom **value equality**, not for every key class: inherited identity equality is valid when identity is intended.
 
-`HashMap` first uses `hashCode()` to choose a bucket, then uses `equals()` to check the specific key among possible collisions. If the contract is broken, `get()` and `remove()` may fail to find an object even with a logically equal key.
+`HashMap` uses a hash to narrow the search, then identifies a matching key by identity or equality. Keep all state involved in equality and hashing stable while the key is stored. Otherwise lookup or removal may fail even using the same object.
 
-In Kotlin, `data class` generates `equals()` and `hashCode()` automatically from primary constructor properties. But mutable fields in a `HashMap` key are dangerous: if a field participating in `hashCode()` changes after insertion, the key can become unreachable.
+Prefer immutable identifiers as keys. Kotlin data classes generate equality and hashing from primary-constructor properties, but mutable properties or mutable nested objects can still make unsafe keys.
 
 ## Generics and Collections
 
-### Generics and primitives in Java
+### Generics and primitives
 
-Java generics work only with reference types, so `List<int>` is impossible. Primitive values use wrapper types: `Integer`, `Long`, `Boolean` and so on.
+Java type arguments must be reference types: use `List<Integer>`, not `List<int>`. Boxing converts primitives to wrappers; unboxing reverses it. Unboxing `null` throws `NullPointerException`, and `==` between two wrappers compares identity, not numeric value.
 
-Because of type erasure, generic types mostly lose information about the concrete `T` at runtime, and operations work through `Object` and casts. Primitives are not `Object`, so they require boxing/unboxing.
+Type erasure replaces a type parameter with its leftmost bound, or `Object` when unbounded; the compiler inserts casts where needed. Generic signatures may remain as metadata, but an ordinary list does not carry an enforceable runtime element-type argument.
 
-On Android this matters for performance: collections such as `List<Integer>` can create extra allocations compared with `int[]` arrays or specialized structures.
+`List<Integer>` is not a subtype of `List<Number>`. Wildcards express permitted use:
+
+- `List<? extends Number>`: read elements as `Number`; cannot safely add a non-null element.
+- `List<? super Integer>`: add `Integer` values; reads have type `Object`.
+
+Avoid raw types and unchecked casts. See [Generics](../kotlin/generics.md) for variance and erasure concepts.
+
+Boxed collections may cost more memory and allocations than `int[]` or specialized structures. Boxing does not necessarily allocate a new object every time; optimize measured hot paths.
 
 ### `Iterator` and `Iterable`
 
-`Iterable` is an interface for objects that can be iterated. It contains the `iterator()` method, which returns an `Iterator`.
+`Iterable.iterator()` creates an iterator; `hasNext()` checks availability and `next()` returns the next element or throws `NoSuchElementException` when exhausted. Java enhanced `for` supports both `Iterable` and arrays; arrays do not implement `Iterable`.
 
-`Iterator` is the object that performs the traversal: `hasNext()` checks whether there is a next element, `next()` returns the next element, and `remove()` optionally removes the current element.
+For an iterator that supports removal, call `remove()` after `next()`, at most once per returned element. It may otherwise throw `UnsupportedOperationException` or `IllegalStateException`.
 
-Java `for-each` works on top of `Iterable`. Do not modify a collection directly while traversing it with a regular iterator, otherwise `ConcurrentModificationException` is possible. For removal during traversal, use `iterator.remove()` or safer alternatives.
+Structural changes outside an ordinary fail-fast iterator can cause `ConcurrentModificationException`, even in one thread. Detection is best-effort, not a thread-safety guarantee. Concurrent collections have their own iteration contracts.
 
-### Java Collections hierarchy
+### Collection interfaces and implementations
 
-`Collection` is the base interface for most Java collections: `List`, `Set`, `Queue` and `Deque`. `List` stores ordered elements, `Set` stores unique elements, and `Queue` / `Deque` describe queues.
+| Interface | Meaning | Common implementation |
+|---|---|---|
+| `List` | Indexed sequence, duplicates allowed | `ArrayList` |
+| `Set` | Unique elements | `HashSet` |
+| `Queue` | Processing queue; ordering depends on implementation | `PriorityQueue` |
+| `Deque` | Queue with operations at both ends; extends `Queue` | `ArrayDeque` |
+| `Map` | Unique keys mapped to values; not a `Collection` | `HashMap` |
 
-`Map` does not extend `Collection` because it stores key-value pairs rather than individual elements. `HashMap`, `TreeMap` and `LinkedHashMap` are different `Map` implementations with different ordering guarantees and complexity characteristics.
+`Collection` extends `Iterable`; `Map` exposes collection views through `keySet()`, `values()`, and `entrySet()`.
 
-**Key idea:** Java Collections Framework is a set of interfaces and implementations for storing groups of objects, where it is important to understand not only the API, but also operation complexity, element ordering and `equals()` / `hashCode()` requirements.
+`HashMap` has no iteration-order guarantee and offers expected constant-time basic lookup with well-distributed hashes. `LinkedHashMap` normally preserves insertion order and can use access order. `TreeMap` sorts by natural ordering or a comparator, with logarithmic lookup; comparison returning zero determines key equivalence.
+
+Unmodifiable collections are not necessarily immutable snapshots: a wrapper can reflect changes to its backing collection. See [Collections](../kotlin/collections.md).
 
 ## Types and Access
 
-### Java access modifiers
+### Access modifiers
 
-Java has `public`, `protected`, package-private and `private`.
+For class members:
 
-`public` is accessible from anywhere. `private` is accessible only inside the class. If no modifier is specified, package-private is used: access is allowed only within the same package.
+- `public`: accessible wherever the declaring type is accessible, subject to module boundaries where applicable.
+- `private`: accessible within the enclosing top-level class's body, including its nested classes.
+- No modifier: package-private, accessible in the same package. Subpackages are separate packages.
+- `protected`: accessible in the same package and under subclass-access rules outside it.
 
-In Java, `protected` means access from within the package and from subclasses. This is a common pitfall: `protected` does not mean only "available to subclasses".
+Outside the package, a subclass cannot use an arbitrary superclass instance to access a protected instance member: the qualifying reference must have the subclass's type or a subtype. Top-level classes support `public` or package-private, not `private` or `protected`. Interface members have different implicit modifiers.
 
 ### Type checks and casting: `instanceof`
 
-`instanceof` checks whether an object is an instance of a specific class or interface. It is a runtime type check before a safe downcast.
-
-`instanceof` is usually used when code works with a base type, but a specific subtype needs subtype-specific behavior. In modern design, polymorphism is often better, but the mechanism itself is still important to understand.
+`instanceof` tests runtime type compatibility and returns `false` for `null`. A cast changes the reference's compile-time type, not the object. An incompatible reference cast throws `ClassCastException`; casting `null` to a reference type yields `null`.
 
 ```java
-class Animal {
-}
-
-class Cat extends Animal {
-    void meow() {
-        System.out.println("meow");
+static void printText(Object value) {
+    if (value instanceof String) {
+        String text = (String) value;
+        System.out.println(text.length());
     }
 }
+```
 
-Animal animal = new Cat();
+With a toolchain and language level supporting pattern matching:
 
-if (animal instanceof Cat) {
-    Cat cat = (Cat) animal;
-    cat.meow();
+```java
+static void printText(Object value) {
+    if (value instanceof String text) {
+        System.out.println(text.length());
+    }
 }
 ```
 
-In newer Java versions, pattern matching for `instanceof` can be used:
+For Android, distinguish the JDK running Gradle, the configured Java language level, and available runtime APIs. Installing a newer JDK alone does not enable every feature or library API. Prefer polymorphism when repeated type checks duplicate subtype behavior.
+
+### Singleton implementation and lifetime
 
 ```java
-if (animal instanceof Cat cat) {
-    cat.meow();
-}
-```
-
-In Android projects, availability depends on the supported Java language features and toolchain.
-
-### Java Singleton implementation
-
-Java has no dedicated keyword for Singleton. The classic implementation uses a `private` constructor, `private static` instance and `public static getInstance()`.
-
-```java
-public class MySingleton {
+public final class MySingleton {
     private static final MySingleton INSTANCE = new MySingleton();
 
-    private MySingleton() {
-    }
+    private MySingleton() {}
 
     public static MySingleton getInstance() {
         return INSTANCE;
@@ -115,4 +121,16 @@ public class MySingleton {
 }
 ```
 
-This eager singleton is simple and thread-safe because of class loading. For lazy initialization, use the holder pattern or enum singleton. Double-checked locking is possible, but easy to implement incorrectly without `volatile`.
+This creates the instance during class initialization, not necessarily at app startup. Class-initialization guarantees safely publish it; they do not make later mutations thread-safe. A holder class can defer construction until its accessor is used. An enum is another option; double-checked locking requires `volatile` and correct synchronization.
+
+The static instance belongs to that loaded class, not all application processes. Android process death loses its state. Avoid retaining Activity or View references in long-lived objects; dependency injection can make ownership and test substitution clearer. See [DI Basics](../di/basics.md).
+
+## References
+
+- [Object contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
+- [Type erasure](https://docs.oracle.com/javase/tutorial/java/generics/erasure.html)
+- [HashMap](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/HashMap.html)
+- [JLS access control](https://docs.oracle.com/javase/specs/jls/se25/html/jls-6.html#jls-6.6)
+- [JLS enhanced for](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.14.2)
+- [JLS class initialization](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
+- [Java versions in Android builds](https://developer.android.com/build/jdks)

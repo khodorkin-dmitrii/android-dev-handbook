@@ -222,3 +222,5 @@ __marimo__/
 # Local Codex/project instructions
 AGENTS.md
 references/
+# Experimental TTS previews and debug text
+build/audio/
