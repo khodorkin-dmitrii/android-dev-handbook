@@ -64,7 +64,7 @@ On average, QuickSort works in `O(n log n)`, while the worst case is `O(n²)`. I
 
 ### What data structures do you know?
 
-Common data structures include arrays, dynamic arrays, linked lists, stacks, queues, deques, hash tables, sets, trees, heaps, tries, and graphs. In an interview, it is important not only to list them but also to understand their use cases and the complexity of key operations.
+Common data structures include arrays, dynamic arrays, linked lists, stacks, queues, deques, hash tables, sets, trees, heaps, tries, and graphs.
 
 ### What is the worst-case insertion complexity in a binary search tree?
 

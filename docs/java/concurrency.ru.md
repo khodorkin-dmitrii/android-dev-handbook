@@ -1,26 +1,20 @@
 # Java Concurrency
 
-Темы Java concurrency, которые помогают понимать legacy Java-код, Android internals и низкоуровневую модель многопоточности: `Thread`, `volatile`, `synchronized`, `wait()` / `notify()`, `Executor`, `Future`, atomic classes и `java.util.concurrent`.
+Основы многопоточности Java для Android и существующего Java-кода: `Thread`, видимость изменений, мониторы, исполнители задач, Future, атомарные значения и конкурентные коллекции. Java-примеры показывают исходные API; те же правила доступа к общему состоянию действуют и в Kotlin.
 
 ## Потоки и синхронизация
 
 ### `Thread`
 
-`Thread` - базовая единица выполнения в Java. Когда вызывается `start()`, JVM создаёт новый поток выполнения и вызывает `run()` внутри этого нового потока.
+`start()` запускает поток, выполняющий `run()`; прямой вызов `run()` остаётся обычным вызовом в текущем потоке. Запустить поток можно только один раз. Он завершается после окончания работы или выхода необработанного исключения.
 
-Поток завершится, когда метод `run()` дойдёт до конца или выбросит необработанное исключение. Останавливать поток через `stop()` нельзя: это unsafe API. Обычно используют cooperative cancellation через `interrupt()`, флаг, `Future` cancellation или higher-level concurrency APIs.
+Отмена кооперативная: `interrupt()` запрашивает реакцию, а не принудительно завершает поток. Код должен проверять прерывание или использовать прерываемые блокирующие вызовы. `sleep()`, `wait()` и `join()` могут выбросить `InterruptedException`, сбросив статус прерывания. Передайте исключение выше либо восстановите статус через `Thread.currentThread().interrupt()` и корректно завершите работу; не игнорируйте его молча. Не используйте `Thread.stop()`.
 
-Чтобы дождаться результата снаружи, можно использовать `join()`, `Future` / `Callable`, `CountDownLatch`, callback или shared state с правильной синхронизацией. В Android для нового Kotlin-кода чаще используют coroutines, но понимать raw `Thread` полезно для legacy-кода.
+`join()` ожидает завершения, но не возвращает результат работы. Для результата подходят `Callable` / `Future`. Блокирующее ожидание и длительная работа не должны выполняться в главном потоке Android.
 
 ### `volatile` vs `synchronized`
 
-`volatile` гарантирует visibility: если один thread записал новое значение volatile-поля, другие threads увидят актуальное значение. Также `volatile` задаёт happens-before relationship для чтения/записи этой переменной.
-
-Но `volatile` не делает составные операции атомарными. Например, `counter++` всё равно не thread-safe, потому что это чтение, изменение и запись.
-
-`synchronized` даёт mutual exclusion: только один thread может выполнять protected block на одном monitor. Также `synchronized` обеспечивает visibility изменений при входе и выходе из monitor. Для простого флага может хватить `volatile`, для критической секции и compound operations нужен `synchronized`, lock или atomic classes.
-
-Пример volatile-флага:
+Запись в `volatile`-поле находится в отношении happens-before к последующим чтениям этого поля. Это также публикует предшествующие записи, но не защищает будущие изменения объекта по ссылке и не делает `counter++` атомарным.
 
 ```java
 class SharedResource {
@@ -36,9 +30,9 @@ class SharedResource {
 }
 ```
 
-Здесь `volatile` подходит для простого флага: один thread меняет значение, другой гарантированно видит актуальное значение. Но если нужно выполнить compound operation, `volatile` уже недостаточно.
+Этому флагу нужна видимость изменений, а не составное обновление. Сам по себе флаг не пробуждает заблокированный поток.
 
-Пример synchronized-счётчика:
+`synchronized` объединяет взаимное исключение и видимость: освобождение монитора находится в отношении happens-before к последующему захвату **того же монитора**. Синхронизированные методы экземпляра блокируют `this`, статические - объект `Class` класса, в котором объявлены.
 
 ```java
 class SharedCounter {
@@ -54,82 +48,91 @@ class SharedCounter {
 }
 ```
 
-Здесь `synchronized` защищает критическую секцию: `increment()` выполняется атомарно относительно других synchronized-методов на том же объекте, а изменения видны другим threads после выхода из monitor.
+Чтения и записи используют один монитор. Несинхронизированный доступ не становится защищённым из-за наличия другого синхронизированного метода. Делайте критические секции короткими и соблюдайте единый порядок захвата блокировок, чтобы избежать взаимоблокировок. `Thread.sleep()` не освобождает мониторы и не обеспечивает видимость изменений.
 
 ### `wait()` / `notify()` / `notifyAll()`
 
-`wait()`, `notify()` и `notifyAll()` - низкоуровневые методы `Object` для координации threads через monitor.
+Эти методы `Object` требуют владения монитором целевого объекта; иначе возникает `IllegalMonitorStateException`.
 
-Их можно вызывать только внутри `synchronized`-блока или `synchronized`-метода на том же объекте-мониторе. `wait()` освобождает monitor и приостанавливает thread, `notify()` будит один ожидающий thread, `notifyAll()` будит всех ожидающих.
+- `wait()` освобождает этот монитор, но не остальные блокировки потока. Перед возвратом монитор захватывается снова.
+- `notify()` выбирает одного ожидающего без гарантии порядка; `notifyAll()` уведомляет всех ожидающих.
+- Уведомление не освобождает монитор и не передаёт выполнение ожидающему немедленно.
+- Всегда проверяйте условие в цикле `while`: ложные пробуждения и конкурирующие потребители могут сделать его неверным. Уведомление не сохраняется для будущих ожидающих.
 
-На практике `wait()` почти всегда используют в `while`-loop с проверкой условия, потому что возможны spurious wakeups. В современном коде чаще предпочитают `java.util.concurrent`, locks, queues, coroutines или reactive primitives.
+Читайте и изменяйте состояние условия под одним монитором. Вместо собственного протокола wait/notify предпочитайте `BlockingQueue`, защёлки или другие высокоуровневые инструменты.
 
-## Higher-level concurrency APIs
+## Высокоуровневые API многопоточности
 
 ### `Executor`
 
-`Executor` - abstraction для запуска задач без ручного управления `Thread`. Вместо `new Thread(...).start()` код передаёт `Runnable` в `Executor`, а конкретная реализация решает, где и когда его выполнить.
+`Executor.execute(Runnable)` отделяет задачу от политики выполнения. Он **не гарантирует** фоновый поток: реализация может выполнить задачу прямо в вызывающем потоке.
 
-Чаще всего используют `ExecutorService` и thread pools: fixed thread pool, cached thread pool, single-thread executor. Это позволяет переиспользовать threads, ограничивать параллелизм и управлять `shutdown()`.
+`ExecutorService` добавляет отправку задач, Future и управление жизненным циклом. Переиспользуйте пул с явно определённым владельцем. `shutdown()` отклоняет новые задачи, но позволяет завершиться принятым; сам вызов не ожидает завершения. `shutdownNow()` пытается прервать работу и возвращает незапущенные задачи; уже работающие могут продолжить выполнение, если игнорируют прерывание.
 
-**Коротко:** `Executor` отделяет описание задачи от механизма её выполнения. В Android raw `Executor` встречается в legacy/Java-коде, а в Kotlin-коде часто заменяется coroutines и `Dispatchers`.
+Размер пула - не единственное ограничение: фиксированный пул может накапливать неограниченную очередь задач, а кэширующий пул - создавать много потоков. Для постоянной нагрузки осознанно выбирайте размер очереди и поведение при отказе в приёме задач.
 
 ### `Callable` / `Future`
 
-`Runnable` описывает задачу без результата, а `Callable<T>` описывает задачу, которая возвращает значение или бросает exception.
+`Runnable` не возвращает результат; `Callable<T>` возвращает значение и может выбросить исключение. `Future<T>.get()` ожидает завершения и возвращает результат либо выбрасывает `ExecutionException` при ошибке задачи или `CancellationException` после отмены. Ожидающий поток также может быть прерван.
 
-`Future<T>` представляет результат асинхронной операции. Через `get()` можно дождаться результата, но важно помнить: `get()` блокирует текущий thread, поэтому его нельзя вызывать на Android main thread.
+`get(timeout, unit)` ограничивает ожидание, а не выполнение задачи; тайм-аут не отменяет её автоматически. `cancel(true)` может прервать работающую задачу, но не гарантирует остановку её кода. `isDone()` учитывает ошибку и отмену, а не только успех.
 
-`Future` также позволяет проверить состояние задачи и попытаться отменить её через `cancel()`. В современном Android-коде похожую роль часто играют `suspend` functions, `Deferred` или `Flow`, но `Callable` / `Future` важно знать для Java concurrency и legacy APIs.
+В Kotlin-коде Android корутины с определённой областью жизни и `Deferred` часто удобнее для результатов и отмены. Они не делают блокирующий Java-код автоматически отменяемым.
 
 ### Atomic
 
-Atomic classes из `java.util.concurrent.atomic` дают lock-free thread-safe операции над отдельными значениями: `AtomicInteger`, `AtomicBoolean`, `AtomicReference` и другие.
+`AtomicInteger`, `AtomicBoolean` и `AtomicReference` поддерживают атомарные операции над отдельными значениями без ручного захвата монитора. `incrementAndGet()` атомарен; отдельные вызовы `get()` и `set()` не образуют единого атомарного обновления. Не стоит обещать строго lock-free реализацию во всех случаях.
 
-Они полезны для простых counters, flags и compare-and-set логики. Например, `AtomicInteger.incrementAndGet()` атомарен, в отличие от обычного `counter++`.
+`compareAndSet(expected, update)` меняет значение, только если оно ещё соответствует ожидаемому; `AtomicReference` сравнивает ссылки по идентичности. Функции обновления в `updateAndGet()` могут вызываться повторно, поэтому не должны иметь побочных эффектов.
 
-Но Atomic не заменяет полноценную синхронизацию для сложного состояния из нескольких полей. Если нужно атомарно менять несколько связанных значений, лучше использовать `synchronized`, `Lock` или другую модель state management.
+Несколько атомарных полей не образуют транзакцию. Защищайте связанное состояние одной блокировкой либо атомарно заменяйте неизменяемый объект состояния. Атомарная ссылка не защищает изменения внутри объекта, на который указывает.
 
 ## ConcurrentHashMap
 
 ### Предварительные темы
 
-- [HashMap complexity](../engineering/algorithms-complexity.md#collections-arraylist-linkedlist-hashmap-and-hashset-complexity)
+- [Сложность HashMap](../engineering/algorithms-complexity.md#collections-arraylist-linkedlist-hashmap-and-hashset-complexity)
 
-`ConcurrentHashMap` - thread-safe реализация `Map` для shared maps, которые читают и обновляют несколько threads.
+`HashMap` требует внешней синхронизации при совместном доступе с конкурентными записями. `Collections.synchronizedMap(...)` сериализует доступ через обёртку; для обхода всё равно нужна блокировка этой обёртки.
 
-Обычный `HashMap` небезопасен при concurrent writes: один thread может увидеть stale data, перезаписать update другого thread или оставить map во внутренне неконсистентном состоянии. `Collections.synchronizedMap(...)` оборачивает каждую операцию одним общим lock, что просто, но часто снижает concurrency и всё равно требует ручной синхронизации во время итерации. `ConcurrentHashMap` обычно лучше подходит для активно разделяемых maps, потому что он спроектирован для concurrent access и даёт атомарные операции над map.
-
-Базовый пример:
+`ConcurrentHashMap` поддерживает конкурентный доступ и атомарные обновления отдельного ключа, но не транзакцию над всей картой:
 
 ```java
-ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();
 counts.put("success", 1);
 counts.putIfAbsent("failure", 0);
 counts.merge("success", 1, Integer::sum);
 ```
 
-**Важно:** отдельные операции thread-safe, но составные check-then-act sequences не становятся атомарными автоматически:
+Между отдельными вызовами `containsKey()` и `put()` возможна гонка. Для единого логического обновления используйте `putIfAbsent()`, `computeIfAbsent()`, `compute()` или `merge()`. Функции вычисления должны быть короткими; избегайте рекурсивных обновлений карты.
 
-```java
-if (!map.containsKey(key)) {
-    map.put(key, value);
-}
-```
-
-Между `containsKey()` и `put()` другой thread может обновить тот же key. Когда одно логическое обновление должно выполниться как единая операция, лучше использовать атомарные API: `putIfAbsent()`, `computeIfAbsent()`, `compute()` или `merge()`.
-
-### Связанные темы
-
-- `synchronized`
-- `volatile`
-- `ReadWriteLock`
+Ключи и значения `null` запрещены. Итераторы слабо согласованы, а не представляют снимок; агрегатные наблюдения вроде `size()` могут меняться при конкурентных обновлениях. Потокобезопасность карты не делает её изменяемые значения потокобезопасными.
 
 ## `java.util.concurrent`
 
-`java.util.concurrent` - пакет Java с high-level инструментами для многопоточности: `ExecutorService`, `Future`, `BlockingQueue`, `CountDownLatch`, `Semaphore`, `ConcurrentHashMap`, locks, atomic classes и др.
+Полезные инструменты помимо исполнителей и карт:
 
-Его цель - дать более безопасные и удобные примитивы, чем ручное управление `Thread`, `wait()` / `notify()` и shared mutable state.
+- `BlockingQueue`: передача данных от производителей потребителям, при необходимости с ограничением ёмкости.
+- `CountDownLatch`: одноразовое ожидание уменьшения счётчика до нуля.
+- `Semaphore`: ограничение конкурентного доступа через разрешения.
+- `Lock` / `ReadWriteLock`: явные политики блокировки; освобождайте захваченные блокировки в `finally`.
 
-**Главная мысль:** базу `Thread` / `synchronized` / `wait()` важно понимать, но в production чаще используют более высокоуровневые инструменты из `java.util.concurrent` или, в modern Android Kotlin, coroutines.
+В Android выносите блокирующие операции из главного потока и связывайте владение задачами с подходящим жизненным циклом. Перед использованием новых Java API проверяйте уровень Android API или поддержку desugaring.
+
+## Связанные темы
+
+- [Java Core](core.md)
+- [Основы корутин](../coroutines-flow/basics.md)
+- [Области жизни и отмена корутин](../coroutines-flow/scopes-cancellation.md)
+
+## Источники
+
+- [Модель памяти Java и мониторы](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [Thread](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html) и [Object wait/notify](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
+- [Android Executor](https://developer.android.com/reference/java/util/concurrent/Executor) и [ExecutorService](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+- [Future](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
+- [Атомарные классы](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
+- [ConcurrentHashMap](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
