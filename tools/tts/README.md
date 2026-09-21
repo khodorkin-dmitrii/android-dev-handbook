@@ -1,8 +1,8 @@
 # Experimental Russian Shorts audio
 
 This standalone tool prepares one speech-ready TXT per top-level section of
-`docs/shorts.ru.md`. It can also use `edge-tts` to narrate the **first complete
-Q&A item** as a separate preview. It does not change handbook articles or
+`docs/shorts.ru.md` or `docs/shorts.md`. It can also use `edge-tts` to narrate
+the **first complete Russian Q&A item** as a separate preview. It does not change handbook articles or
 publish audio.
 
 No API key, paid subscription or Microsoft Edge installation is required.
@@ -26,7 +26,7 @@ Dependencies and generated files stay separate from the handbook build.
 ## Generate chapter texts
 
 Each level-2 (`##`) section in `docs/shorts.ru.md` becomes one independent
-speech-ready TXT in `build/audio/`, in source order. This command makes no MP3
+speech-ready TXT in `build/audio/shorts-ru/`, in source order. This command makes no MP3
 and does not contact the speech service:
 
 ```powershell
@@ -53,6 +53,20 @@ complete answers with paragraph boundaries. The same Markdown cleanup and
 `build/audio/pronunciation-ru.json` substitutions used by the preview run independently
 for each chapter. Unexpected section headings are reported as unmapped; a
 missing expected section stops generation.
+
+## Generate English chapter texts
+
+The English source `docs/shorts.md` uses the same ten chapter boundaries and
+Markdown cleanup. This command writes `01-en-shorts-computer-science.txt` through
+`10-en-shorts-testing.txt` to `build/audio/shorts-eng/`:
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/generate.py --chapters-text-en
+```
+
+Only TXT files are generated. The Russian pronunciation map is never applied to
+this English source. The chapter title is spoken once before its questions and
+answers. Generated files remain ignored by Git under `build/`.
 
 ## Generate the preview
 

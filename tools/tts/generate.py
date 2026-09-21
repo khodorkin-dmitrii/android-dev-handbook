@@ -26,6 +26,18 @@ CHAPTER_FILES = {
     "Libraries and Build": "09-ru-shorts-libraries-build.txt",
     "Testing": "10-ru-shorts-testing.txt",
 }
+EN_CHAPTER_FILES = {
+    "Computer Science": "01-en-shorts-computer-science.txt",
+    "Kotlin": "02-en-shorts-kotlin.txt",
+    "Android basics": "03-en-shorts-android-basics.txt",
+    "Jetpack Compose": "04-en-shorts-jetpack-compose.txt",
+    "Coroutines and Flow": "05-en-shorts-coroutines-flow.txt",
+    "Architecture": "06-en-shorts-architecture.txt",
+    "Dependency Injection": "07-en-shorts-dependency-injection.txt",
+    "Networking": "08-en-shorts-networking.txt",
+    "Libraries and Build": "09-en-shorts-libraries-build.txt",
+    "Testing": "10-en-shorts-testing.txt",
+}
 
 
 def read_preview() -> str:
@@ -163,23 +175,26 @@ def chapter_speech_text(markdown: str) -> tuple[str, int]:
     return spoken, len(questions)
 
 
-def generate_chapter_texts() -> None:
-    chapters = split_chapters(SOURCE.read_text(encoding="utf-8"))
+def generate_chapter_texts(
+    source: Path = SOURCE,
+    chapter_files: dict[str, str] = CHAPTER_FILES,
+    output_dir: Path = ROOT / "build/audio/shorts-ru",
+) -> None:
+    chapters = split_chapters(source.read_text(encoding="utf-8"))
     titles = [title for title, _ in chapters]
     if len(titles) != len(set(titles)):
         raise ValueError("Duplicate chapter headings in Russian Shorts")
-    missing = set(CHAPTER_FILES) - set(titles)
+    missing = set(chapter_files) - set(titles)
     if missing:
         raise ValueError(f"Missing expected chapters: {sorted(missing)}")
-    output_dir = ROOT / "build/audio"
     output_dir.mkdir(parents=True, exist_ok=True)
     for title, markdown in chapters:
-        filename = CHAPTER_FILES.get(title)
+        filename = chapter_files.get(title)
         if filename is None:
             print(f"Unmapped chapter: {title}")
             continue
         text, count = chapter_speech_text(markdown)
-        text = apply_russian_pronunciation(text, SOURCE)
+        text = apply_russian_pronunciation(text, source)
         output = output_dir / filename
         output.write_text(text, encoding="utf-8", newline="\n")
         print(f"{output}: {count} Q&A, {len(text)} characters")
@@ -204,8 +219,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--text-only", action="store_true",
                         help="Write debug text without contacting the speech service")
-    parser.add_argument("--chapters-text", action="store_true",
-                        help="Write one speech-ready TXT per Russian Shorts chapter; no audio")
+    chapters = parser.add_mutually_exclusive_group()
+    chapters.add_argument("--chapters-text", action="store_true",
+                          help="Write one TXT per Russian Shorts chapter; no audio")
+    chapters.add_argument("--chapters-text-en", action="store_true",
+                          help="Write one TXT per English Shorts chapter; no audio")
     parser.add_argument("--voice", default=DEFAULT_VOICE,
                         help=f"Microsoft voice name (default: {DEFAULT_VOICE})")
     parser.add_argument("--rate", default="-5%", help="Speech rate (default: -5%%)")
@@ -216,6 +234,13 @@ def main() -> None:
     args = parser.parse_args()
     if args.chapters_text:
         generate_chapter_texts()
+        return
+    if args.chapters_text_en:
+        generate_chapter_texts(
+            ROOT / "docs/shorts.md",
+            EN_CHAPTER_FILES,
+            ROOT / "build/audio/shorts-eng",
+        )
         return
     for name, pattern in (("rate", r"[+-]\d+%"), ("volume", r"[+-]\d+%"),
                           ("pitch", r"[+-]\d+Hz")):

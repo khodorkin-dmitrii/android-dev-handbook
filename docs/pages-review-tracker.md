@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-20
+1. Last tracker update: 2026-09-21
 1. Total articles tracked: 99
-1. Updated: 39
-1. TODO: 60
+1. Updated: 40
+1. TODO: 59
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 11      | 20   |
+| P1 | 31 | 12      | 19   |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -57,7 +57,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-18, `kotlin/generics.md`, Generics, Clarified variance and type projections; added upper bounds, nullability, star projections, and type-erasure/reified limitations with Kotlin examples; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-19, `java/core.md`, Java Core, Clarified object equality, collections, generics and boxing, access control, casts, and singleton lifetime; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-09-20, `java/concurrency.md`, Java Concurrency, Clarified visibility and monitor semantics, interruption, wait/notify, executor lifecycle, Future cancellation, atomic operations, and ConcurrentHashMap guarantees; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `java/exceptions.md`, Java Exceptions
+1. P1, **UPDATED**, 2026-09-21, `java/exceptions.md`, Java Exceptions, Clarified checked and unchecked exception boundaries, catch ordering, finally behavior, try-with-resources and suppressed exceptions, cause preservation, Kotlin interop, and Android failure handling; synchronized EN/RU.
 1. P1, **TODO**, , `java/jvm-android-runtime.md`, JVM / Android Runtime
 1. P1, **TODO**, , `android/storage.md`, Storage
 1. P1, **TODO**, , `android/context-resources.md`, Context & Resources
