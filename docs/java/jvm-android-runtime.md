@@ -1,29 +1,86 @@
 # JVM / Android Runtime
 
-This section covers the relationship between Java, JVM bytecode, DEX and Android Runtime. It helps explain why Java/Kotlin code can look familiar but run on Android differently from a regular desktop/server Java application.
+Java and Kotlin source can target Android, but an Android app does not run inside a conventional desktop/server JVM. The build toolchain produces DEX bytecode, and Android Runtime (ART) executes it using interpretation and compiled native code.
 
-## Runtime and Compilation
+## From source code to DEX
 
-### Why cannot regular Java bytecode run directly on Android?
+A simplified Android build pipeline is:
 
-Android does not run regular `.class` files directly like a standard JVM. Java/Kotlin code is first compiled to JVM bytecode, then the Android toolchain converts it to DEX (Dalvik Executable).
+```text
+Java/Kotlin source
+        ↓ javac / Kotlin compiler
+JVM bytecode (.class files)
+        ↓ D8 or R8 + desugaring
+DEX bytecode (.dex files)
+        ↓ packaging
+APK installed on a device
+        ↓ ART
+interpreted or compiled machine code
+```
 
-DEX is the bytecode format for Android Runtime (ART), optimized for the mobile environment and packaging into APK/AAB. So Java source code and many Java libraries can be used if they are compatible with Android APIs, but raw `.class` bytecode itself is not the final runtime format of an Android application.
+Java libraries usually arrive as JAR or AAR artifacts containing `.class` files. During the Android build, D8 converts JVM bytecode to DEX. In optimized builds, R8 can additionally shrink, optimize, and obfuscate code before producing DEX.
 
-**In short:** Android uses ART and DEX, not a regular JVM runtime for `.class` files.
+An Android App Bundle (`.aab`) is a publishing format, not the file ART directly executes. Google Play uses it to generate APKs tailored to a device; installed APKs contain the DEX and resources used at runtime.
 
-### JIT compilation
+One DEX file has reference limits, including the well-known 65,536 method-reference limit. Apps that exceed them use multiple DEX files. Modern Android build tools handle multidex automatically for `minSdk` 21 and above; older versions need legacy multidex support.
 
-JIT (Just-In-Time) compilation is the compilation of frequently executed bytecode sections into native machine code while the program is running.
+## JDK, language level, and Android APIs
 
-The idea is that the runtime can first interpret code, collect profiling information, and then optimize hot paths. This improves performance of repeated code but adds runtime overhead and warm-up cost.
+Three versions that are often confused have different roles:
 
-**In short:** JIT optimizes hot code at runtime, unlike AOT where compilation happens ahead of time.
+- **Gradle JDK** runs Gradle and the Android Gradle Plugin during the build.
+- **Java/Kotlin language and bytecode targets** control which source features and JVM bytecode level compilers produce.
+- **`compileSdk` and `minSdk`** determine which Android APIs are visible at compile time and available on devices.
 
-### AOT / JIT in Android ART
+Using a newer JDK to build the app does not make every JDK API available on Android. Android provides its own Java-compatible core libraries. A library must use APIs supported by the target Android versions or supplied through supported desugaring/backports.
 
-ART (Android Runtime) runs Android applications from DEX bytecode and uses a combination of interpretation, JIT and AOT/profile-guided compilation.
+### Desugaring
 
-AOT (Ahead-Of-Time) compiles code ahead of time, for example during installation or background optimization. JIT compiles hot code at runtime based on the real usage profile.
+Desugaring rewrites newer language constructs into forms older Android runtimes understand during D8/R8 compilation. Core library desugaring can also package implementations of selected newer Java APIs and rewrite calls to them.
 
-Practical meaning: Android tries to balance startup time, compiled code size, memory usage and runtime performance. So it is more accurate to say that modern ART uses a hybrid approach, not only AOT or only JIT.
+Desugaring is not a universal JVM compatibility layer: it supports specific features and APIs. Always check Android documentation and `minSdk` requirements when adopting a Java API.
+
+## ART execution model
+
+### Interpretation, JIT, and AOT
+
+ART executes DEX using a hybrid strategy:
+
+- **Interpretation** can start code without first compiling all of it.
+- **JIT (Just-In-Time)** compiles frequently executed code while the app runs and records profiling information.
+- **AOT (Ahead-Of-Time)** compiles selected code before execution, including profile-guided work performed during installation or background device optimization.
+
+The exact strategy varies by Android version and device state. It balances startup latency, storage occupied by compiled code, memory use, installation time, and steady-state performance. It is therefore inaccurate to describe modern ART as purely interpreted, JIT-only, or AOT-only.
+
+Baseline Profiles provide ART with likely hot code paths from the first launch, so selected code can be compiled before real users exercise it. They complement runtime profiles rather than replacing JIT or guaranteeing that all application code is AOT-compiled.
+
+## Processes, Zygote, and memory
+
+Android normally runs each app in its own Linux process with its own ART instance and sandboxed UID. Components from the same application usually share that process, but Android can create or terminate the process according to system needs; an application object is not a permanent system-wide singleton.
+
+New app processes are commonly forked from **Zygote**, a pre-initialized process containing framework classes and resources. Copy-on-write memory sharing makes process startup and common framework memory more efficient.
+
+ART uses garbage collection for managed Java/Kotlin objects. Garbage collection removes objects that are no longer reachable; it does not close files, sockets, cursors, or other external resources. Close those deterministically. Allocation rate, retained references, and GC pauses can still affect frames and responsiveness, so diagnose memory and performance with measurements rather than manual `System.gc()` calls.
+
+## Practical implications
+
+- Do not assume behavior or APIs merely because code works on a desktop JVM.
+- Keep build JDK compatibility separate from device API compatibility.
+- Treat reflection, JNI, dynamic class loading, and serialization carefully when R8 is enabled; required code may need precise keep rules.
+- Measure release builds because DEX layout, R8 optimization, profiles, and ART compilation can make them behave differently from debug builds.
+- Use Baseline Profiles and benchmarks for important startup and interaction paths instead of trying to control JIT/AOT directly.
+
+## Related topics
+
+- [Java Core](core.md)
+- [Gradle & Build System](../android/gradle-build-system.md)
+- [Performance & Memory](../android/performance-memory.md)
+
+## References
+
+- [Android Runtime and Dalvik](https://source.android.com/docs/core/runtime)
+- [Java versions in Android builds](https://developer.android.com/build/jdks)
+- [Java language features and API desugaring](https://developer.android.com/studio/write/java8-support)
+- [R8 app optimization](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization)
+- [Baseline Profiles](https://developer.android.com/topic/performance/baselineprofiles/overview)
+- [Android memory management](https://developer.android.com/topic/performance/memory-overview)
