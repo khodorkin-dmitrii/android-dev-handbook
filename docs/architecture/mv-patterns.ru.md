@@ -56,7 +56,20 @@ Intent/Action -> processing -> new State -> View
 - **Reducer** - функция, создающая новое состояние из предыдущего state и результата;
 - **Processor/Actor** - необязательный компонент для asynchronous work и side effects.
 
-Reducer должен оставаться детерминированным: одинаковые old state и result дают одинаковый new state. Сетевые запросы, storage и timers выполняются за его пределами, а их результаты возвращаются в state pipeline.
+Идея reducer исторически связана с Flux и особенно Redux, но не ограничивается Redux или MVI. Концептуально она описывает явный переход состояния:
+
+```text
+State + Action/Result -> New State
+```
+
+Строгий reducer - чистая функция: одинаковые прежнее состояние и входные данные дают одинаковое новое состояние без side effects. Сетевые запросы, storage и timers выполняются за его пределами, а их результаты возвращаются в state pipeline.
+
+```kotlin
+fun reduce(state: UiState, action: Action): UiState =
+    when (action) {
+        Action.Retry -> state.copy(isLoading = true, error = null)
+    }
+```
 
 MVI делает transitions предсказуемыми и удобными для логирования и тестирования, особенно на сложных экранах. Строгая реализация может породить множество actions, results и processors, поэтому её сложность должна соответствовать фиче.
 
@@ -85,6 +98,16 @@ ViewModel handles the action and updates UiState
 ```
 
 Не каждой фиче нужны единая функция `dispatch(action)` и формальный reducer. Методы вроде `onRetry()` тоже соответствуют UDF, если actions движутся вверх, а state - вниз.
+
+В современном Android переходы состояния в стиле reducer часто используют без отдельного класса `Reducer`:
+
+```kotlin
+fun onRetry() {
+    _state.update { it.copy(isLoading = true, error = null) }
+}
+```
+
+Такой подход полезен, когда явные и предсказуемые переходы состояния упрощают тестирование сложного state-heavy экрана. Простому экрану не нужна Redux-style инфраструктура только ради обновления immutable state.
 
 Долговечные результаты следует представлять как state. Для действительно одноразовых UI effects нужно осознанно выбрать delivery semantics, потому что неактивный UI может пропустить событие в памяти. Обработка navigation, snackbar и похожих эффектов должна соответствовать общей политике проекта по UI state.
 

@@ -1,6 +1,6 @@
 # Storage
 
-Storage in Android includes low-level SQLite, Room as a modern abstraction, DataStore for settings and legacy `SharedPreferences`.
+Choose storage by the shape and ownership of the data: Room for relational records, DataStore for small settings, app-specific files for data used only by the app, and shared storage for user-visible media or documents. Persistence across app restarts is different from temporary UI state.
 
 ## SQLite and Room
 
@@ -8,96 +8,46 @@ Storage in Android includes low-level SQLite, Room as a modern abstraction, Data
 
 ![SQLite cheat sheet](../assets/images/android/sql_cheat_sheet.png)
 
-`SQLiteOpenHelper` - a basic Android helper for manually creating, opening and migrating a SQLite database.
+`SQLiteOpenHelper` manages creation, opening, and version upgrades when an app works directly with `SQLiteDatabase`. A subclass specifies a database name and version and implements `onCreate()` and `onUpgrade()`. Constructing the helper does not open the database; the first `getReadableDatabase()` or `getWritableDatabase()` call does.
 
-It is used when an app works directly with `SQLiteDatabase` and SQL queries: creates tables, runs query/insert/update/delete operations and manages schema versions.
-
-A subclass usually defines the database name and version, and implements `onCreate()` and `onUpgrade()`.
-
-**Important:** the helper object itself is created quickly, but the database is actually opened only when `getReadableDatabase()` or `getWritableDatabase()` is called.
-
-In modern Android, Room is usually preferred because it provides compile-time SQL validation, DAO, migrations and less boilerplate.
-
-**In short:** `SQLiteOpenHelper` is a low-level helper for managing SQLite database creation and migrations; Room is usually preferred for new production code.
+Use Room for most new relational databases. It still uses SQLite, but validates supported SQL queries at compile time and provides DAOs and migration support. Direct SQLite remains relevant in existing code and when lower-level control is needed.
 
 ### `onCreate()` / `onUpgrade()`
 
-`onCreate()` is called when the database is created for the first time. This is usually where tables, indexes, triggers and, when needed, initial data are created.
+`onCreate()` initializes a new database, typically creating tables and indexes. `onUpgrade()` runs when an existing database has an older version than the version requested by the helper. The default downgrade behavior throws unless `onDowngrade()` is implemented.
 
-`onUpgrade()` is called when the database version in code becomes higher than the version of the existing database on the device.
-
-The main task of `onUpgrade()` is to carefully migrate the schema and preserve user data. A simple `DROP TABLE` + `CREATE TABLE` is acceptable only for cache/test data or when data loss is intentionally allowed.
-
-Migrations must account for all old versions: a user may update from version 1 directly to version 5.
-
-**Important:** after release, you cannot simply "rewrite" an already published migration step and expect it to run again on devices where it has already been applied.
-
-**In short:** `onCreate()` creates the initial schema, `onUpgrade()` migrates an existing database between versions and must be written carefully to avoid data loss.
+Plan a migration path from every supported old version: a user may skip several app releases. Preserve data unless it is explicitly disposable; dropping and recreating user tables loses it. Test upgrades using real schemas from previous releases. Changing the code for a migration that has already run will not rerun it on upgraded devices. Room has its own explicit and automatic migration mechanisms; do not confuse them with `SQLiteOpenHelper.onUpgrade()`.
 
 ### `getReadableDatabase()` / `getWritableDatabase()`
 
-`getReadableDatabase()` and `getWritableDatabase()` return `SQLiteDatabase`, but differ by opening intent.
+`getWritableDatabase()` opens a read/write database or throws if this is impossible. `getReadableDatabase()` generally returns the same read/write database but can fall back to read-only, for example when the disk is full. Do not assume its result is writable.
 
-`getWritableDatabase()` opens the database for reading and writing. On first open, it may call `onCreate()`, `onUpgrade()` and `onOpen()`.
-
-`getReadableDatabase()` usually returns the same read/write database object when possible. But if there is a problem, for example full disk, it may return a read-only database.
-
-Both methods may take a long time, especially when creating or migrating the database, so they should not be called on the main thread.
-
-After successful opening, the database object is cached by the helper. Usually, you do not need to open/close the database for every small operation, but you should close the helper/database when they are no longer needed.
-
-For several related operations, use a transaction to preserve consistency and improve performance.
-
-**In short:** `getWritableDatabase()` opens a read/write database, `getReadableDatabase()` may return read-only in fallback cases, and both can block during open or migration.
+Opening may create or upgrade a database and block, so call these methods off the main thread. Reuse an appropriately scoped helper instead of opening and closing it for every query; close it when its owner is finished. Group related writes in a transaction to preserve consistency.
 
 ### Room
 
-Room - a Jetpack persistence library on top of SQLite that provides a more convenient and safer API for a local database.
+Room models tables with `@Entity`, database operations with `@Dao`, and the database entry point with `@Database`. It suits offline records, caches, history, and other structured data with queries and relationships. It does not remove the need to design indexes and migrations.
 
-Main parts of Room: `@Entity` describes a table, `@Dao` describes queries/insert/update/delete operations, and `@Database` connects entities and DAO in a database class.
-
-Room validates SQL at compile time, reduces boilerplate and integrates well with Kotlin Coroutines and `Flow`.
-
-Room fits structured relational data: cache, offline-first data, user-generated content, history and relational entities.
-
-**Important:** Room still uses SQLite under the hood, so schema design, indexes, transactions and migrations still matter.
-
-By default, Room does not allow database operations on the main thread, and that is good: queries should go through suspend functions, `Flow` or a background dispatcher.
-
-**In short:** Room is the recommended higher-level abstraction over SQLite for structured local data, with DAO, entities, compile-time SQL checks and migration support.
+Room disallows main-thread database access by default. Use `suspend` DAO functions for one-shot operations and `Flow` for observable queries; Room executes these asynchronous queries off the main thread. For multiple related writes, use a transaction. Never use destructive migration for data users expect to keep.
 
 ## Preferences
 
 ### DataStore
 
-DataStore - a Jetpack API for storing small persistent data asynchronously and more safely than `SharedPreferences`.
+DataStore stores small persistent values with coroutines and `Flow`. Preferences DataStore uses keys without a fixed schema; Proto DataStore stores typed messages defined with Protocol Buffers. Reads expose a `Flow`; Preferences DataStore uses `edit()` and Proto DataStore uses `updateData()` for transactional updates.
 
-There are two main variants: Preferences DataStore for key-value data without a predefined schema, and Proto DataStore for typed objects through Protocol Buffers.
-
-DataStore uses coroutines and `Flow`, so reads usually look like a `Flow` of settings, while writes are performed through suspend `updateData()` / `edit()`.
-
-It works well for user settings, feature flags, onboarding flags, last selected option and other small preferences.
-
-DataStore is not intended for large relational data, partial updates of complex structures or referential integrity. Room is better for that.
-
-**Important:** for one DataStore file, there should be one instance in the process, usually through a delegate or DI singleton.
-
-**In short:** DataStore is a modern asynchronous replacement for `SharedPreferences` for small key-value or typed settings, while Room is better for complex structured data.
+Use it for settings and small pieces of app state, such as a theme or onboarding flag. Use Room for relational data, large datasets, or queries over individual records. Keep one DataStore instance per file within a process; if multiple processes must access the same file, use the multiprocess variant consistently. DataStore itself is not an encryption mechanism.
 
 ### SharedPreferences
 
-`SharedPreferences` - an old Android API for storing a small set of key-value data in an XML file.
+`SharedPreferences` stores a small set of key-value settings and is common in older Android code. `apply()` updates the in-memory state immediately and schedules disk persistence without reporting failure. `commit()` writes synchronously and returns a success flag. Avoid `commit()` on the main thread; pending `apply()` disk writes can also stall lifecycle transitions and contribute to ANRs.
 
-It fits simple primitives and `String`: flags, small settings, selected mode and first launch marker.
+For new settings, prefer DataStore. When migrating an existing preferences file, use DataStore migration support and verify defaults and key mapping. Neither plain `SharedPreferences` nor DataStore makes secrets secure by itself; choose a suitable protected storage design for sensitive data.
 
-For writing, there are `apply()` and `commit()`. `apply()` writes changes asynchronously and does not return a result; `commit()` writes synchronously and returns boolean success.
+## Files and shared storage
 
-`commit()` can block the calling thread, so it should not be used on the main thread unless necessary.
+Store files needed only by your app in app-specific storage. Use `filesDir` for persistent private files and `cacheDir` for disposable cache; the system may remove cache files, and app-specific files are generally removed on uninstall. App-specific external storage is also available for large app-owned files, but its volume may be unavailable.
 
-`SharedPreferences` is not intended for large data, lists of complex objects, relational data or frequent concurrent writes.
+To publish photos and videos outside your app, use `MediaStore`; to let users select existing photos or videos, use the system photo picker. For documents chosen or created by the user, use the Storage Access Framework. Treat returned `content://` URIs as handles to content rather than assuming a filesystem path. Access rules and permissions depend on the operation and Android version.
 
-`SharedPreferences` does not encrypt data by itself. Sensitive data needs a separate secure storage approach, not a regular preferences file.
-
-In modern Android, DataStore is usually chosen for new settings, but `SharedPreferences` is still common in legacy code.
-
-**In short:** `SharedPreferences` is a simple legacy key-value storage API; use it for small preferences, prefer DataStore for modern asynchronous settings storage.
+See the [Android storage overview](https://developer.android.com/training/data-storage) for API selection and the [Android Keystore guidance](https://developer.android.com/privacy-and-security/keystore) for cryptographic keys.

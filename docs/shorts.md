@@ -334,9 +334,21 @@ Common options are `Mutex` for protecting suspending code, atomic operations for
 
 Flow is an asynchronous stream of values from the coroutines ecosystem. A regular `Flow` is cold: every collector starts the upstream again.
 
+### What is `Channel` in Kotlin Coroutines?
+
+`Channel` is a hot coroutine primitive for sending values between coroutines. It behaves like a queue with suspending `send` and `receive` operations, and each element is normally consumed by one receiver.
+
 ### How is `Channel` different from `Flow`?
 
 A regular `Flow` is usually a cold declarative stream started by each collector. `Channel` is a hot point-to-point communication primitive: it exists independently of receivers, and each sent element is consumed by only one of them.
+
+### How is `Channel` different from `SharedFlow`?
+
+`Channel` normally delivers each element to one competing receiver. `SharedFlow` broadcasts an emission to all active collectors and can replay values according to its configuration.
+
+### When should `Channel` be used instead of `SharedFlow`?
+
+Use `Channel` when queue or single-consumer semantics matter, such as producer-consumer pipelines, work distribution or actor-like communication. Use `SharedFlow` when every active collector should observe the same emission; neither primitive guarantees durable UI-event delivery across process death.
 
 ### What is the difference between Flow and a suspend function?
 
@@ -411,6 +423,18 @@ MVVM is usually simpler and works well for most screens. MVI is useful for compl
 ### Is a separate framework required for MVI?
 
 No. An MVI-style approach can be implemented with a regular `ViewModel`, `StateFlow`, immutable `UiState`, and sealed actions or effects.
+
+### What is a reducer?
+
+A reducer computes a new state from the previous state and an action or result: `State + Action -> New State`. In a strict Redux-style design it is a pure function, which makes transitions predictable and easy to test.
+
+### Is a reducer only a Redux or MVI concept?
+
+No. The term is historically associated with Flux and Redux and is common in MVI, but MVVM can also use immutable `UiState`, actions and reducer-like transitions. Not every screen needs a formal reducer.
+
+### What does reducer-like state management mean in modern Android?
+
+It means updating immutable state through explicit transitions, often directly in a `ViewModel` with `_state.update { it.copy(...) }`. The code gains reducer benefits without requiring a dedicated `Reducer` class or Redux-style framework.
 
 ### What is Clean Architecture?
 

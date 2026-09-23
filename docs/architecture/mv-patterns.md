@@ -56,7 +56,20 @@ Typical elements are:
 - **Reducer** - a function that produces new state from previous state and a result;
 - **Processor/Actor** - optional asynchronous work and side effects.
 
-A reducer should remain deterministic: the same old state and result should produce the same new state. Network calls, storage and timers run outside it, and their results return to the state pipeline.
+The reducer idea is historically associated with Flux and especially Redux, but it is not exclusive to either Redux or MVI. Conceptually, it describes an explicit state transition:
+
+```text
+State + Action/Result -> New State
+```
+
+A strict reducer is a pure function: the same old state and input produce the same new state, without performing side effects. Network calls, storage and timers run outside it, and their results return to the state pipeline.
+
+```kotlin
+fun reduce(state: UiState, action: Action): UiState =
+    when (action) {
+        Action.Retry -> state.copy(isLoading = true, error = null)
+    }
+```
 
 MVI makes transitions predictable and easy to log or test, especially on complex screens. Strict implementations can add many actions, results and processors, so the ceremony should match the feature.
 
@@ -85,6 +98,16 @@ ViewModel handles the action and updates UiState
 ```
 
 Not every feature needs a single `dispatch(action)` function or a formal reducer. Named methods such as `onRetry()` still follow UDF when actions move upward and state moves downward.
+
+Modern Android code often uses reducer-like transitions without a dedicated `Reducer` class:
+
+```kotlin
+fun onRetry() {
+    _state.update { it.copy(isLoading = true, error = null) }
+}
+```
+
+This is useful when explicit, predictable and testable transitions clarify a state-heavy screen. Simple screens do not need Redux-style infrastructure merely to update immutable state.
 
 Durable outcomes should be represented in state. Truly transient UI effects require deliberately chosen delivery semantics because an inactive UI can miss an in-memory event. Keep navigation, snackbar and similar handling consistent with the project's UI-state policy.
 

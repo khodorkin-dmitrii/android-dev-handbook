@@ -334,9 +334,21 @@ Cancellation кооперативная: coroutine реагирует на от�
 
 Flow - асинхронный поток значений из coroutines ecosystem. Обычный `Flow` cold: каждый collector заново запускает upstream.
 
+### Что такое `Channel` в Kotlin Coroutines?
+
+`Channel` - hot coroutine primitive для передачи значений между coroutines. Он похож на очередь с suspending operations `send` и `receive`, а каждый элемент обычно получает один receiver.
+
 ### Чем `Channel` отличается от `Flow`?
 
 Обычный `Flow` чаще всего является cold declarative stream и запускается отдельно для каждого collector-а. `Channel` - hot primitive для point-to-point передачи: он существует независимо от receivers, а каждый отправленный элемент получает только один из них.
+
+### Чем `Channel` отличается от `SharedFlow`?
+
+`Channel` обычно передаёт каждый элемент одному из конкурирующих receivers. `SharedFlow` рассылает каждое значение всем активным collectors и может повторять его в соответствии с настройкой replay.
+
+### Когда использовать `Channel` вместо `SharedFlow`?
+
+`Channel` подходит, когда важна семантика очереди или одного consumer-а: для producer-consumer pipelines, распределения работы и actor-like коммуникации. `SharedFlow` выбирают, когда одно значение должны увидеть все активные collectors; ни один из этих механизмов не гарантирует надёжную доставку UI events после process death.
 
 ### Чем Flow отличается от suspend-функции?
 
@@ -411,6 +423,18 @@ MVVM обычно проще и подходит большинству экра
 ### Нужен ли отдельный framework для MVI?
 
 Нет. MVI-style подход можно реализовать на обычном `ViewModel`, `StateFlow`, immutable `UiState` и sealed actions/effects.
+
+### Что такое reducer?
+
+Reducer вычисляет новое состояние на основе предыдущего state и action или result: `State + Action -> New State`. В строгом Redux-style подходе это чистая функция, поэтому переходы состояния остаются предсказуемыми и удобными для тестирования.
+
+### Reducer относится только к Redux или MVI?
+
+Нет. Термин исторически связан с Flux и Redux и часто встречается в MVI, но MVVM тоже может использовать immutable `UiState`, actions и переходы состояния в стиле reducer. Формальный reducer нужен не каждому экрану.
+
+### Что означает reducer-like управление состоянием в современном Android?
+
+Это обновление immutable state через явные переходы, часто прямо во `ViewModel` с помощью `_state.update { it.copy(...) }`. Такой код получает преимущества reducer-подхода без отдельного класса `Reducer` и Redux-style framework.
 
 ### Что такое Clean Architecture?
 

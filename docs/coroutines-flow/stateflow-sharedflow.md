@@ -90,7 +90,7 @@ Collect flows with lifecycle awareness: use `collectAsStateWithLifecycle()` in C
 
 State describes what the screen should show now. It should be reproducible: collecting it again after recreation should render the same valid UI.
 
-Effects are transient commands such as showing a snackbar, navigating, scrolling or launching a system picker. A separate `SharedFlow` or [Channel](channels.md#ui-events-and-effects) can be appropriate when the consequence is non-critical and behavior without an active collector is deliberately defined.
+Effects are transient commands such as showing a snackbar, navigating, scrolling or launching a system picker. A separate `SharedFlow` or [Channel](channels.md) can be appropriate when the consequence is non-critical and behavior without an active collector is deliberately defined.
 
 Critical outcomes should usually be reduced to durable state. For example, store that an operation succeeded or that data was saved; navigation or a confirmation message can then be derived from an explicit UI decision instead of being the only record of the result.
 

@@ -1,103 +1,53 @@
 # Storage
 
-Storage в Android включает низкоуровневый SQLite, Room как modern abstraction, DataStore для настроек и legacy `SharedPreferences`.
+Способ хранения зависит от вида данных и того, кому они нужны: Room подходит для связанных записей, DataStore - для небольших настроек, каталоги приложения - для его собственных файлов, общее хранилище - для медиафайлов и документов пользователя. Сохранение данных между запусками отличается от временного состояния экрана.
 
 ## SQLite и Room
 
 ### SQLiteOpenHelper
 
-![SQLite cheat sheet](../assets/images/android/sql_cheat_sheet.png)
+![Шпаргалка по SQLite](../assets/images/android/sql_cheat_sheet.png)
 
-`SQLiteOpenHelper` - базовый Android helper для создания, открытия и миграции SQLite database вручную.
+`SQLiteOpenHelper` управляет созданием, открытием и обновлением версии базы при прямой работе с `SQLiteDatabase`. Класс-наследник задаёт имя и версию базы и реализует `onCreate()` и `onUpgrade()`. Создание объекта помощника ещё не открывает базу: это происходит при первом вызове `getReadableDatabase()` или `getWritableDatabase()`.
 
-Он используется, когда приложение напрямую работает с `SQLiteDatabase` и SQL-запросами: создаёт таблицы, выполняет query/insert/update/delete и управляет версиями схемы.
-
-Класс-наследник обычно задаёт database name и version, а также реализует `onCreate()` и `onUpgrade()`.
-
-**Важно:** сам объект helper создаётся быстро, но база реально открывается только при вызове `getReadableDatabase()` или `getWritableDatabase()`.
-
-В modern Android чаще предпочитают Room, потому что он даёт compile-time проверку SQL, DAO, migrations и меньше boilerplate.
-
-**Коротко:** `SQLiteOpenHelper` is a low-level helper for managing SQLite database creation and migrations; Room is usually preferred for new production code.
+Для новых реляционных баз обычно выбирают Room. Он тоже использует SQLite, но проверяет поддерживаемые SQL-запросы при компиляции и предоставляет DAO и механизм миграций. Прямая работа с SQLite остаётся актуальной в существующем коде и там, где нужен низкоуровневый контроль.
 
 ### `onCreate()` / `onUpgrade()`
 
-`onCreate()` вызывается, когда database создаётся впервые. Обычно здесь создают tables, indexes, triggers и при необходимости добавляют начальные данные.
+`onCreate()` инициализирует новую базу, обычно создавая таблицы и индексы. `onUpgrade()` вызывается, если версия существующей базы ниже запрошенной версии. При понижении версии стандартная реализация выбрасывает исключение, если не переопределить `onDowngrade()`.
 
-`onUpgrade()` вызывается, когда version базы в коде стала больше, чем версия уже существующей базы на устройстве.
-
-Главная задача `onUpgrade()` - аккуратно мигрировать схему и сохранить пользовательские данные. Простой `DROP TABLE` + `CREATE TABLE` допустим только для cache/test data или когда потеря данных осознанно разрешена.
-
-Миграции должны учитывать все старые версии: пользователь может обновиться с версии 1 сразу на версию 5.
-
-**Важно:** после релиза нельзя просто "переписать" уже опубликованный migration step и ожидать, что он повторно выполнится на устройствах, где уже был применён.
-
-**Коротко:** `onCreate()` creates the initial schema, `onUpgrade()` migrates an existing database between versions and must be written carefully to avoid data loss.
+Продумайте переход с каждой поддерживаемой старой версии: пользователь может пропустить несколько выпусков приложения. Сохраняйте данные, если только их потеря явно не допустима; удаление и повторное создание пользовательских таблиц уничтожит их содержимое. Проверяйте обновление на схемах прошлых выпусков. Изменение кода уже выполненной миграции не запустит её повторно на обновлённых устройствах. У Room собственные механизмы явных и автоматических миграций; их не следует смешивать с `SQLiteOpenHelper.onUpgrade()`.
 
 ### `getReadableDatabase()` / `getWritableDatabase()`
 
-`getReadableDatabase()` и `getWritableDatabase()` возвращают `SQLiteDatabase`, но отличаются намерением открытия.
+`getWritableDatabase()` открывает базу для чтения и записи либо выбрасывает исключение, если это невозможно. `getReadableDatabase()` обычно возвращает такую же базу, но при проблеме, например переполненном диске, может открыть её только для чтения. Не предполагайте, что результат всегда доступен для записи.
 
-`getWritableDatabase()` открывает базу для чтения и записи. При первом открытии может вызвать `onCreate()`, `onUpgrade()` и `onOpen()`.
-
-`getReadableDatabase()` обычно возвращает тот же read/write database object, если это возможно. Но если есть проблема, например full disk, он может вернуть read-only database.
-
-Оба метода могут занять много времени, особенно при создании или миграции базы, поэтому их не стоит вызывать на main thread.
-
-После успешного открытия database object кэшируется helper-ом. Обычно не нужно открывать/закрывать базу на каждую маленькую операцию, но нужно закрывать helper/database, когда они больше не нужны.
-
-Для нескольких связанных операций стоит использовать transaction, чтобы сохранить consistency и улучшить performance.
-
-**Коротко:** `getWritableDatabase()` opens a read/write database, `getReadableDatabase()` may return read-only in fallback cases, and both can block during open or migration.
+Открытие может включать создание или миграцию базы и блокировать поток, поэтому вызывайте эти методы вне главного потока. Повторно используйте помощник в пределах подходящего времени жизни, а не открывайте и закрывайте его для каждого запроса; закройте его, когда он больше не нужен. Объединяйте связанные операции записи в транзакцию для сохранения согласованности.
 
 ### Room
 
-Room - Jetpack persistence library поверх SQLite, которая даёт более удобный и безопасный API для локальной базы данных.
+В Room `@Entity` описывает таблицу, `@Dao` - операции с данными, а `@Database` - точку доступа к базе. Он подходит для офлайн-записей, кэша, истории и других структурированных данных со связями и запросами. Продумывать индексы и миграции всё равно необходимо.
 
-Основные части Room: `@Entity` описывает таблицу, `@Dao` описывает queries/insert/update/delete, `@Database` связывает entities и DAO в database class.
+По умолчанию Room запрещает доступ к базе в главном потоке. Используйте `suspend`-функции DAO для отдельных операций и `Flow` для наблюдаемых запросов; Room выполняет такие асинхронные запросы вне главного потока. Для нескольких связанных операций записи используйте транзакцию. Не выбирайте миграцию с удалением данных, которые пользователь ожидает сохранить.
 
-Room проверяет SQL на этапе компиляции, уменьшает boilerplate и хорошо интегрируется с Kotlin Coroutines и `Flow`.
-
-Room подходит для structured relational data: cache, offline-first data, user-generated content, history, relational entities.
-
-**Важно:** Room всё равно использует SQLite под капотом, поэтому нужно понимать schema design, indexes, transactions и migrations.
-
-По умолчанию Room не позволяет выполнять database operations на main thread, и это хорошо: запросы должны идти через suspend functions, `Flow` или background dispatcher.
-
-**Коротко:** Room is the recommended higher-level abstraction over SQLite for structured local data, with DAO, entities, compile-time SQL checks and migration support.
-
-## Preferences
+## Настройки
 
 ### DataStore
 
-DataStore - Jetpack API для хранения небольших persistent данных асинхронно и безопаснее, чем `SharedPreferences`.
+DataStore хранит небольшие постоянные значения и работает с корутинами и `Flow`. Preferences DataStore использует ключи без фиксированной схемы; Proto DataStore хранит типизированные сообщения, описанные в Protocol Buffers. Чтение предоставляет `Flow`; для атомарных обновлений Preferences DataStore использует `edit()`, а Proto DataStore - `updateData()`.
 
-Есть два основных варианта: Preferences DataStore для key-value данных без заранее заданной схемы и Proto DataStore для typed objects через Protocol Buffers.
-
-DataStore использует coroutines и `Flow`, поэтому чтение обычно выглядит как `Flow` настроек, а запись выполняется через suspend `updateData()` / `edit()`.
-
-Он хорошо подходит для user settings, feature flags, onboarding flags, last selected option и других небольших preferences.
-
-DataStore не предназначен для больших relational данных, partial updates сложных структур или referential integrity. Для этого лучше Room.
-
-**Важно:** для одного файла DataStore должен существовать один instance в процессе, обычно через delegate или DI singleton.
-
-**Коротко:** DataStore is a modern asynchronous replacement for `SharedPreferences` for small key-value or typed settings, while Room is better for complex structured data.
+Он подходит для настроек и небольших фрагментов состояния приложения: например, темы или признака завершения знакомства с приложением. Для связанных данных, больших наборов и запросов к отдельным записям используйте Room. В одном процессе создавайте один экземпляр DataStore на файл; если к файлу обращаются несколько процессов, последовательно используйте многопроцессный вариант. Сам по себе DataStore не шифрует содержимое.
 
 ### SharedPreferences
 
-`SharedPreferences` - старый Android API для хранения небольшого набора key-value данных в XML-файле.
+`SharedPreferences` хранит небольшой набор настроек в виде пар «ключ - значение» и часто встречается в старом Android-коде. `apply()` сразу обновляет данные в памяти и планирует запись на диск, не сообщая об ошибке. `commit()` записывает данные синхронно и возвращает признак успеха. Не вызывайте `commit()` в главном потоке; ожидающие записи `apply()` тоже могут задержать переходы жизненного цикла и привести к ANR.
 
-Он подходит для простых primitives и `String`: flags, небольшие настройки, selected mode, first launch marker.
+Для новых настроек предпочитайте DataStore. При переносе существующих настроек используйте его механизм миграции и проверьте значения по умолчанию и соответствие ключей. Ни обычный `SharedPreferences`, ни DataStore сами по себе не обеспечивают безопасное хранение секретов: для конфиденциальных данных нужна подходящая защищённая схема.
 
-Для записи есть `apply()` и `commit()`. `apply()` пишет изменения асинхронно и не возвращает результат, `commit()` пишет синхронно и возвращает boolean success.
+## Файлы и общее хранилище
 
-`commit()` может блокировать вызывающий thread, поэтому его не стоит использовать на main thread без необходимости.
+Файлы, нужные только приложению, сохраняйте в его собственных каталогах. `filesDir` предназначен для постоянных приватных файлов, `cacheDir` - для временного кэша; система может удалять файлы кэша, а файлы приложения обычно удаляются при его удалении. Для крупных собственных файлов доступно и внешнее хранилище приложения, но соответствующий том может быть недоступен.
 
-`SharedPreferences` не предназначен для больших данных, списков сложных объектов, relational data или частых конкурентных записей.
+Для публикации фото и видео вне приложения используйте `MediaStore`; для выбора пользователем уже существующих фото и видео - системный выбор фотографий. Для документов, выбираемых или создаваемых пользователем, используйте Storage Access Framework. Возвращённый URI вида `content://` указывает на содержимое: не считайте его путём к файлу. Правила доступа и разрешения зависят от операции и версии Android.
 
-`SharedPreferences` не шифрует данные сам по себе. Для чувствительных данных нужен отдельный secure storage подход, а не обычный preferences file.
-
-В modern Android для новых настроек чаще выбирают DataStore, но `SharedPreferences` всё ещё часто встречается в legacy-коде.
-
-**Коротко:** `SharedPreferences` is a simple legacy key-value storage API; use it for small preferences, prefer DataStore for modern asynchronous settings storage.
+Выбор API подробнее описан в [руководстве по хранению данных Android](https://developer.android.com/training/data-storage); хранение криптографических ключей - в [руководстве по Android Keystore](https://developer.android.com/privacy-and-security/keystore).
