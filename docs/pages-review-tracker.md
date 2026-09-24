@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-23
+1. Last tracker update: 2026-09-24
 1. Total articles tracked: 99
-1. Updated: 42
-1. TODO: 57
+1. Updated: 44
+1. TODO: 55
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 14      | 17   |
+| P1 | 31 | 16      | 15   |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -60,10 +60,10 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-21, `java/exceptions.md`, Java Exceptions, Clarified checked and unchecked exception boundaries, catch ordering, finally behavior, try-with-resources and suppressed exceptions, cause preservation, Kotlin interop, and Android failure handling; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-09-22, `java/jvm-android-runtime.md`, JVM / Android Runtime, Added the JVM-to-DEX build pipeline; clarified JDK, language target and Android API compatibility, D8/R8 and desugaring, multidex, ART interpretation/JIT/AOT, Baseline Profiles, Zygote, processes, and managed memory; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-09-23, `android/storage.md`, Storage, Clarified SQLite and Room migrations, asynchronous access and preferences write behavior; added concise app-specific and shared-file storage guidance; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `android/context-resources.md`, Context & Resources
+1. P1, **UPDATED**, 2026-09-23, `android/context-resources.md`, Context & Resources, Clarified context lifetime and UI configuration, ContextWrapper, resource selection, state restoration, and manual configuration handling; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-06-30, `networking/http-rest.md`, HTTP / REST, Expanded HTTP/REST fundamentals: HTTP methods, safe/idempotent semantics, GET vs POST, status codes table, headers/body, and Android error mapping.
 1. P1, **UPDATED**, 2026-06-30, `networking/retrofit-okhttp.md`, Retrofit / OkHttp, Expanded Retrofit/OkHttp: service API examples, Response<T>, OkHttp setup, interceptors, auth interceptor, serialization pitfalls, NetworkResult, request debugging, logging, common mistakes, and production recommendations.
-1. P1, **TODO**, , `networking/graphql.md`, GraphQL
+1. P1, **UPDATED**, 2026-09-24, `networking/graphql.md`, GraphQL, Clarified operations and schema nullability, added a variable-based query, distinguished partial GraphQL errors from transport failures, refined REST trade-offs and Apollo cache guidance; synchronized EN/RU and removed repetition.
 1. P1, **TODO**, , `networking/grpc-protobuf.md`, gRPC / Protobuf
 1. P1, **TODO**, , `testing/android-ui-testing.md`, Android UI Testing
 1. P1, **TODO**, , `engineering/code-quality.md`, Code Quality

@@ -1,43 +1,31 @@
 # Context & Resources
 
-`Context` и resources связывают код приложения с Android runtime: ресурсами, system services, theme, configuration и запуском компонентов.
+`Context` предоставляет доступ к возможностям приложения и Android. Система ресурсов выбирает строки, разметку и другие значения с учётом текущей конфигурации.
 
-## Context
+## Контекст
 
-### Activity Context vs Application Context
+### Контекст Activity и приложения
 
-`Context` - это доступ к окружению Android-приложения: resources, assets, system services, package info, запуск `Activity` / `Service` / Broadcast и т.д.
+Через `Context` доступны ресурсы, assets, системные службы, файлы приложения и запуск компонентов. Выбирайте контекст с подходящими временем жизни и конфигурацией интерфейса.
 
-`Activity Context` привязан к lifecycle конкретной `Activity` и знает о theme, window и UI-состоянии. Его используют для UI-операций: inflate themed layout, show dialog, start activity from screen, access themed resources.
+Контекст `Activity` содержит её тему и конфигурацию окна. Он нужен для создания оформленных темой `View`, показа диалогов и обращения к ресурсам экрана. В Compose текущий контекст можно получить через `LocalContext.current`, но для ресурсов, которые должны обновляться при изменении конфигурации, обычно используют `stringResource()` и аналогичные функции Compose.
 
-`Application Context` живёт столько же, сколько процесс приложения. Его используют для долгоживущих объектов: repositories, databases, `DataStore`, analytics, dependency graph, если им не нужен UI/theme конкретной `Activity`.
+Контекст приложения связан с процессом, а не с отдельным экраном. Он подходит для долгоживущей базы данных, DataStore или репозитория, которым нужны службы или файлы приложения. Но у него может не быть темы и конфигурации конкретного окна, необходимых интерфейсу. Передавайте контекст только тем зависимостям, которым он действительно нужен; по возможности выбирайте более узкую зависимость.
 
-Главный pitfall: нельзя хранить `Activity Context` в singleton/static object/long-lived component, иначе можно получить memory leak `Activity`. Если нужен `Context` в долгоживущем объекте, чаще безопаснее использовать `applicationContext`.
-
-**Коротко:** `Activity Context` is UI/lifecycle/themed context, `Application Context` is process-level context; avoid storing `Activity Context` longer than Activity lifecycle.
+Если долгоживущий объект хранит `Activity`, `View` или контекст с темой экрана, уничтоженный экран может остаться в памяти. Для работы на уровне процесса используйте `applicationContext`. Не сохраняйте надолго строки и изображения, зависящие от конфигурации: после смены языка, темы или параметров экрана они могут устареть.
 
 ### ContextWrapper
 
-`ContextWrapper` - класс-обёртка над `Context`, который делегирует вызовы базовому `Context`, но позволяет переопределять часть поведения.
+`ContextWrapper` делегирует операции базовому `Context` и позволяет переопределить отдельное поведение. `ContextThemeWrapper` добавляет тему для работы с интерфейсом; от него наследуется `Activity`. Обёртка не делает базовый контекст безопасным для долгого хранения: его время жизни по-прежнему важно.
 
-Многие Android-классы построены вокруг этой идеи: `ContextThemeWrapper` добавляет или меняет theme, `Activity` тоже является `ContextThemeWrapper`, а `Application` и `Service` наследуются от `ContextWrapper`.
+Если нужны ресурсы для заданной конфигурации, `createConfigurationContext()` создаёт контекст с этой конфигурацией. Для выбора языка приложения предпочтительны системные API или API AppCompat, а не ручное изменение глобального объекта `Resources`.
 
-`ContextWrapper` полезен, когда нужно создать `Context` с другой theme/configuration или адаптировать поведение `Context` API без изменения исходного base context.
+## Ресурсы
 
-На практике Android-разработчик чаще сталкивается с ним косвенно: themed inflater, dialog context, localized/configuration context, activity as context.
+### Ресурсы, конфигурация и ориентация
 
-**Коротко:** `ContextWrapper` wraps another `Context` and delegates to it, while allowing specific behavior like theme or configuration to be overridden.
+К ресурсам относятся строки, формы множественного числа, размеры, цвета, изображения и разметка. Android выбирает варианты по квалификаторам вроде `values-ru`, `values-night` и `layout-land`; где необходимо, задавайте значения по умолчанию. Для текста интерфейса используйте `getString()` или `getQuantityString()` в Android-коде и `stringResource()` или `pluralStringResource()` в Compose, а не строки, жёстко заданные в коде.
 
-## Resources
+`Configuration` описывает язык, размер экрана, плотность пикселей, ориентацию, ночной режим, масштаб шрифта и другие параметры. Поворот - лишь один из случаев изменения конфигурации; изменение размера окна тоже может повлиять на выбор ресурсов. Android часто пересоздаёт `Activity`, чтобы интерфейс применил новую конфигурацию. Данные экрана и бизнес-данные держите в подходящем хранилище состояния, а восстанавливаемое состояние интерфейса при необходимости сохраняйте через `rememberSaveable`, `SavedStateHandle` или saved instance state. Постоянное хранилище нужно для данных между запусками приложения, а не для обычного поворота экрана.
 
-### Resources / configuration / orientation
-
-Resources - API для доступа к ресурсам приложения: strings, drawables, colors, dimensions, layouts, plurals и другим файлам из `res/`.
-
-Configuration описывает текущую конфигурацию устройства и приложения: orientation, locale, screen size, density, night mode, font scale и другие параметры.
-
-Когда configuration меняется, например при rotation, смене языка или dark mode, Android может пересоздать `Activity`, чтобы заново применить подходящие resources из qualifiers: `layout-land`, `values-night`, `values-ru`, `drawable-xhdpi` и т.д.
-
-Orientation - частный случай configuration. При смене portrait/landscape важно не хранить UI state только во `View`, а использовать `ViewModel`, `SavedStateHandle` / `onSaveInstanceState()` или persistent storage в зависимости от типа данных.
-
-Можно обработать часть изменений вручную через `android:configChanges`, но это переносит ответственность на приложение и обычно не должно использоваться как стандартное решение для всех экранов.
+`android:configChanges` поручает `Activity` обрабатывать указанные изменения через `onConfigurationChanged()` вместо обычного пересоздания. Тогда приложение должно само обновить затронутые `View` и ресурсы, зависящие от конфигурации. Это не отменяет пересоздание по другим причинам и необходимость учитывать гибель процесса. Подробнее - в [руководстве по изменениям конфигурации](https://developer.android.com/guide/topics/resources/runtime-changes) и [руководстве по ресурсам](https://developer.android.com/guide/topics/resources/providing-resources).

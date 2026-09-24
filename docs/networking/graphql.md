@@ -1,55 +1,41 @@
 # GraphQL
 
-GraphQL lets the client describe the required data shape through a query instead of choosing a fixed REST endpoint with a predefined response.
+GraphQL is an API query language: a client selects fields from a server-defined schema. It is useful when a screen needs related data in a specific shape, but does not automatically eliminate latency or make caching simple.
 
-## GraphQL Basics
+## Operations and schema
 
-### What is GraphQL?
+- A **query** reads data. A **mutation** performs a write or server-side action; do not blindly retry it because it may not be idempotent.
+- A **subscription** delivers updates over time. The transport (often WebSocket) depends on the client and server, not on the GraphQL query language itself.
+- The **schema** defines types, fields, arguments and nullability. Client operations select fields from that contract; a generated Kotlin type represents the selected result, not necessarily the entire schema type.
 
-GraphQL is a query language and runtime for APIs where the client describes which data fields it needs, and the server returns a response with the same shape.
+Use variables for dynamic values rather than building query strings by interpolation:
 
-In Android, GraphQL is usually used through a client library such as Apollo Kotlin: the backend schema generates typed models and operations for queries/mutations/subscriptions.
+```graphql
+query RobotStatus($id: ID!) {
+  robot(id: $id) {
+    id
+    name
+    batteryPercent
+  }
+}
+```
 
-Benefit: it can reduce overfetching and underfetching because the screen requests only the fields it needs. Trade-off: caching, error handling, schema versioning and observability are more complex than in simple REST.
+The client supplies `$id` separately. `ID!` means the variable cannot be null. The server may still return a nullable `robot` if the schema declares it nullable. Fragments can share field selections across operations.
 
-**In short:** GraphQL lets the client request exactly the data shape it needs, usually through typed generated operations.
+## Responses and errors
 
-### Query / Mutation / Subscription
+A response can contain `data` and `errors` together: one field may fail while other data remains usable. Treat a transport failure, a GraphQL execution error, and a domain-level failure represented in `data` as distinct cases. Check schema nullability and decide explicitly whether partial data is acceptable for the screen. An HTTP success status alone does not mean the operation succeeded without GraphQL errors.
 
-Query is used to read data, mutation changes data or starts a server-side action, and subscription provides realtime updates through a persistent connection.
+## GraphQL vs REST
 
-In Android, queries usually look like one-shot fetch or observable cached data, mutations like a suspend operation with a result, and subscriptions like a stream of updates.
+REST commonly offers resource-oriented endpoints with server-defined response shapes; GraphQL usually exposes a schema through a single endpoint and lets clients choose fields. This can reduce overfetching and some round trips, but a complex query may still be expensive on the server. HTTP caching and request inspection are generally simpler with conventional REST; GraphQL often needs operation-aware tooling and a deliberate client cache strategy. Choose by API and product needs, not by a blanket performance claim.
 
-**Important:** mutation does not have to be idempotent, so retry should be done carefully, just like with `POST` in REST.
+## Apollo Kotlin on Android
 
-**In short:** query reads data, mutation changes data, subscription streams updates.
+Apollo Kotlin generates type-safe Kotlin models from a schema and `.graphql` operations, and executes queries, mutations and subscriptions. Keep the client in the data layer; repositories can map generated response types into stable domain or UI models. Treat schema updates as a build-time compatibility concern.
 
-### GraphQL schema and typed models
+Configure fetch and cache behavior deliberately. Apollo's normalized cache is an option, not an automatic guarantee that every operation has correct offline behavior; record identity and mutation updates matter. Also plan lifecycle-aware subscription collection, reconnection, and cancellation.
 
-GraphQL schema describes types, fields, arguments and operations available to the client. On Android, client tools can generate Kotlin models and type-safe API from the schema and `.graphql` files.
+Related: [HTTP / REST](http-rest.md), [Retrofit / OkHttp](retrofit-okhttp.md), [StateFlow & SharedFlow](../coroutines-flow/stateflow-sharedflow.md).
 
-This reduces the risk of runtime errors caused by incorrect field names or types, but requires schema synchronization between backend and mobile project.
-
-Do not expose generated network models directly to UI. It is better to map them into domain/UI models, especially when the schema is complex or unstable.
-
-**In short:** schema is the API contract; generated models make GraphQL calls type-safe on Android.
-
-### GraphQL vs REST
-
-REST is usually built around resources and different endpoints: `/users`, `/orders`, `/products`. GraphQL usually has one endpoint, and the data shape is defined by the query.
-
-REST is easier to understand, cache at HTTP level and debug with standard tools. GraphQL is more flexible for complex screens that need to collect data from several related entities without several round trips.
-
-In GraphQL, errors can be partial: a response can contain both data and errors. Therefore the client should handle partial data, nullability and backend error extensions.
-
-**In short:** REST exposes resources through endpoints, GraphQL exposes a schema and lets the client choose the response shape.
-
-### Apollo Kotlin
-
-Apollo Kotlin is a popular GraphQL client for Android/Kotlin. It generates Kotlin code from GraphQL schema and operations, executes queries/mutations/subscriptions and supports normalized cache.
-
-Apollo client usually lives in the data layer, while repository calls generated operations and maps responses into domain/UI models.
-
-Pitfalls: track schema nullability, partial errors, cache policy, schema updates, and make sure generated models do not leak into `ViewModel` / UI.
-
-**In short:** Apollo Kotlin is a type-safe GraphQL client; repositories should hide generated API details from UI.
+Sources: [GraphQL queries](https://graphql.org/learn/queries/), [GraphQL responses](https://graphql.org/learn/response/), [Apollo Kotlin](https://www.apollographql.com/docs/kotlin), [Apollo normalized cache](https://www.apollographql.com/docs/kotlin/caching/normalized-cache).
