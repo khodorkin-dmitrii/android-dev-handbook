@@ -26,11 +26,11 @@ The goal of the project is to collect practical explanations, compact notes, imp
 
 The materials are written as a compact knowledge base. Use the search field in the top bar for quick lookup. Use the left menu to navigate inside a section, and the right table of contents to jump between headings on the current page.
 
-### 🎧 Audio Shorts
+## Short Audio Notes 🎧
 
-Prefer listening? The Android Shorts are also available as short audio chapters for quick review.
+Prefer listening? **Short Audio Notes** is a concise audio review of the key Handbook topics in each domain, presented in a Q&A format.
 
-[Listen to Audio Shorts →](audio-shorts.md)
+[Listen to Short Audio Notes →](audio-shorts.md)
 
 ## Created and maintained by Dmitrii Khodorkin
 
