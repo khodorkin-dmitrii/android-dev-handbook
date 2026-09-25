@@ -18,3 +18,21 @@ document.addEventListener(
   },
   true,
 );
+const audioNotesPlayers = [
+  ...document.querySelectorAll(".audio-notes-grid audio"),
+];
+
+audioNotesPlayers.forEach((player, index) => {
+  player.addEventListener("ended", () => {
+    const nextPlayer = audioNotesPlayers[index + 1];
+
+    if (!nextPlayer) {
+      return;
+    }
+
+    nextPlayer.currentTime = 0;
+    nextPlayer.play().catch(() => {
+      // A browser may block automatic continuation because of its media policy.
+    });
+  });
+});
