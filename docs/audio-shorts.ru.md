@@ -10,7 +10,7 @@ hide:
 ## Главы
 
 <div class="audio-notes-grid" markdown>
-<div class="audio-notes-column" markdown>
+<div class="audio-note" markdown>
 
 ### 01. Computer Science
 
@@ -18,11 +18,17 @@ hide:
   <source src="../../assets/audio/shorts/ru/01-ru-shorts-computer-science.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 02. Kotlin
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/ru/02-ru-shorts-kotlin.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 03. Основы Android
 
@@ -30,11 +36,17 @@ hide:
   <source src="../../assets/audio/shorts/ru/03-ru-shorts-android-basics.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 04. Jetpack Compose
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/ru/04-ru-shorts-jetpack-compose.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 05. Coroutines & Flow
 
@@ -43,7 +55,7 @@ hide:
 </audio>
 
 </div>
-<div class="audio-notes-column" markdown>
+<div class="audio-note" markdown>
 
 ### 06. Архитектура
 
@@ -51,11 +63,17 @@ hide:
   <source src="../../assets/audio/shorts/ru/06-ru-shorts-architecture.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 07. Dependency Injection
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/ru/07-ru-shorts-dependency-injection.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 08. Работа с сетью
 
@@ -63,11 +81,17 @@ hide:
   <source src="../../assets/audio/shorts/ru/08-ru-shorts-networking.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 09. Библиотеки и сборка
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/ru/09-ru-shorts-libraries-build.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 10. Тестирование
 

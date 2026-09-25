@@ -10,7 +10,7 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
 ## Chapters
 
 <div class="audio-notes-grid" markdown>
-<div class="audio-notes-column" markdown>
+<div class="audio-note" markdown>
 
 ### 01. Computer Science
 
@@ -18,11 +18,17 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
   <source src="../../assets/audio/shorts/en/01-en-shorts-computer-science.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 02. Kotlin
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/en/02-en-shorts-kotlin.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 03. Android basics
 
@@ -30,11 +36,17 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
   <source src="../../assets/audio/shorts/en/03-en-shorts-android-basics.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 04. Jetpack Compose
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/en/04-en-shorts-jetpack-compose.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 05. Coroutines & Flow
 
@@ -43,7 +55,7 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
 </audio>
 
 </div>
-<div class="audio-notes-column" markdown>
+<div class="audio-note" markdown>
 
 ### 06. Architecture
 
@@ -51,11 +63,17 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
   <source src="../../assets/audio/shorts/en/06-en-shorts-architecture.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 07. Dependency Injection
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/en/07-en-shorts-dependency-injection.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 08. Networking
 
@@ -63,11 +81,17 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
   <source src="../../assets/audio/shorts/en/08-en-shorts-networking.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-note" markdown>
+
 ### 09. Libraries & Build
 
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/en/09-en-shorts-libraries-build.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+<div class="audio-note" markdown>
 
 ### 10. Testing
 

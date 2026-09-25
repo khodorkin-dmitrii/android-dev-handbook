@@ -207,23 +207,19 @@
 .audio-notes-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem;
+    gap: 1.25rem 1.5rem;
     align-items: start;
 }
 
-.audio-notes-column {
+.audio-note {
     min-width: 0;
 }
 
-.audio-notes-column h3 {
-    margin: 1.25rem 0 0.5rem;
+.audio-note h3 {
+    margin: 0 0 0.5rem;
 }
 
-.audio-notes-column > h3:first-child {
-    margin-top: 0;
-}
-
-.audio-notes-column audio {
+.audio-note audio {
     display: block;
     width: 100%;
 }
@@ -231,10 +227,6 @@
 @media screen and (max-width: 800px) {
     .audio-notes-grid {
         grid-template-columns: minmax(0, 1fr);
-        gap: 0;
-    }
-
-    .audio-notes-column + .audio-notes-column > h3:first-child {
-        margin-top: 1.6em;
+        gap: 1.25rem 0;
     }
 }
