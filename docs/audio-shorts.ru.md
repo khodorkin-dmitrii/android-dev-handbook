@@ -77,3 +77,5 @@ hide:
 
 </div>
 </div>
+
+<script src="../../javascripts/audio-notes.js"></script>
