@@ -154,6 +154,8 @@ not_in_nav: |
   pages-review-tracker.md
   shorts.md
   shorts.ru.md
+  audio-shorts.md
+  audio-shorts.ru.md
 
 nav:
   - Home: index.md
