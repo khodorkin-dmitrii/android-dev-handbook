@@ -1,8 +1,16 @@
+---
+hide:
+  - navigation
+---
+
 # Short Audio Notes
 
 Аудиоверсии коротких материалов Handbook, сгруппированные по темам. Их удобно использовать для быстрого повторения в дороге, на прогулке, во время тренировки или в любой ситуации, когда слушать удобнее, чем читать.
 
 ## Главы
+
+<div class="audio-notes-grid" markdown>
+<div class="audio-notes-column" markdown>
 
 ### 01. Computer Science
 
@@ -34,6 +42,9 @@
   <source src="../../assets/audio/shorts/ru/05-ru-shorts-coroutines-flow.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-notes-column" markdown>
+
 ### 06. Архитектура
 
 <audio controls preload="metadata" controlslist="nodownload">
@@ -63,3 +74,6 @@
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/ru/10-ru-shorts-testing.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+</div>

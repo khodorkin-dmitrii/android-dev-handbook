@@ -1,8 +1,16 @@
+---
+hide:
+  - navigation
+---
+
 # Short Audio Notes
 
 Audio versions of the Handbook Shorts, organized by topic for quick review while commuting, walking, training, or whenever listening is more convenient than reading.
 
 ## Chapters
+
+<div class="audio-notes-grid" markdown>
+<div class="audio-notes-column" markdown>
 
 ### 01. Computer Science
 
@@ -34,6 +42,9 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
   <source src="../../assets/audio/shorts/en/05-en-shorts-coroutines-flow.mp3" type="audio/mpeg">
 </audio>
 
+</div>
+<div class="audio-notes-column" markdown>
+
 ### 06. Architecture
 
 <audio controls preload="metadata" controlslist="nodownload">
@@ -63,3 +74,6 @@ Audio versions of the Handbook Shorts, organized by topic for quick review while
 <audio controls preload="metadata" controlslist="nodownload">
   <source src="../../assets/audio/shorts/en/10-en-shorts-testing.mp3" type="audio/mpeg">
 </audio>
+
+</div>
+</div>

@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # Android Dev Handbook
 
 Android Dev Handbook is a structured Android development reference covering Kotlin, Java, Jetpack Compose, Coroutines & Flow, architecture, testing, networking, storage, performance and core engineering concepts.
