@@ -1,118 +1,76 @@
 # Android UI Testing
 
-This section covers Android UI testing: Espresso, Compose UI tests, JUnit and observable behavior checks for user scenarios.
+Android UI tests verify observable user behavior: the user performs an action and sees the expected state, navigation result or error. Keep most business logic in faster local tests and reserve device tests for behavior that depends on Android UI, lifecycle, resources or integration between screens.
 
-## UI testing tools
+## Test scope and environment
 
-### Espresso
+JUnit provides the test lifecycle, assertions and rules, but does not drive Android UI by itself.
 
-Espresso is an Android UI testing framework for the View System. It lets tests find `View`, perform user actions and verify UI state.
+- Tests in `src/test` run on the local JVM. They suit pure Kotlin code and can use Robolectric when a simulated Android environment is appropriate.
+- Tests in `src/androidTest` run on an emulator or device through an instrumented runner. Espresso and Compose device tests normally live here.
 
-Basic Espresso style:
+A focused screen test supplies controlled state and fake dependencies. A broader journey test launches the app and verifies several integrated components. Keep the latter set small: it is slower and has more failure points.
+
+## Espresso for Views
+
+Espresso finds `View` objects, performs actions and checks assertions:
 
 ```kotlin
 onView(withId(R.id.emailInput))
-    .perform(typeText("ada@example.com"))
+    .perform(typeText("ada@example.com"), closeSoftKeyboard())
 
-onView(withId(R.id.loginButton))
-    .perform(click())
-
-onView(withText("Welcome"))
-    .check(matches(isDisplayed()))
+onView(withId(R.id.loginButton)).perform(click())
+onView(withText("Welcome")).check(matches(isDisplayed()))
 ```
 
-Espresso synchronizes with the main thread and standard Android UI operations, so manual waiting for rendering is often unnecessary. But external async work, custom executors, network or background jobs may require `IdlingResource` or a controlled fake dependency.
+Espresso waits for the main message queue, `AsyncTask` work and registered `IdlingResource` instances to become idle. It does not automatically know about arbitrary executors, callbacks or external asynchronous work. Prefer controlled fake dependencies; when real asynchronous work must participate, register an idling resource before it starts and unregister it after the test. Avoid `Thread.sleep()` because it is both slow and timing-dependent.
 
-A good Espresso test checks user-visible behavior: text, enabled/disabled state, navigation result, error message, item in list. It should not check private implementation details.
+Use stable matchers such as resource IDs and meaningful text or content descriptions. For lists, match a stable item property and perform a RecyclerView action rather than relying on screen coordinates or child positions.
 
-Typical pitfalls:
+## Compose UI tests
 
-- real network calls in UI tests;
-- `Thread.sleep`;
-- overly precise layout detail checks;
-- unstable matchers for RecyclerView;
-- tests that depend on run order or shared app state.
-
-**In short:** Espresso fits XML/View UI tests and verifies behavior through View hierarchy, actions and matchers.
-
-### Compose UI tests
-
-Compose UI tests work through the semantics tree, not the View hierarchy. A test finds nodes by text, content description, role, state, testTag and other semantics properties.
-
-Basic example:
+Compose tests interact with the semantics tree rather than the View hierarchy:
 
 ```kotlin
 @get:Rule
 val composeRule = createComposeRule()
 
 @Test
-fun saveButtonIsDisplayed() {
+fun savingProfileShowsSuccess() {
     composeRule.setContent {
         ProfileScreen(
             state = ProfileUiState(userName = "Ada"),
-            onAction = {}
+            onSave = { }
         )
     }
 
-    composeRule
-        .onNodeWithText("Save")
-        .assertIsDisplayed()
+    composeRule.onNodeWithText("Save").performClick()
+    composeRule.onNodeWithText("Saved").assertIsDisplayed()
 }
 ```
 
-For elements where text is unstable because of localization or several identical strings exist, use `testTag`:
+Use `createComposeRule()` when the test owns the content. Use `createAndroidComposeRule<Activity>()` when an Activity and Android integration are part of the scenario.
 
-```kotlin
-Button(
-    modifier = Modifier.testTag("save_button"),
-    onClick = onSave
-) {
-    Text("Save")
-}
-```
+Prefer semantics that also describe the UI to users, such as text, role, content description, selected state and state description. Use `Modifier.testTag()` when no stable user-facing selector exists, but do not treat a tag as an accessibility replacement. If a node cannot be found, inspect the semantics tree and consider whether merged descendants require `useUnmergedTree = true`; do not make unmerged-tree queries the default.
 
-```kotlin
-composeRule
-    .onNodeWithTag("save_button")
-    .performClick()
-```
+Compose waits for known Compose work and its test clock, but it cannot observe every external asynchronous source. Inject completed or controllable fakes when possible. Use `waitUntil` for observable conditions that genuinely complete outside Compose synchronization, with a bounded timeout.
 
-Compose tests automatically wait for the idle state of the Compose runtime. For animations, the clock can be controlled:
+For deterministic animation tests, control virtual time:
 
 ```kotlin
 composeRule.mainClock.autoAdvance = false
 composeRule.mainClock.advanceTimeBy(300)
 ```
 
-**Important:** `testTag` is convenient for tests, but accessibility should still be described through meaningful semantics: text, role, content description, state description.
+## Reliable UI tests
 
-**In short:** Compose UI tests verify UI through the semantics tree; test user-visible behavior rather than internal composable structure.
+- Verify outcomes visible to the user, not private fields, composable structure or exact pixel positions.
+- Replace real network, clock and random data with deterministic dependencies.
+- Start each test from known app state; do not depend on test order or data left by another test.
+- Cover important configuration boundaries deliberately, such as locale, dark theme, font scale and representative window sizes, rather than duplicating every test for every device.
+- Use screenshots for diagnostics or dedicated visual regression tooling, not as a substitute for behavioral assertions.
+- A flaky test is a defect: identify missing synchronization or shared state instead of adding retries blindly.
 
-### JUnit
+Related: [Testing Strategy](strategy.md), [ViewModel Testing](viewmodel-testing.md), [Compose Testing](../compose/testing.md).
 
-JUnit is the base test framework on which unit tests and many Android tests are usually built. It provides `@Test`, assertions, rules, lifecycle hooks and Gradle/IDE integration.
-
-In Android there are usually two levels:
-
-- local unit tests in `src/test`, which run on the JVM without a device;
-- instrumented tests in `src/androidTest`, which run on an emulator/device and have access to the Android framework.
-
-Example of a simple JUnit test:
-
-```kotlin
-class EmailValidatorTest {
-
-    @Test
-    fun `valid email returns true`() {
-        val validator = EmailValidator()
-
-        assertTrue(validator.isValid("ada@example.com"))
-    }
-}
-```
-
-JUnit rules are useful for repeated setup, for example replacing `Dispatchers.Main`, creating a temporary folder or configuring a Compose/Espresso rule.
-
-JUnit itself does not perform Android UI testing. UI needs Espresso, Compose testing APIs, Robolectric or an instrumented test runner, depending on the scenario.
-
-**In short:** JUnit is the foundation for tests; Android-specific behavior is added by rules, runners and testing libraries on top of it.
+Sources: [Android testing fundamentals](https://developer.android.com/training/testing/fundamentals), [Espresso](https://developer.android.com/training/testing/espresso), [Espresso idling resources](https://developer.android.com/training/testing/espresso/idling-resource), [Compose UI testing](https://developer.android.com/develop/ui/compose/testing), [Compose test synchronization](https://developer.android.com/develop/ui/compose/testing/synchronization).

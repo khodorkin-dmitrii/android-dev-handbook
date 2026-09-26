@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-24
+1. Last tracker update: 2026-09-26
 1. Total articles tracked: 99
-1. Updated: 44
-1. TODO: 55
+1. Updated: 46
+1. TODO: 53
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 16      | 15   |
+| P1 | 31 | 18      | 13   |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -64,8 +64,11 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-06-30, `networking/http-rest.md`, HTTP / REST, Expanded HTTP/REST fundamentals: HTTP methods, safe/idempotent semantics, GET vs POST, status codes table, headers/body, and Android error mapping.
 1. P1, **UPDATED**, 2026-06-30, `networking/retrofit-okhttp.md`, Retrofit / OkHttp, Expanded Retrofit/OkHttp: service API examples, Response<T>, OkHttp setup, interceptors, auth interceptor, serialization pitfalls, NetworkResult, request debugging, logging, common mistakes, and production recommendations.
 1. P1, **UPDATED**, 2026-09-24, `networking/graphql.md`, GraphQL, Clarified operations and schema nullability, added a variable-based query, distinguished partial GraphQL errors from transport failures, refined REST trade-offs and Apollo cache guidance; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `networking/grpc-protobuf.md`, gRPC / Protobuf
-1. P1, **TODO**, , `testing/android-ui-testing.md`, Android UI Testing
+1. P1, **UPDATED**, 2026-09-25, `networking/grpc-protobuf.md`, gRPC / Protobuf, Added a complete service contract example; clarified RPC streaming semantics, Android channel lifecycle, deadlines, cancellation and safe retries, protobuf presence and compatibility rules, and REST trade-offs; synchronized EN/RU and removed repetition.
+1. P1, **UPDATED**, 2026-09-26, `testing/android-ui-testing.md`, Android UI Testing, Clarified local versus instrumented scope, Espresso and Compose synchronization boundaries, rule selection, semantics and stable selectors; added hermetic-test, configuration and flaky-test guidance; synchronized EN/RU and removed repetition.
+1. P1, **TODO**, , `ai/overview.md`, AI on Android
+1. P1, **TODO**, , `ai/ml-kit.md`, ML Kit
+1. P1, **TODO**, , `ai/litert.md`, LiteRT
 1. P1, **TODO**, , `engineering/code-quality.md`, Code Quality
 1. P1, **TODO**, , `engineering/code-review.md`, Code Review
 1. P1, **TODO**, , `engineering/oop.md`, OOP
@@ -76,9 +79,6 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **TODO**, , `architecture/legacy-refactoring.md`, Legacy & Refactoring
 1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
 1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
-1. P1, **TODO**, , `ai/overview.md`, AI on Android
-1. P1, **TODO**, , `ai/ml-kit.md`, ML Kit
-1. P1, **TODO**, , `ai/litert.md`, LiteRT
 1. P2, **TODO**, , `android/index.md`, Android Overview
 1. P2, **TODO**, , `kotlin/index.md`, Kotlin Overview
 1. P2, **TODO**, , `compose/index.md`, Compose Overview

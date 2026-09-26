@@ -1,89 +1,67 @@
 # gRPC / Protobuf
 
-gRPC and Protocol Buffers are more common in projects that need a strict typed contract, binary serialization, streaming or a shared API contract across several platforms.
+gRPC is an RPC framework built around typed service methods. Protocol Buffers (protobuf) is its default Interface Definition Language and message format, although the two technologies can also be used separately. They are useful when an API needs code-generated contracts, compact binary messages or streaming.
 
-## gRPC
+## Service contract and generated code
 
-### What is gRPC?
-
-gRPC is an RPC framework where the client calls remote methods on the server almost like regular functions, and the API contract is described in `.proto` files.
-
-Under the hood, gRPC usually uses HTTP/2, binary serialization through Protocol Buffers, typed service definitions and code generation for client/server stubs.
-
-In Android, gRPC can be useful when a strict contract, efficient binary protocol, streaming, low-latency communication or shared API contract across several platforms is needed.
-
-Drawbacks: harder debugging without special tools, less readable payload compared with JSON, required code generation and careful schema evolution.
-
-**In short:** gRPC is a type-safe RPC framework where API methods and messages are defined in proto files and client/server code is generated from that contract.
-
-### What are Protocol Buffers?
-
-Protocol Buffers, or protobuf, is a language-neutral binary serialization format and IDL for describing message structure.
-
-The `.proto` file describes messages, fields, field numbers, types, enums and services. Kotlin/Java models and gRPC stubs are generated from this contract.
+A `.proto` file describes messages and service methods. The compiler and gRPC plugins generate message classes and client/server APIs for the selected languages.
 
 ```proto
-message User {
-  string id = 1;
-  string name = 2;
-  int32 age = 3;
+syntax = "proto3";
+
+message RobotRequest {
+  string robot_id = 1;
+}
+
+message RobotStatus {
+  string robot_id = 1;
+  int32 battery_percent = 2;
+}
+
+service RobotService {
+  rpc GetStatus(RobotRequest) returns (RobotStatus);
+  rpc ObserveStatus(RobotRequest) returns (stream RobotStatus);
 }
 ```
 
-The key idea: in protobuf, field numbers matter more than field names. Therefore old field numbers must not be reused with a different meaning when the schema changes.
+Field numbers identify protobuf fields on the wire. Names improve source readability, but renaming a field does not change its binary identity. Generated protobuf types are transport-contract models; map them to domain or UI models when the layers have different needs.
 
-Benefits of protobuf: compact binary payload, fast parsing, strict schema and code generation. Drawbacks: payload is not human-readable like JSON, and schema evolution requires discipline.
+## RPC types
 
-**In short:** protobuf defines strongly typed messages and serializes them into compact binary data; field numbers are part of the compatibility contract.
+gRPC defines four method shapes:
 
-### REST vs gRPC
+- **Unary**: one request, one response.
+- **Server streaming**: one request, a stream of responses.
+- **Client streaming**: a stream of requests, one response.
+- **Bidirectional streaming**: both sides exchange independent streams. Message order is preserved within each stream of one RPC.
 
-REST is usually built around resources, URLs and HTTP methods: `GET /users/1`, `POST /orders`. gRPC is built around service methods: `UserService.GetUser`, `OrderService.CreateOrder`.
+With gRPC Kotlin, generated coroutine stubs can expose unary calls as `suspend` functions and streams as `Flow`. A stream still needs lifecycle-aware collection, cancellation and an explicit reconnection policy. Flow control exists at the gRPC transport level, but application buffering and slow-consumer behavior must still be designed.
 
-REST usually uses JSON, is easier to debug with regular HTTP tools and is convenient for public APIs, browser clients and simple CRUD scenarios.
+## Android client responsibilities
 
-gRPC is usually more efficient in payload size and latency, provides a strict contract, code generation and strong streaming support over HTTP/2.
+Keep the generated stub and channel in the data layer and normally reuse the channel instead of creating one per request. Configure transport security for production and close long-lived resources when their owner is destroyed.
 
-In Android, the choice depends on the backend ecosystem and the task. For a regular mobile API, REST + Retrofit is often enough. gRPC is useful if the project is already built around protobuf/gRPC, needs streaming updates, typed contracts or high network-layer efficiency.
+Set a deadline for calls: otherwise a client may wait indefinitely, depending on the API defaults. Coroutine cancellation should propagate to the RPC, but cancellation does not roll back work already completed on the server.
 
-**Important:** gRPC does not automatically make architecture better. Repository/data layer, error mapping, timeout/retry policy, cancellation and mapping generated models into domain/UI models are still needed.
+Map gRPC statuses such as `UNAUTHENTICATED`, `PERMISSION_DENIED`, `NOT_FOUND`, `UNAVAILABLE` and `DEADLINE_EXCEEDED` into application errors. Retry only transient failures and only when the operation is safe to repeat or has an idempotency mechanism; exponential backoff does not make a non-idempotent call safe.
 
-**In short:** REST is resource-oriented and human-readable, gRPC is service-method-oriented, strongly typed and efficient, but requires generated code and tooling.
+## Protobuf compatibility
 
-### Unary / streaming calls
+Schema evolution is safe only when wire-compatibility rules are respected:
 
-Unary call is the simplest gRPC call type: the client sends one request and receives one response. It is similar to a regular HTTP request/response.
+- add new fields with new numbers;
+- never renumber fields or reuse a deleted number;
+- reserve the number and preferably the name of a removed field;
+- avoid changing a field type or semantic meaning in place;
+- do not assume a scalar's default value means it was explicitly sent - use field presence (`optional`) when that distinction matters;
+- keep an enum zero value such as `STATUS_UNSPECIFIED` for an unknown or unset state.
 
-Server streaming means the client sends one request, and the server returns a stream of responses. Examples: subscription to live status, progress updates or timeline events.
+Old readers normally preserve or ignore unknown fields depending on how a message is processed, so avoid converting through representations that discard them during read-modify-write flows.
 
-Client streaming means the client sends a stream of requests, and the server returns one response. Examples: uploading a series of chunks or a set of events after which the server returns a final result.
+## gRPC vs REST
 
-Bidirectional streaming means client and server exchange streams at the same time. It is similar to a persistent realtime channel and works for chat-like, telemetry or interactive flows.
+REST is commonly resource-oriented and uses human-readable JSON, which is convenient for public APIs and ordinary HTTP tooling. gRPC is service-method-oriented, usually runs over HTTP/2, provides generated types and supports streaming directly. Binary messages can reduce payload size, but real performance depends on the request pattern, backend and network. For a conventional mobile CRUD API, REST with Retrofit may be simpler; gRPC is compelling when the backend already uses protobuf, strict cross-platform contracts or streaming.
 
-In Android, streaming is convenient to map into `Flow`, but lifecycle-aware collection, cancellation, reconnect strategy and backpressure/buffering at the chosen gRPC/Kotlin wrapper level should be considered.
+Related: [HTTP / REST](http-rest.md), [Retrofit / OkHttp](retrofit-okhttp.md), [Flow Basics](../coroutines-flow/flow-basics.md).
 
-**In short:** gRPC supports unary, server streaming, client streaming and bidirectional streaming calls; streaming is one of its main advantages over typical REST APIs.
-
-### gRPC in Android
-
-In Android, a gRPC client is usually generated from `.proto` contracts. The data layer calls generated stubs, and repository maps protobuf responses into domain/UI models.
-
-For Kotlin code, coroutine-friendly stubs are often used: unary calls look like suspend functions, and streaming calls can be represented as `Flow`.
-
-Generated protobuf models should not be passed directly into UI / `ViewModel`. They are network contract models, not necessarily convenient domain models.
-
-Error handling differs from REST: instead of HTTP status codes, the client often works with gRPC status codes such as `OK`, `CANCELLED`, `UNKNOWN`, `INVALID_ARGUMENT`, `NOT_FOUND`, `PERMISSION_DENIED`, `UNAUTHENTICATED`, `UNAVAILABLE`, `DEADLINE_EXCEEDED`.
-
-**In short:** on Android, gRPC belongs in the data layer; repositories should hide generated stubs and map protobuf/status errors into app-level models.
-
-### Schema evolution / backward compatibility
-
-Protobuf supports backward/forward compatibility well if schema-change rules are followed.
-
-New fields with new field numbers can be added: old clients will ignore them, and new clients can read them if the server sends them.
-
-Do not reuse deleted field numbers or change the meaning of an existing field. If a field is removed, its number and name should be marked as `reserved`.
-
-Changing the type of an existing field is dangerous because old and new clients may start reading data incorrectly. For a new meaning, add a new field with a new number.
-
-**In short:** protobuf compatibility is based on stable field numbers; add new fields safely, but do not reuse or repurpose old field numbers.
+Sources: [gRPC core concepts](https://grpc.io/docs/what-is-grpc/core-concepts/), [gRPC deadlines](https://grpc.io/docs/guides/deadlines/), [Proto3 language guide](https://protobuf.dev/programming-guides/proto3/), [Protobuf best practices](https://protobuf.dev/best-practices/dos-donts/).
