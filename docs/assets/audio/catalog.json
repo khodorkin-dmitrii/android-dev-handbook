@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "playlists": [
+    {
+      "id": "shorts",
+      "title": {
+        "en": "Short Audio Notes",
+        "ru": "Short Audio Notes"
+      },
+      "availableLanguages": [
+        "en",
+        "ru"
+      ],
+      "manifestUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/manifest.json"
+    }
+  ]
+}
