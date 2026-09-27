@@ -8,15 +8,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-26
+1. Last tracker update: 2026-09-27
 1. Total articles tracked: 99
-1. Updated: 46
-1. TODO: 53
+1. Updated: 47
+1. TODO: 52
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 18      | 13   |
+| P1 | 31 | 19      | 12   |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -66,7 +66,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-24, `networking/graphql.md`, GraphQL, Clarified operations and schema nullability, added a variable-based query, distinguished partial GraphQL errors from transport failures, refined REST trade-offs and Apollo cache guidance; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-25, `networking/grpc-protobuf.md`, gRPC / Protobuf, Added a complete service contract example; clarified RPC streaming semantics, Android channel lifecycle, deadlines, cancellation and safe retries, protobuf presence and compatibility rules, and REST trade-offs; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-09-26, `testing/android-ui-testing.md`, Android UI Testing, Clarified local versus instrumented scope, Espresso and Compose synchronization boundaries, rule selection, semantics and stable selectors; added hermetic-test, configuration and flaky-test guidance; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `ai/overview.md`, AI on Android
+1. P1, **UPDATED**, 2026-09-27, `ai/overview.md`, AI on Android, Updated the Android AI solution map with ML Kit GenAI; clarified on-device, cloud and hybrid selection, runtime availability and foreground constraints, API-key security, untrusted-output handling, performance measurement and model-aware evaluation; synchronized EN/RU.
 1. P1, **TODO**, , `ai/ml-kit.md`, ML Kit
 1. P1, **TODO**, , `ai/litert.md`, LiteRT
 1. P1, **TODO**, , `engineering/code-quality.md`, Code Quality
