@@ -1,26 +1,47 @@
+const audioNotesSelector = ".audio-notes-grid audio";
+
+const isAudioNotesPlayer = (target) =>
+  target instanceof HTMLAudioElement && target.matches(audioNotesSelector);
+
+const setActivePlayer = (currentPlayer) => {
+  document.querySelectorAll(audioNotesSelector).forEach((player) => {
+    player.classList.toggle("is-playing", player === currentPlayer);
+  });
+};
+
 document.addEventListener(
   "play",
   (event) => {
     const currentPlayer = event.target;
 
-    if (
-      !(currentPlayer instanceof HTMLAudioElement) ||
-      !currentPlayer.closest(".audio-notes-grid")
-    ) {
+    if (!isAudioNotesPlayer(currentPlayer)) {
       return;
     }
 
-    document.querySelectorAll(".audio-notes-grid audio").forEach((player) => {
+    document.querySelectorAll(audioNotesSelector).forEach((player) => {
       if (player !== currentPlayer) {
         player.pause();
       }
     });
+
+    setActivePlayer(currentPlayer);
   },
   true,
 );
-const audioNotesPlayers = [
-  ...document.querySelectorAll(".audio-notes-grid audio"),
-];
+
+["pause", "ended"].forEach((eventName) => {
+  document.addEventListener(
+    eventName,
+    (event) => {
+      if (isAudioNotesPlayer(event.target)) {
+        event.target.classList.remove("is-playing");
+      }
+    },
+    true,
+  );
+});
+
+const audioNotesPlayers = [...document.querySelectorAll(audioNotesSelector)];
 
 audioNotesPlayers.forEach((player, index) => {
   player.addEventListener("ended", () => {

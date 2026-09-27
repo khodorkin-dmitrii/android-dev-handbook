@@ -32,6 +32,20 @@ Main content language (for now): **Russian**.
 * GitHub Actions
 * GitHub Pages
 
+## 💻 Local preview
+
+Run these commands from the repository root:
+
+```bash
+mkdocs build
+mkdocs serve
+```
+
+Then open the Short Audio Notes page:
+
+1. EN: [http://127.0.0.1:8000/android-dev-handbook/en/audio-shorts/](http://127.0.0.1:8000/android-dev-handbook/en/audio-shorts/)
+2. RU: [http://127.0.0.1:8000/android-dev-handbook/ru/audio-shorts/](http://127.0.0.1:8000/android-dev-handbook/ru/audio-shorts/)
+
 ## 📚 Resources
 
 * MkDocs Material: https://squidfunk.github.io/mkdocs-material/

@@ -224,6 +224,21 @@
     width: 100%;
 }
 
+.audio-note audio.is-playing {
+    border-radius: 999px;
+    outline: 2px solid var(--md-accent-fg-color);
+    outline: 2px solid color-mix(in srgb, var(--md-accent-fg-color) 75%, transparent);
+    outline-offset: 2px;
+}
+
+.audio-note audio.is-playing::-webkit-media-controls-panel {
+    background-color: color-mix(
+        in srgb,
+        var(--md-accent-fg-color) 24%,
+        var(--md-default-bg-color)
+    );
+}
+
 @media screen and (max-width: 800px) {
     .audio-notes-grid {
         grid-template-columns: minmax(0, 1fr);
