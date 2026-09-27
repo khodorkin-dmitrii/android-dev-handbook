@@ -78,6 +78,8 @@ Receiver можно зарегистрировать в манифесте ил�
 
 Типичные примеры - `ContactsProvider`, `MediaStore` и `FileProvider`. Provider может быть точкой входа и инициализироваться до `Application.onCreate()`, поэтому в нём следует избегать тяжёлой работы при старте. Если provider экспортирован, чувствительные операции нужно защищать узкими URI permissions или явными permissions.
 
+![Реализация ContentProvider](../assets/images/android/content-provider-implementation.png)
+
 ## Передача данных
 
 ### Intent: explicit vs implicit

@@ -78,6 +78,8 @@ Receivers can be registered in the manifest or at runtime. Account for implicit 
 
 Common examples are `ContactsProvider`, `MediaStore`, and `FileProvider`. Providers can be app entry points and may be initialized before `Application.onCreate()`, so avoid heavy startup work. If a provider is exported, protect sensitive operations with narrow URI permissions or explicit permissions.
 
+![ContentProvider implementation](../assets/images/android/content-provider-implementation.png)
+
 ## Passing data
 
 ### Intent: explicit vs implicit
