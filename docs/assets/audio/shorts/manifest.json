@@ -181,7 +181,8 @@
         "en": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/en/09-en-shorts-libraries-build.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/en/09-en-shorts-libraries-build.srt",
+          "timedTranscriptFormat": "srt"
         },
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/09-ru-shorts-libraries-build.mp3",

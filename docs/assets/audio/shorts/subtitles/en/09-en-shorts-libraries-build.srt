@@ -1,0 +1,43 @@
+1
+00:00:00,125 --> 00:00:00,978
+Libraries and Build
+
+2
+00:00:01,332 --> 00:00:02,869
+How and where are Android libraries published?
+
+3
+00:00:03,226 --> 00:00:06,996
+An Android library is built as an AAR and published to a Maven repository
+
+4
+00:00:07,152 --> 00:00:10,640
+such as Maven Central, GitHub Packages, Nexus, or Artifactory.
+
+5
+00:00:10,981 --> 00:00:14,100
+The Gradle maven-publish plugin is commonly used to upload the artifact,
+
+6
+00:00:14,371 --> 00:00:16,733
+POM, sources, and optional documentation.
+
+7
+00:00:17,088 --> 00:00:18,230
+How should a library be versioned?
+
+8
+00:00:18,589 --> 00:00:20,358
+Semantic Versioning is often used:
+
+9
+00:00:20,644 --> 00:00:23,765
+MAJOR for breaking changes, MINOR for backward-compatible features,
+
+10
+00:00:24,032 --> 00:00:25,752
+and PATCH for backward-compatible fixes.
+
+11
+00:00:26,102 --> 00:00:30,130
+API dumps and binary compatibility validation are useful for a published API.
