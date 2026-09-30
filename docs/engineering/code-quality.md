@@ -1,105 +1,158 @@
 # Code Quality
 
-Code quality is about making code correct, readable, maintainable, testable and safe to change. Good code is not just "beautiful" code. It should help the team understand, modify and evolve the system without unnecessary risk.
+Code quality is the ability to understand, verify, and change code without unnecessary risk. Good code is not merely "clean" or stylistically attractive. It must behave correctly, express its intent, fit the architecture, and remain practical to test and maintain.
 
-These ideas are also useful during [Code Review](code-review.md), where reviewers check not only whether the code works, but whether it can be safely maintained.
+These ideas also guide [Code Review](code-review.md), where reviewers evaluate both the current behavior and the cost of future change.
 
 ## What is code quality?
 
-Code quality describes how well code supports its purpose over time. High-quality code is understandable, predictable, covered by meaningful tests, and aligned with the architecture of the project.
+Quality is contextual. A one-off migration, a small internal tool, and a long-lived Android feature do not need the same structure or test coverage. The goal is the simplest design that makes important behavior explicit and keeps likely changes safe.
 
-Quality is contextual. A small script, a one-off migration and a long-lived Android feature do not need the same level of structure. The goal is to choose the simplest design that keeps the current behavior clear and future changes safe.
+Useful questions include:
 
-**In short:** code quality is the ability to change code confidently without constantly creating new bugs or slowing future work.
+- Is the behavior correct for normal, error, and lifecycle paths?
+- Can another developer understand the intent without reconstructing hidden assumptions?
+- Are responsibilities and ownership clear?
+- Can the important behavior be tested without reproducing the whole application?
+- Will a likely change stay local, or spread across unrelated modules?
+
+No single metric answers all of these questions.
 
 ## Readability
 
-Readability means the intent of the code is clear. A reader should be able to understand what the code does, why it exists and where the state is owned without reconstructing everything from low-level details.
+Readable code makes intent visible. A reader should understand what the code does, why it exists, and where mutable state is owned without translating low-level operations into a mental model first.
 
-Important parts of readability:
+Readability usually benefits from:
 
-- clear names for classes, functions, variables and state;
-- small functions with one main responsibility;
-- predictable control flow;
-- low surprise in side effects;
-- explicit ownership of mutable state;
-- code organized around meaningful domain or feature concepts.
+- names that describe domain meaning rather than implementation mechanics;
+- functions with one coherent responsibility;
+- predictable control flow and explicit side effects;
+- limited nesting and early handling of invalid states;
+- consistent Kotlin formatting and naming conventions;
+- comments that explain constraints or decisions, not every line.
 
-Readability is not about making code verbose. It is about making the important decisions visible and removing noise that hides behavior.
+Small functions are not automatically readable. Splitting a simple operation across many indirections can hide the actual flow. Prefer a clear unit of behavior over an arbitrary line limit.
 
-**Practical note:** if a comment has to explain what every line does, the code probably needs better names, smaller functions or clearer structure.
+## Maintainability and boundaries
 
-## Maintainability
+Maintainability means a change can be made without breaking unrelated behavior. It depends on cohesive responsibilities, limited coupling, stable contracts, useful tests, and clear ownership.
 
-Maintainability means future changes can be made without breaking unrelated behavior. Maintainable code has clear boundaries, limited coupling, useful tests and explicit contracts between layers.
+In Android, separate concerns where they change for different reasons:
 
-In Android, maintainability often depends on whether UI, state management, domain logic and data access are separated well enough. A change in API mapping should not require rewriting UI. A UI state change should not leak into repository internals.
+- UI renders state and sends user actions;
+- a state holder coordinates screen behavior;
+- domain logic expresses product rules when that separation adds value;
+- repositories define data access boundaries;
+- data sources handle concrete network, database, or platform APIs.
 
-Maintainable code also avoids hiding important behavior in global state, base classes, magic callbacks or implicit lifecycle assumptions.
+These are guidelines, not a requirement to create every layer for every feature. A small feature may not need a separate domain layer. Extra indirection is justified when it isolates volatility, enables reuse, improves testing, or clarifies ownership.
 
-**Key idea:** maintainability is not only about today's implementation. It is about reducing the cost and risk of tomorrow's change.
+Avoid hiding important behavior in global mutable state, deep inheritance, magic callbacks, or implicit lifecycle assumptions. A boundary is useful only when its contract is clearer than the code it replaces.
 
 ## Technical debt
 
-Technical debt is a trade-off or accumulated complexity that makes future work slower or riskier. It can appear from rushed decisions, old requirements, missing tests, temporary workarounds, outdated dependencies or design that no longer fits the product.
+Technical debt is an intentional trade-off or accumulated complexity that makes future work slower or riskier. It can come from time pressure, changed requirements, temporary workarounds, missing tests, outdated dependencies, or a design that no longer fits the product.
 
-Not every debt is bad. Sometimes taking a small debt is a reasonable business decision, especially when the scope is clear and the team plans to revisit it. The risk starts when debt is invisible, undocumented or spread across critical paths.
+Not all debt is a mistake. A deliberate shortcut can be reasonable when its scope, risk, and expected lifetime are understood. Unmanaged debt is more dangerous: it is invisible, repeatedly surprises the team, or spreads through critical paths.
 
-Common signs of unmanaged debt:
+Record meaningful debt with:
 
-- changes take much longer than expected;
-- small fixes break unrelated behavior;
-- tests are missing or hard to write;
-- important logic is duplicated;
-- nobody knows which layer owns a decision;
-- a "temporary" workaround becomes part of the architecture.
+- the current limitation and its impact;
+- why the trade-off was accepted;
+- the affected owner or area;
+- a trigger for revisiting it, such as the next feature in that code;
+- a concrete removal or containment plan when one is known.
 
-**Important:** technical debt should be named and managed. Ignored debt turns into a tax on every future feature.
+Do not turn every imperfect detail into a ticket. Track debt that changes risk, delivery speed, reliability, security, or the cost of planned work.
 
-## YAGNI
+## YAGNI and abstractions
 
-YAGNI means "You Aren't Gonna Need It". Do not add functionality, abstractions or extension points before there is a real need.
+YAGNI means "You Aren't Gonna Need It": do not add functionality, extension points, or abstractions before there is a concrete need.
 
-Premature abstraction often makes code harder to read and change. A generic interface, plugin system or strategy layer can be useful when there are real variations, but harmful when there is only one implementation and no concrete second use case.
+An interface with one implementation is not automatically wrong. It can represent a real boundary, isolate an external API, or enable deterministic tests. It becomes suspicious when it only mirrors another type, has no independent contract, and exists for a hypothetical future implementation.
 
-YAGNI does not mean avoiding design. It means designing for known requirements and keeping the code easy to extend when a real need appears.
+Before adding an abstraction, ask:
 
-**Common pitfall:** adding an abstraction "just in case" can create more maintenance cost than the future change it was supposed to simplify.
+- What variation or dependency does it isolate today?
+- Does it make the caller simpler?
+- Can its contract be named precisely?
+- Would introducing it later be significantly harder?
+
+Design for known requirements while leaving code easy to refactor when evidence appears.
 
 ## Code smells
 
-Code smells are signs that code may have design, readability or maintainability problems. They are not always bugs, and they do not always require immediate refactoring.
+Code smells are signals of possible design or maintenance problems, not proof of a bug and not automatic rewrite instructions.
 
-Common examples:
+Common examples include:
 
-- long method;
-- large class / god object;
-- duplicated code;
-- feature envy;
-- primitive obsession;
-- shotgun surgery;
-- deep nesting;
-- too many boolean flags;
-- hidden side effects;
-- unnecessary abstraction.
+- long methods or large classes with several reasons to change;
+- duplicated product rules;
+- deep nesting or many boolean flags;
+- feature envy and unclear ownership;
+- primitive values that hide domain constraints;
+- changes that require edits across many unrelated files;
+- hidden side effects or order-dependent callbacks;
+- abstractions that add navigation without reducing complexity.
 
-A smell is a signal to inspect context. Sometimes the right answer is a small cleanup. Sometimes it is better to leave the code alone until there is a real reason to change it.
+Inspect the context before acting. Duplication of two similar lines may be cheaper than a shared abstraction that couples unrelated features. Conversely, duplicated business rules can create inconsistent behavior and deserve early attention.
 
-**In short:** code smells are useful warning signs, not automatic rewrite instructions.
+## Refactoring safely
 
-## Refactoring
+Refactoring changes internal structure while preserving externally observable behavior. It should make the next change safer or the current behavior clearer.
 
-Refactoring is changing the internal structure of code without changing external behavior. It improves readability, maintainability, testability or architecture while preserving what users and callers observe.
+A practical sequence is:
 
-Good refactoring is usually incremental. It starts from a small boundary, keeps behavior stable and is supported by tests or clear manual checks. Large rewrites are riskier because they change structure and behavior at the same time.
+1. Define the behavior that must remain stable.
+2. Add or identify tests at the boundary being changed.
+3. Make one structural change at a time.
+4. Run focused checks after each step.
+5. Review the result for reduced complexity, not merely moved code.
 
-Practical refactoring examples:
+Examples include extracting mapping from a `ViewModel`, splitting a large workflow into named steps, moving data access out of UI code, consolidating duplicated rules, or making state ownership explicit.
 
-- extract a mapper from `ViewModel`;
-- split a large function into named steps;
-- move data access out of UI layer;
-- replace duplicated logic with a shared function;
-- introduce a small interface when a real second implementation appears;
-- make state ownership explicit.
+Do not mix a broad rewrite, behavior change, dependency upgrade, and formatting pass in one review unless they cannot be separated. Smaller diffs make regressions and design decisions easier to see.
 
-**Important:** refactoring should reduce complexity. If it only moves code around or adds layers without making change safer, it may not be worth doing.
+## Automated quality gates
+
+Automation should catch repeatable problems before a reviewer spends attention on them:
+
+```bash
+./gradlew test lint
+```
+
+A typical Android pipeline combines compilation, unit tests, Android Lint, consistent formatting, and project-specific static analysis. Instrumented or integration tests should be added where their risk coverage justifies the cost.
+
+Android Lint detects issues related to correctness, security, performance, accessibility, internationalization, and Android API usage. Run it explicitly in CI; it is not automatically part of every Gradle build. Configure severity to match the project and suppress a finding only with a narrow scope and a documented reason.
+
+For an existing project with many findings, a baseline can prevent new violations while old ones are reduced gradually. A baseline is migration support, not evidence that recorded issues are harmless. Avoid regenerating it merely to make CI green.
+
+## Metrics and trade-offs
+
+Coverage, complexity, duplication, warning counts, and build times can reveal trends, but they are proxies rather than quality itself.
+
+- High coverage does not prove that important behavior is asserted.
+- Low complexity does not guarantee a good domain model.
+- Zero duplication can indicate premature abstraction.
+- More layers do not automatically mean better architecture.
+
+Use metrics to start investigation and compare change over time. Combine them with production signals such as crashes, ANRs, defect escape rate, rollback frequency, and the time required to make common changes.
+
+## Common mistakes
+
+- Treating formatting preferences as the main measure of quality.
+- Adding architecture layers without a concrete responsibility.
+- Optimizing for test coverage percentage instead of risk coverage.
+- Suppressing static-analysis findings without recording why.
+- Refactoring and changing behavior in one large, hard-to-review diff.
+- Leaving temporary workarounds without ownership or a revisit trigger.
+- Applying a code smell mechanically without considering context.
+- Rewriting stable code only because a newer pattern exists.
+
+## See also
+
+- [Code Review](code-review.md)
+- [Architecture Basics](../architecture/basics.md)
+- [Testing Strategy](../testing/strategy.md)
+- [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html)
+- [Android Lint](https://developer.android.com/studio/write/lint)

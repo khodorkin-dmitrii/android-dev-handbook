@@ -2,17 +2,17 @@
 
 ML Kit provides high-level machine learning APIs designed for mobile applications. It is a good default when a ready-made API already solves the task: the application works with Android-friendly objects instead of managing tensors, model operators, and hardware delegates directly.
 
-Most ML Kit processing runs on the device. This enables offline use, low latency, and camera-based real-time scenarios while allowing sensitive source data to remain local.
+ML Kit processing runs on the device. This enables offline use, low latency, and real-time camera scenarios while allowing sensitive input to remain local. Model delivery, supported devices, languages, and API stability still vary by feature.
 
 ## Available capabilities
 
-ML Kit includes APIs in several groups:
+ML Kit includes several groups of APIs:
 
 - vision: text recognition, barcode scanning, face detection, image labeling, object detection and tracking, pose detection, segmentation, and document scanning;
 - natural language: language identification, translation, smart reply, and entity extraction;
-- generative AI on supported devices: APIs such as summarization, proofreading, rewriting, image description, speech recognition, and prompting.
+- generative AI: summarization, proofreading, rewriting, image description, speech recognition, and prompting on supported devices.
 
-Availability, lifecycle status, language support, and device requirements differ between APIs. Check the documentation for the specific feature before committing to a product design.
+Traditional vision and natural-language APIs use task-specific models. ML Kit GenAI APIs are a separate family built on AICore and the device's shared Gemini Nano model. Their device and language coverage is narrower, so check availability at runtime and design a fallback before committing to a product flow.
 
 ## ML Kit or LiteRT?
 
@@ -27,19 +27,19 @@ Choose [LiteRT](litert.md) when:
 
 - the application must run a custom `.tflite` model;
 - preprocessing and postprocessing are part of a custom model contract;
-- you need direct control over input and output tensors or acceleration;
+- you need direct control over tensors or acceleration;
 - ML Kit's model, output, or supported use cases do not meet the requirements.
 
-ML Kit can also support custom models for selected APIs. Evaluate that option before building the entire pipeline at a lower level.
+Selected ML Kit APIs also accept custom models. Evaluate that option before implementing the entire pipeline at a lower level.
 
 ## Dependency and model delivery
 
-The exact artifact depends on the API. Some ML Kit features offer two delivery options:
+The artifact and delivery options depend on the API. Some ML Kit features offer both:
 
-- a **bundled model** is included in the application, is available immediately, and increases application size;
-- a **Google Play services model** keeps the initial application smaller but may require a model download before the first successful use.
+- a **bundled model**, which is included in the application, works immediately, and increases application size;
+- a **Google Play services model**, which keeps the application smaller but may need to download before the first successful request.
 
-For example, Latin-script text recognition uses different artifacts for bundled and Play services delivery:
+For example, Latin-script text recognition has separate artifacts:
 
 ```kotlin
 dependencies {
@@ -51,9 +51,9 @@ dependencies {
 }
 ```
 
-The versions above were current when this article was reviewed. Verify them in the official guide before adding the dependency. Do not add both variants for the same detector unless the feature explicitly requires them.
+These versions were current when this article was reviewed. Verify them in the feature's official guide. Do not add both variants for the same detector.
 
-If the first-run flow cannot wait for a download, use a bundled model or arrange installation-time download where the API supports it. The product must still handle unavailable and failed states.
+If the first-run flow cannot wait for a download, choose the bundled option or request installation-time delivery where the API supports it. Otherwise expose a preparing state and handle download failure. A Play services model can produce no result until its download completes.
 
 ## Text recognition example
 
@@ -76,9 +76,9 @@ class TextRecognitionDataSource : Closeable {
 }
 ```
 
-`await()` is supplied by `kotlinx-coroutines-play-services`. If that adapter is not used, bridge the returned `Task` through listeners while preserving cancellation and lifecycle behavior.
+`await()` is supplied by `kotlinx-coroutines-play-services`. Cancelling the awaiting coroutine does not necessarily cancel work already started by the underlying ML Kit task. Ignore late results after the owner or input has changed.
 
-The data source should be scoped to an owner with an explicit lifetime, such as a screen-level component or dependency-injection scope. Release clients that expose `close()` when that owner is destroyed.
+Scope the data source to an owner with an explicit lifetime, such as a screen-level component or dependency-injection scope. Close clients that expose `close()` when that owner is destroyed.
 
 ## CameraX integration
 
@@ -113,13 +113,13 @@ Important rules:
 
 - close every `ImageProxy`, including error and early-return paths;
 - pass the frame rotation reported by CameraX;
-- use `ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST` for many real-time scenarios;
-- avoid running several detector invocations concurrently unless the API and feature were designed for it;
+- use `ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST` for most real-time analysis;
+- avoid overlapping detector calls unless the API and feature are designed for it;
 - crop or reduce input resolution only after measuring the effect on accuracy.
 
 ## State and error handling
 
-Model the feature as explicit states rather than a nullable result:
+Represent the feature with explicit states rather than a nullable result:
 
 ```kotlin
 sealed interface RecognitionState {
@@ -130,7 +130,9 @@ sealed interface RecognitionState {
 }
 ```
 
-Differentiate between an empty but valid recognition result, a missing or downloading model, unsupported input, cancellation, and an actual processing failure. Avoid showing an error for every camera frame that contains no recognizable object.
+Differentiate an empty but valid result, a missing or downloading model, unsupported input or device, cancellation, and an actual processing failure. Do not show an error for every camera frame that contains no recognizable object.
+
+For GenAI APIs, runtime availability is part of the feature contract. Inference is allowed only while the app is the top foreground application, AICore enforces per-app quotas, and different Gemini Nano versions can produce different output. Handle unsupported devices, `BUSY`, battery quota, and background-use errors; evaluate quality across supported model versions.
 
 ## Performance and lifecycle
 
@@ -138,18 +140,18 @@ Differentiate between an empty but valid recognition result, a missing or downlo
 - Run processing outside UI rendering code and never block the main thread while waiting for a result.
 - Throttle continuous input and discard stale results when a newer frame supersedes them.
 - Keep raw images out of long-lived state unless the feature requires them.
-- Test cold start separately from steady-state latency because model initialization or download can dominate the first request.
+- Test cold start separately from steady-state latency because initialization or model download can dominate the first request.
 - Measure on lower-end devices and with realistic camera resolutions.
 
 ## Privacy
 
-On-device processing does not automatically make the entire feature private. The application may still upload source images, analytics, recognized text, or crash diagnostics. Document each data path and avoid recording user content in logs.
+On-device inference keeps API input and output local, but it does not automatically make the entire feature private. The application may still upload images, analytics, recognized text, or crash diagnostics. Document each data path and avoid recording user content in logs.
 
 If a result is later sent to a backend or cloud model, explain that boundary in the product flow and apply the application's consent, retention, and security rules.
 
 ## Testing
 
-Wrap the ML Kit client behind a small interface so ViewModels and use cases can be tested with deterministic fakes:
+Wrap the ML Kit client behind a small interface so ViewModels and use cases can use deterministic fakes:
 
 ```kotlin
 fun interface TextRecognizerGateway {
@@ -157,21 +159,23 @@ fun interface TextRecognizerGateway {
 }
 ```
 
-Use integration tests with a curated image set for the real client. Include rotation, blur, low light, partial content, supported scripts, empty input, and the minimum image size relevant to the product. Avoid asserting an unstable full OCR string when checking a smaller invariant is sufficient.
+Use integration tests with a curated image set for the real client. Include rotation, blur, low light, partial content, supported scripts, empty input, and the minimum useful image size. Avoid asserting an unstable full OCR string when a smaller invariant is sufficient. For probabilistic or generative output, evaluate quality over a representative dataset instead of relying on one golden response.
 
 ## Common mistakes
 
 - Recreating the detector for every frame.
 - Forgetting to close `ImageProxy` or a closeable ML Kit client.
-- Assuming the model is already downloaded.
+- Assuming a model or GenAI capability is available.
 - Processing every camera frame and building an unbounded queue.
 - Updating UI with a stale result after the screen or input has changed.
-- Treating confidence-based output as a guaranteed fact.
+- Treating probabilistic output as a guaranteed fact.
 - Logging images or recognized user content.
 
 ## See also
 
 - [AI on Android](overview.md)
+- [LiteRT](litert.md)
 - [ML Kit documentation](https://developers.google.com/ml-kit)
+- [ML Kit GenAI APIs](https://developers.google.com/ml-kit/genai)
 - [Text recognition on Android](https://developers.google.com/ml-kit/vision/text-recognition/v2/android)
 - [CameraX image analysis](https://developer.android.com/media/camera/camerax/analyze)
