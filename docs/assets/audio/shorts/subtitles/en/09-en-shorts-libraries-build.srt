@@ -1,6 +1,6 @@
 1
 00:00:00,125 --> 00:00:00,978
-<b>Libraries and Build</b>
+<u>Libraries and Build</u>
 
 2
 00:00:01,332 --> 00:00:02,869
