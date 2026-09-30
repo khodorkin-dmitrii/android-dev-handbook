@@ -102,4 +102,4 @@ hide:
 </div>
 </div>
 
-<script src="../../javascripts/audio-notes.js?v=2"></script>
+<script src="../../javascripts/audio-notes.js?v=3"></script>

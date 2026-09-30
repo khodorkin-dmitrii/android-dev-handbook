@@ -44,6 +44,16 @@ document.addEventListener(
 const audioNotesPlayers = [...document.querySelectorAll(audioNotesSelector)];
 
 audioNotesPlayers.forEach((player, index) => {
+  player.addEventListener("ratechange", () => {
+    const playbackRate = player.playbackRate;
+
+    audioNotesPlayers.forEach((otherPlayer) => {
+      if (otherPlayer.playbackRate !== playbackRate) {
+        otherPlayer.playbackRate = playbackRate;
+      }
+    });
+  });
+
   player.addEventListener("ended", () => {
     const nextPlayer = audioNotesPlayers[index + 1];
 
