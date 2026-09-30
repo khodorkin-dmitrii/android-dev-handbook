@@ -1,10 +1,10 @@
 1
 00:00:00,125 --> 00:00:00,978
-Libraries and Build
+<b>Libraries and Build</b>
 
 2
 00:00:01,332 --> 00:00:02,869
-How and where are Android libraries published?
+<i>How and where are Android libraries published?</i>
 
 3
 00:00:03,226 --> 00:00:06,996
@@ -24,7 +24,7 @@ POM, sources, and optional documentation.
 
 7
 00:00:17,088 --> 00:00:18,230
-How should a library be versioned?
+<i>How should a library be versioned?</i>
 
 8
 00:00:18,589 --> 00:00:20,358
