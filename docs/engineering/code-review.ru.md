@@ -1,139 +1,62 @@
-# Code Review
+# ООП
 
-Code review - это инженерная практика для проверки корректности, maintainability, shared ownership, knowledge sharing и снижения production risk. Это не поиск виноватого.
+Объектно-ориентированное программирование (ООП) моделирует систему как объекты, объединяющие состояние и поведение. Цель не в том, чтобы создать как можно больше классов, а в том, чтобы дать каждому типу ясную ответственность и сделать зависимости явными.
 
-Code review применяет многие идеи из [Code Quality](code-quality.md): readability, maintainability, code smells, unnecessary abstractions и safe refactoring.
+## Четыре принципа ООП
 
-## Зачем нужен code review?
+### Инкапсуляция
 
-Code review помогает команде находить проблемы до production и сохранять codebase понятной не одному человеку, а всей команде. Он также распространяет контекст: reviewers узнают изменение, а автор получает feedback до того, как код станет частью общей системы.
+Инкапсуляция защищает инварианты объекта, скрывая изменяемое состояние за небольшим API. Одного `private` недостаточно: вызывающий код должен запрашивать допустимые операции, а не самостоятельно согласовывать внутренние поля.
 
-Хорошее review проверяет и behavior, и maintainability. Код может работать сегодня, но быть сложным для изменения завтра, если он прячет state, смешивает layers или добавляет premature abstractions.
+```kotlin
+class Cart {
+    private val items = mutableListOf<Item>()
 
-**Коротко:** code review снижает production risk и сохраняет ownership кода shared внутри команды.
+    fun add(item: Item) {
+        require(item.quantity > 0)
+        items += item
+    }
 
-## Практический workflow code review
+    fun snapshot(): List<Item> = items.toList()
+}
+```
 
-Опытные инженеры обычно проверяют pull request в несколько проходов: от общего смысла и рисков к деталям реализации.
+`Cart` владеет изменяемой коллекцией, проверяет изменения и возвращает снимок только для чтения, не раскрывая сам список.
 
-1. Понять, что меняется
-    - Какую задачу решает этот PR?
-    - Соответствует ли scope поставленной задаче?
-    - Правильный ли подход выбран для этой задачи?
+### Абстракция
 
-2. Оценить дизайн
-    - Вписывается ли решение в существующую архитектуру проекта?
-    - Хорошо ли разделены ответственности?
-    - Подходящий ли уровень абстракции выбран?
+Абстракция предоставляет нужную вызывающему коду возможность и скрывает детали реализации. Интерфейс подходит для контракта без хранимого состояния; абстрактный класс может разделять состояние или реализацию между близкими типами.
 
-3. Проверить корректность
-    - Баги
-    - Edge cases
-    - Thread safety
-    - Lifecycle
-    - Error handling
+```kotlin
+interface UserRepository {
+    suspend fun user(id: UserId): User
+}
+```
 
-4. Оценить maintainability
-    - Readability
-    - Простота
-    - Testability
-    - Насколько легко будет менять этот код дальше
+`ViewModel` может зависеть от этого контракта, а не от Room или сетевого клиента.
 
-5. Проверить стиль
-    - Naming
-    - Formatting
-    - Небольшие языковые идиомы
-    - Consistency
+### Наследование
 
-**Главная мысль:** опытные reviewers большую часть усилий тратят на понимание задачи, проверку дизайна и уверенность в корректности решения. Вопросы стиля тоже важны, но обычно их стоит смотреть в конце, а многие из них лучше автоматически контролировать через форматтеры и static analysis tools.
+Наследование выражает отношение **является** и предполагает, что подтип может заменить базовый тип без неожиданностей для вызывающего кода. Классы и методы Kotlin по умолчанию финальны; используйте `open` только для намеренно созданной точки расширения. Предпочитайте неглубокие иерархии. Наследование от Android API, например `ViewModel`, не означает, что прикладное поведение тоже следует строить на глубоких базовых классах.
 
-## Что проверять в pull request?
+### Полиморфизм
 
-Pull request стоит проверять с нескольких сторон:
+Полиморфизм позволяет работать через общий тип при разных реализациях. Рабочую и тестовую реализации `UserRepository` можно передать через внедрение зависимостей, не меняя потребителя.
 
-- correctness - решает ли изменение нужную задачу;
-- readability - сможет ли другой разработчик быстро понять код;
-- maintainability - можно ли безопасно менять этот код дальше;
-- architecture boundaries - остается ли logic в правильном layer;
-- state and lifecycle - безопасно ли состояние owned и collected;
-- error handling - явно ли представлены и обработаны failures;
-- tests - покрыты ли важные случаи;
-- performance - нет ли лишней работы на hot paths;
-- security and privacy - безопасно ли обработаны sensitive data и permissions;
-- UX states - loading, empty, error и disabled states.
+## Предпочитайте композицию для переиспользования поведения
 
-Не каждый PR требует глубокой дискуссии по каждому пункту. Глубина review должна соответствовать риску и размеру изменения.
+Композиция моделирует отношение **содержит** и обычно связывает типы слабее, чем наследование реализации. Kotlin поддерживает делегирование интерфейса, когда ручная переадресация вызовов создала бы шаблонный код:
 
-**Практический совет:** сначала проверяй observable behavior и contracts, потом implementation details.
+```kotlin
+class RepositoryWrapper(
+    private val delegate: UserRepository,
+) : UserRepository by delegate
+```
 
-## Как ревьюить Android-код?
+Используйте наследование, когда взаимозаменяемость является частью модели, а композицию - для сборки независимых возможностей.
 
-В Android code review важно учитывать platform-specific risks:
+## Изменяемость и владение состоянием
 
-- lifecycle safety;
-- отсутствие `Activity` / `Context` leaks;
-- случайная работа на main thread;
-- coroutine scope and cancellation;
-- `Flow` collection and lifecycle awareness;
-- Compose recomposition and state issues;
-- navigation and one-off events;
-- resource handling;
-- configuration changes;
-- error, empty и loading states.
+Неизменяемый объект нельзя изменить после создания. Ссылка только для чтения, например `val` или `List<T>`, не гарантирует глубокую неизменяемость: связанные объекты всё ещё могут меняться. Неизменяемые снимки упрощают анализ, тестирование и отображение состояния интерфейса в Compose. Локализуйте неизбежные изменения у явного владельца, а наружу предоставляйте состояние и операции или события, запрашивающие его изменение.
 
-Для `ViewModel` стоит проверить, что UI state явный, а side effects не смешаны с durable state. Для Compose - ownership состояния, stable inputs и unnecessary recomposition. Для data layer - error mapping, threading, cancellation и разделение DTO/domain.
-
-**Важно:** Android bugs часто появляются из-за lifecycle и ownership состояния, а не только из-за неправильной business logic.
-
-## Как давать хороший review feedback?
-
-Хороший review feedback конкретный, уважительный и actionable. Он объясняет, почему проблема важна, и отделяет required changes от suggestions.
-
-Полезные привычки:
-
-- указывать конкретную проблему;
-- объяснять risk или trade-off;
-- задавать вопросы, когда intent неясен;
-- избегать личного тона;
-- предпочитать маленькие actionable comments;
-- помечать optional ideas как suggestions;
-- признавать, когда решение является judgment call.
-
-Примеры тона:
-
-- Required: "This can leak `Activity` because the object is Singleton-scoped. Can we use `@ApplicationContext` or move this dependency closer to the screen scope?"
-- Suggestion: "This mapper is getting large. Maybe we can split formatting from API mapping?"
-- Question: "Is this event expected to survive configuration change?"
-
-**Главная мысль:** review comments должны помогать улучшить код, а не заставлять автора защищаться.
-
-## Common code review comments
-
-Neutral review comments проще применить, когда они ясно описывают concern:
-
-- "Can we move this logic out of the UI layer?"
-- "This looks like state rather than a one-off event."
-- "This may run on the main thread."
-- "Can we add a test for this edge case?"
-- "This abstraction seems premature. Is there a real second use case?"
-- "Can we map this DTO before exposing it outside the data layer?"
-- "What happens here on retry or configuration change?"
-- "Can we make the error state explicit in `UiState`?"
-
-Эти comments - starting points. Лучший review feedback включает причину и ожидаемое направление, а не только требуемое изменение.
-
-## Что делает pull request хорошим?
-
-Хороший pull request достаточно маленький для review, сфокусирован на одной теме и объяснен в понятном description. Он не смешивает unrelated refactoring с feature changes, если refactoring не нужен для самой feature.
-
-Полезное PR description обычно включает:
-
-- что изменилось;
-- почему это изменилось;
-- как это было протестировано;
-- screenshots или recordings для UI changes;
-- known limitations или follow-up work.
-
-Хорошие PR уменьшают guesswork для reviewer. Они делают важные решения видимыми и сохраняют diff сфокусированным.
-
-**Коротко:** хороший PR сфокусирован, объяснен, протестирован и достаточно мал для осмысленного review.
+Связанные темы: [SOLID](solid.ru.md), [Паттерны проектирования](design-patterns.ru.md) и [Основы архитектуры](../architecture/basics.ru.md).

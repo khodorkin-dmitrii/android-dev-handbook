@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # Pages Review Tracker
 This is an internal editorial tracker for Android Dev Handbook article review.
 It is intentionally kept as an unlisted service page: available by direct URL, but not part of the main learning navigation.
@@ -8,15 +13,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-09-30
+1. Last tracker update: 2026-10-02
 1. Total articles tracked: 99
-1. Updated: 50
-1. TODO: 49
+1. Updated: 52
+1. TODO: 47
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 22      | 9    |
+| P1 | 31 | 24      | 7    |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -70,8 +75,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-28, `ai/ml-kit.md`, ML Kit, Clarified traditional and GenAI API boundaries, bundled versus Play services model delivery, coroutine and CameraX lifecycle handling, runtime availability, foreground and quota constraints, privacy, and model-aware testing; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-09-29, `ai/litert.md`, LiteRT, Clarified CompiledModel and Interpreter selection, LiteRT-LM boundaries, model contracts and delivery, synchronous inference and cancellation, accelerator fallback, quantization, integrity, lifecycle, and model-aware testing; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-09-30, `engineering/code-quality.md`, Code Quality, Clarified contextual quality, readability and Android boundaries, technical-debt management, YAGNI and code-smell interpretation, safe refactoring, automated quality gates, lint baselines, suppressions, and metric limitations; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `engineering/code-review.md`, Code Review
-1. P1, **TODO**, , `engineering/oop.md`, OOP
+1. P1, **UPDATED**, 2026-10-01, `engineering/code-review.md`, Code Review, Added author responsibilities, risk-based review depth, focused-PR guidance, Android-specific checks, explicit feedback severity, disagreement resolution, test review, approval criteria, follow-up rules, and post-merge validation; synchronized EN/RU and removed repetition.
+1. P1, **UPDATED**, 2026-10-02, `engineering/oop.md`, OOP, Clarified encapsulation, abstraction, inheritance and polymorphism with Kotlin examples; added final-by-default, composition, interface delegation, state ownership and immutability guidance; synchronized EN/RU and removed repetition.
 1. P1, **TODO**, , `engineering/solid.md`, SOLID
 1. P1, **TODO**, , `engineering/design-patterns.md`, Design Patterns
 1. P1, **TODO**, , `engineering/algorithms-complexity.md`, Algorithms & Complexity

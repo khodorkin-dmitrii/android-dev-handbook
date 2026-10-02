@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 ## Computer Science
 
 ### Назовите принципы ООП

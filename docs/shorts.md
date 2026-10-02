@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 ## Computer Science
 
 ### Name the principles of OOP
