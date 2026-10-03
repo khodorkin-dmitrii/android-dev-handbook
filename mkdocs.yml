@@ -8,7 +8,7 @@ theme:
   name: material
   language: en
   logo: assets/images/library-android-v9.svg
-  favicon: assets/images/library-android-v9.svg
+  favicon: assets/images/favicon.png
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
