@@ -1,51 +1,53 @@
 # SOLID
 
-SOLID is a set of object-oriented design principles that help make code more maintainable, extensible and testable.
+SOLID is a set of design principles for managing change in object-oriented code. The principles aim to increase cohesion, reduce unnecessary coupling and make behavior easier to replace and test. They are heuristics, not requirements to add an interface or layer for every class.
 
-SOLID stands for SRP, OCP, LSP, ISP and DIP: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion.
+## Single Responsibility Principle (SRP)
 
-These are not strict rules, but guidelines. Their goal is to reduce coupling, increase cohesion and make system changes easier without cascading breakages.
+A unit should have one cohesive responsibility and one main reason to change. This is about change boundaries, not about making every function a separate class.
 
-**In short:** SOLID helps design classes with clear responsibility, depend on abstractions and extend behavior without constantly changing existing code.
+An Android `ViewModel` may coordinate screen logic, but it should not also parse network JSON, execute SQL and format Android resources. Keep transport and persistence details in the data layer. Add a use case or mapper when it represents reusable logic or removes real complexity, not automatically.
 
-## SOLID Principles
+**Smell:** changes to unrelated features repeatedly modify the same large class.
 
-### Single Responsibility Principle
+## Open/Closed Principle (OCP)
 
-Single Responsibility Principle (SRP) means a class should have one main reason to change.
+Stable code should allow expected variations to be added without repeatedly rewriting its core logic. Composition, strategies and polymorphism can replace a growing conditional when behavior genuinely varies:
 
-In Android this means `ViewModel` should not format UI, call the network, parse JSON and work with the database at the same time. It is better to split responsibility between `ViewModel`, `UseCase`, `Repository`, `Mapper` and `DataSource`.
+```kotlin
+interface PricePolicy {
+    fun price(order: Order): Money
+}
 
-A typical smell: a class becomes a god object and knows too much about different layers.
+class Checkout(private val policy: PricePolicy) {
+    fun total(order: Order): Money = policy.price(order)
+}
+```
 
-### Open/Closed Principle
+OCP does not mean existing code must never change. Introducing extension points for hypothetical requirements adds complexity; extract an abstraction when a variation is known or repeated.
 
-Open/Closed Principle (OCP) means code should be open for extension but closed for modification.
+## Liskov Substitution Principle (LSP)
 
-The idea is to add new behavior through new implementations, strategies or composition instead of constantly editing a large `if` / `else` or `when` block.
+Every implementation of a base type must preserve its contract so callers do not need implementation-specific checks. A subtype should not require stronger preconditions, promise weaker results or introduce surprising failures and side effects.
 
-In Android, an example can be several `Formatter`, `Validator` or `PaymentHandler` implementations behind a common interface.
+If `UserRepository.user(id)` promises a user or a documented domain error, one implementation should not silently return stale data while another throws an undocumented exception. Tests against the shared contract are useful for multiple implementations.
 
-### Liskov Substitution Principle
+LSP applies to interfaces as well as class inheritance.
 
-Liskov Substitution Principle (LSP) means a subtype should correctly replace the base type without breaking expected behavior.
+## Interface Segregation Principle (ISP)
 
-If code expects an object of a base class or interface, any implementation should follow its contract. Problems appear when a subtype unexpectedly throws exceptions, ignores methods or changes behavior semantics.
+Clients should depend only on operations they use. Prefer cohesive, consumer-oriented contracts over one universal interface that forces implementations or test fakes to support irrelevant methods.
 
-In practice, this is an argument for careful inheritance and well-described interfaces.
+For example, a read-only screen may depend on `ObserveOrders`, while synchronization code uses `SyncOrders`. Do not split interfaces only to make them small: methods that change together and serve the same clients can remain together.
 
-### Interface Segregation Principle
+## Dependency Inversion Principle (DIP)
 
-Interface Segregation Principle (ISP) means it is better to have several small specific interfaces than one large universal interface.
+High-level policy should not be coupled directly to low-level details; both should meet at a boundary owned by the policy. A `ViewModel` can depend on an application-level `UserRepository` contract, while a data-layer implementation uses Room and Retrofit.
 
-A class should not depend on methods it does not need. This simplifies testing, mocking and replacing implementations.
+Constructor injection makes dependencies explicit, and Hilt or manual DI can assemble implementations. DI is a wiring technique; it does not satisfy DIP by itself. An interface is unnecessary when there is no meaningful boundary or alternative behavior.
 
-In Android this is visible in `Repository` / `DataSource` API: it is better to separate read, write, sync, analytics and navigation contracts if they are actually used by different clients.
+## Applying SOLID pragmatically
 
-### Dependency Inversion Principle
+Use SOLID to explain a concrete change: which responsibility is mixed, which contract is violated, or which dependency blocks testing. Prefer the simplest design that protects an observed variation. Extra layers, one-method interfaces and pass-through use cases can make navigation harder without improving changeability.
 
-Dependency Inversion Principle (DIP) means high-level logic should not directly depend on low-level details. Both levels should depend on abstractions.
-
-For example, `ViewModel` depends on a `Repository` interface, not directly on a Retrofit service. The concrete implementation is provided through DI.
-
-This reduces coupling and makes code easier to test because tests can provide a fake or mock implementation.
+Related topics: [OOP](oop.md), [Design Patterns](design-patterns.md), [Architecture Basics](../architecture/basics.md), and [DI Basics](../di/basics.md).

@@ -13,15 +13,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-02
+1. Last tracker update: 2026-10-03
 1. Total articles tracked: 99
-1. Updated: 52
-1. TODO: 47
+1. Updated: 53
+1. TODO: 46
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 24      | 7    |
+| P1 | 31 | 25      | 6    |
 | P2 | 41 | 1       | 40   |
 
 ## Tracker
@@ -77,7 +77,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-09-30, `engineering/code-quality.md`, Code Quality, Clarified contextual quality, readability and Android boundaries, technical-debt management, YAGNI and code-smell interpretation, safe refactoring, automated quality gates, lint baselines, suppressions, and metric limitations; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-10-01, `engineering/code-review.md`, Code Review, Added author responsibilities, risk-based review depth, focused-PR guidance, Android-specific checks, explicit feedback severity, disagreement resolution, test review, approval criteria, follow-up rules, and post-merge validation; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-10-02, `engineering/oop.md`, OOP, Clarified encapsulation, abstraction, inheritance and polymorphism with Kotlin examples; added final-by-default, composition, interface delegation, state ownership and immutability guidance; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `engineering/solid.md`, SOLID
+1. P1, **UPDATED**, 2026-10-03, `engineering/solid.md`, SOLID, Clarified change boundaries, pragmatic extension points, behavioral substitutability, consumer-oriented interfaces, and the distinction between dependency inversion and DI; added Kotlin and Android examples, contract-testing guidance, and overengineering caveats; synchronized EN/RU and removed repetition.
 1. P1, **TODO**, , `engineering/design-patterns.md`, Design Patterns
 1. P1, **TODO**, , `engineering/algorithms-complexity.md`, Algorithms & Complexity
 1. P1, **TODO**, , `engineering/memory-runtime-basics.md`, Memory & Runtime Basics

@@ -7,8 +7,8 @@ exclude_docs: |
 theme:
   name: material
   language: en
-  logo: assets/images/library-android-v2.svg
-  favicon: assets/images/library-android-v2.svg
+  logo: assets/images/library-android-v9.svg
+  favicon: assets/images/library-android-v9.svg
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
