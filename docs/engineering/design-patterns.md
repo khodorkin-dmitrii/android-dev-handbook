@@ -1,61 +1,65 @@
 # Design Patterns
 
-Design patterns are reusable solutions for common design problems. They do not replace understanding the task, but they provide a shared language for discussing code structure.
+Design patterns are named, reusable approaches to recurring design problems. They provide a shared vocabulary, not ready-made code or a reason to add abstractions before a problem appears.
 
-GoF (Gang of Four) described 23 main patterns, usually split into three groups:
+The 23 Gang of Four (GoF) patterns are commonly grouped as:
 
 - Creational: `Abstract Factory`, `Builder`, `Factory Method`, `Prototype`, `Singleton`.
 - Structural: `Adapter`, `Bridge`, `Composite`, `Decorator`, `Facade`, `Flyweight`, `Proxy`.
 - Behavioral: `Chain of Responsibility`, `Command`, `Interpreter`, `Iterator`, `Mediator`, `Memento`, `Observer`, `State`, `Strategy`, `Template Method`, `Visitor`.
 
-Below are the main patterns that often appear in practice or are visible in APIs.
+The patterns below are especially common in Android code and APIs.
 
-## Main Patterns
+## Factory Method and Abstract Factory
 
-### Factory Method and Abstract Factory
+**Factory Method** defines a creation operation that subclasses or implementations override to choose the concrete product. A standalone function such as `createParser(format)` that selects a class is usually called a simple factory, not the GoF Factory Method.
 
-Factory Method is a creational pattern that encapsulates creation of one object type when client code does not need to know the concrete class.
+**Abstract Factory** creates a family of related products behind one contract. It can supply matching platform-specific services or UI components without exposing their concrete classes.
 
-Abstract Factory is a creational pattern that creates a family of related objects. It is useful when a whole set of implementations needs to be replaced, for example different UI components, parsers or platform-specific dependencies.
+Use a constructor directly when creation is simple. A factory is useful when creation requires selection, validation, caching or several coordinated dependencies.
 
-**In short:** Factory Method solves creation of one product, Abstract Factory solves creation of a family of related products.
+## Singleton and scoped instances
 
-### Singleton
+**Singleton** combines a single instance with global access. Global mutable state, hidden dependencies and test interference make manual singletons risky on Android.
 
-Singleton is a creational pattern that guarantees one shared instance of a class and a global access point to it.
+Prefer explicit constructor dependencies managed by an application container or DI framework. A Hilt-scoped instance is unique within its component, not immortal: process death destroys the graph, and narrower components have shorter lifetimes. Thread safety of instance creation also does not make the object's mutable state thread-safe.
 
-In Android, singleton is often used for stateless services, repositories, caches or clients, but it is better to create such objects through a DI container instead of writing a manual static singleton.
+## Observer and reactive streams
 
-The main risk of Singleton is hidden dependencies, global state, harder tests and lifecycle problems.
+**Observer** notifies registered subscribers when a subject changes. Android listeners and callbacks often follow this model. `StateFlow`, `SharedFlow` and `LiveData` provide related observable APIs, but their replay, buffering, lifecycle and error semantics differ.
 
-### Observer
+A cold `Flow` normally starts its upstream work separately for each collector, so it is not simply a list of observers attached to one running subject. Collect UI streams with lifecycle-aware APIs and cancel callback subscriptions when their owner stops.
 
-Observer is a behavioral pattern where a subscriber object receives notifications about changes in another object.
+## Adapter
 
-In Android, a similar idea appears in listeners, `LiveData`, `Flow`, callbacks and UI state subscriptions. One data source notifies several subscribers about new values.
+**Adapter** translates one existing interface into another expected by a client. Examples include wrapping a legacy callback API with a suspending contract or presenting third-party storage through an application interface.
 
-Remember lifecycle and unsubscription, otherwise memory leak or events after screen destruction are possible.
+A DTO-to-domain conversion is usually a mapper: it transforms data rather than adapting an object's interface. `RecyclerView.Adapter` adapts application data and view creation to the protocol expected by `RecyclerView`, although its framework role includes more than the minimal GoF pattern.
 
-### Adapter
+## Strategy and State
 
-Adapter is a structural wrapper pattern that lets objects with incompatible interfaces work together.
+**Strategy** places interchangeable algorithms behind one contract. Validators, pricing policies or retry policies can be selected by configuration and used without a large conditional.
 
-In Android, this can be a mapper between API model and domain model, a wrapper around a legacy service or `RecyclerView.Adapter`, which adapts data to UI.
+**State** also delegates behavior, but the selected object represents the owner's current state and transitions over time. Use sealed hierarchies and `when` when the set is closed and simple; use polymorphic state objects when each state owns substantial behavior and transitions.
 
-The idea is to avoid changing existing code and add a compatibility layer instead.
+## Decorator
 
-### Strategy
+**Decorator** wraps an object with the same contract and adds behavior before or after delegation. Logging, metrics or authorization can be layered without subclassing:
 
-Strategy is a behavioral pattern that moves a changeable algorithm into a separate object behind a common interface.
+```kotlin
+class MeasuredRepository(
+    private val delegate: UserRepository,
+    private val metrics: Metrics,
+) : UserRepository by delegate {
+    override suspend fun user(id: UserId): User =
+        metrics.measure("load_user") { delegate.user(id) }
+}
+```
 
-This is useful when there are several behavior variants: different validators, sorters, formatters, retry policies, pricing rules or navigation strategies.
+Kotlin's `by` removes forwarding boilerplate. If the wrapper controls access rather than adding responsibilities, **Proxy** may describe the intent better; if it translates an interface, it is an **Adapter**.
 
-Instead of a large `when`, choose the required strategy and call a common method.
+## Choosing a pattern
 
-### Decorator
+Name the concrete problem first: object creation, interface mismatch, varying algorithm, state-dependent behavior or added responsibility. Prefer language features and simple composition when they solve it clearly. Patterns are most useful when they make change boundaries easier to understand, not when they only add familiar class names.
 
-Decorator is a structural pattern that adds new behavior to an object without changing its class and without creating a complex inheritance hierarchy.
-
-It wraps the original object and implements the same interface. For example, logging, caching, retry or analytics can be added around `Repository` or a network client.
-
-**In short:** Decorator extends behavior through composition, not inheritance.
+Related topics: [OOP](oop.md), [SOLID](solid.md), and [DI Basics](../di/basics.md).

@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-03
+1. Last tracker update: 2026-10-06
 1. Total articles tracked: 99
-1. Updated: 53
-1. TODO: 46
+1. Updated: 57
+1. TODO: 42
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 31 | 25      | 6    |
-| P2 | 41 | 1       | 40   |
+| P1 | 32 | 29      | 3    |
+| P2 | 40 | 1       | 39   |
 
 ## Tracker
 
@@ -78,9 +78,10 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-01, `engineering/code-review.md`, Code Review, Added author responsibilities, risk-based review depth, focused-PR guidance, Android-specific checks, explicit feedback severity, disagreement resolution, test review, approval criteria, follow-up rules, and post-merge validation; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-10-02, `engineering/oop.md`, OOP, Clarified encapsulation, abstraction, inheritance and polymorphism with Kotlin examples; added final-by-default, composition, interface delegation, state ownership and immutability guidance; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-10-03, `engineering/solid.md`, SOLID, Clarified change boundaries, pragmatic extension points, behavioral substitutability, consumer-oriented interfaces, and the distinction between dependency inversion and DI; added Kotlin and Android examples, contract-testing guidance, and overengineering caveats; synchronized EN/RU and removed repetition.
-1. P1, **TODO**, , `engineering/design-patterns.md`, Design Patterns
-1. P1, **TODO**, , `engineering/algorithms-complexity.md`, Algorithms & Complexity
-1. P1, **TODO**, , `engineering/memory-runtime-basics.md`, Memory & Runtime Basics
+1. P1, **UPDATED**, 2026-10-04, `engineering/design-patterns.md`, Design Patterns, Corrected Factory Method terminology; clarified factories, DI scopes, Observer and Flow semantics, Adapter versus Mapper, Strategy versus State, and Decorator versus Proxy; added Kotlin delegation and pragmatic pattern-selection guidance; synchronized EN/RU and removed repetition.
+1. P1, **UPDATED**, 2026-10-05, `engineering/algorithms-complexity.md`, Algorithms & Complexity, Added worst, average and amortized analysis; clarified loop counting, search and sorting trade-offs, auxiliary space, ArrayList growth, LinkedList limitations, hash-key stability and ArrayDeque usage; connected asymptotic complexity with Android profiling and benchmarking; synchronized EN/RU and removed repetition.
+1. P1, **UPDATED**, 2026-10-06, `engineering/memory-runtime-basics.md`, Memory & Runtime Basics, Clarified managed heap, thread stacks and native memory boundaries, object reachability and reference cycles, leak causes, reference strengths, resource cleanup, allocation pressure and Android profiling; synchronized EN/RU.
+1. P1, **UPDATED**, 2026-10-06, `android/binder-ipc-aidl.md`, Binder IPC and AIDL, Added a terminology glossary; clarified AIDL imports and parameter directions, local versus remote interface resolution, transaction-size limits, oneway semantics, connection and process-death handling, caller-identity security, and Stable AIDL compatibility; synchronized EN/RU.
 1. P1, **TODO**, , `architecture/legacy-refactoring.md`, Legacy & Refactoring
 1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
 1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
@@ -103,7 +104,6 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **TODO**, , `android/google-filament.md`, Google Filament
 1. P2, **TODO**, , `android/2d-3d-rendering.md`, 2D and 3D Rendering
 1. P2, **TODO**, , `android/android-system-services.md`, Android System Services
-1. P2, **TODO**, , `android/binder-ipc-aidl.md`, Binder IPC and AIDL
 1. P2, **TODO**, , `compose/navigation.md`, Compose Navigation
 1. P2, **TODO**, , `coroutines-flow/channels.md`, Channels
 1. P2, **TODO**, , `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview

@@ -2,34 +2,34 @@
 
 ![Stack vs Heap](../assets/images/engineering/stack-vs-heap.png)
 
-Core memory and runtime concepts help explain memory leaks, object lifetime, GC behavior and Java/Kotlin code behavior on Android.
+Memory and runtime basics explain object lifetime, garbage collection, leaks and allocation-related performance problems in Android apps.
 
-## Memory and GC
+## Managed memory on Android
 
-### Stack vs Heap
+ART manages Java and Kotlin objects in a per-process heap. An app also uses memory outside that heap, including thread stacks, native allocations, code, graphics buffers and memory-mapped files. Garbage collection reclaims managed objects; it does not release every kind of resource or native allocation.
 
-Stack is a memory area for the call stack, local variables, call parameters and return addresses. It is fast and released automatically when a function exits.
+### Stack and heap
 
-Heap is a memory area for objects that can live longer than one function call. The Garbage Collector is responsible for releasing them.
+Each thread has a call stack containing frames for active calls, including bookkeeping and some local values. Frames are removed when calls return. Deep or infinite recursion can exhaust the stack and cause `StackOverflowError`.
 
-In Java/Kotlin, an object is usually created in the heap, while a local variable can store a reference to that object.
+Objects are normally allocated in the managed heap, while a local variable may hold a reference to an object. The stack-versus-heap model is useful, but exact placement is a runtime implementation detail: ART may optimize allocations. If the process cannot satisfy an allocation, it can fail with `OutOfMemoryError` even when some unreachable objects have not yet been reclaimed.
 
-Each thread has its own stack. If it overflows, `StackOverflowError` occurs. Heap is shared for objects, and when memory is insufficient, `OutOfMemoryError` is possible.
+### Reachability and garbage collection
 
-### Garbage Collection roots
+The collector starts from GC roots, such as active threads, static fields and JNI references, and follows reference chains. A managed object becomes eligible for collection when it is no longer reachable, not merely when the application has finished using it. Cycles can be collected if no path from a root reaches them.
 
-GC roots are starting points from which the Garbage Collector determines reachable objects.
+A memory leak is therefore usually a lifetime bug: an object is still reachable but no longer useful. Common Android examples include a singleton retaining an `Activity`, a listener that was not removed, or work whose callback outlives its screen. GC timing is not deterministic, and resource cleanup should use lifecycle APIs or `Closeable`, not finalization.
 
-GC roots include active thread stacks, static fields, JNI references, system class loader references and objects held by a monitor lock. If an object is reachable from a root, it is considered alive and will not be collected.
+### Strong, soft, weak and phantom references
 
-Memory leak happens when an object is no longer needed logically, but is still reachable through some chain of references.
+- A **strong reference** is an ordinary reference and keeps its target reachable.
+- A **weak reference** does not keep its target alive. It can help with auxiliary mappings, but it is not a substitute for explicit listener removal or lifecycle ownership.
+- A **soft reference** may survive until memory pressure increases. Its clearing policy is not predictable, so Android caches should normally use explicit size limits, such as `LruCache`.
+- A **phantom reference** is used with `ReferenceQueue` for low-level post-mortem processing. Application code rarely needs it; `Cleaner` or explicit resource ownership is usually clearer.
 
-### Strong / Soft / Weak / Phantom references
+Frequent temporary allocations can trigger more GC work and contribute to jank. Measure with Android Studio or Perfetto before optimizing, and inspect retained-reference paths when diagnosing a leak.
 
-Strong reference is a regular reference. While an object is reachable through a strong reference, GC will not collect it.
+## Related topics
 
-Weak reference does not keep an object from garbage collection. It is useful for caches, listeners or situations where an object's lifetime must not be extended.
-
-Soft reference can be kept longer and cleared when memory is low, but in modern Android explicit cache policies are usually better.
-
-Phantom reference is a reference for low-level tracking of the moment when an object becomes unreachable. Together with `ReferenceQueue`, it allows resource cleanup without `finalize()`. It is rare in regular Android development.
+- [Performance & Memory](../android/performance-memory.md)
+- [JVM / Android Runtime](../java/jvm-android-runtime.md)

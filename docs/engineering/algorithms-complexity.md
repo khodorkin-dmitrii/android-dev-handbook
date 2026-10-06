@@ -2,76 +2,72 @@
 
 ![Big O chart](../assets/images/engineering/big-o-chart.png)
 
-Algorithmic complexity helps estimate how code scales as input data grows. This matters not only for algorithm tasks, but also for regular collections, search, sorting and list processing in an application.
+Algorithmic complexity estimates how resource usage grows with input size. It matters in interviews and in application code that searches, sorts, groups or renders growing collections.
 
 ## Big O
 
-Big O is a way to describe how an algorithm's execution time or memory usage grows as input size increases.
+Big O describes an asymptotic upper bound for time or space growth. It does not predict milliseconds. Constants and lower-order terms are omitted, so `O(2n + 10)` becomes `O(n)`.
 
-It is not exact time in milliseconds, but a scalability estimate. For example, `O(n)` means work grows roughly linearly with input size.
+Always state what `n` represents and which case is being discussed:
 
-Big O usually describes an upper bound on growth and ignores details that do not change the overall order of complexity. For example, `O(2n)`, `O(n + 10)` and `O(100n)` are usually simplified to `O(n)`, because for large inputs the growth pattern matters more than the exact coefficient.
+- **Worst case** gives a limit for any valid input of size `n`.
+- **Average case** depends on assumptions about input distribution.
+- **Amortized cost** spreads occasional expensive operations across a sequence, such as resizing an `ArrayList`.
 
-Understand time complexity and space complexity separately: an algorithm can be fast in time but require a lot of additional memory.
+Time and auxiliary-space complexity are separate. An algorithm may reduce time by building an additional set or map.
 
-### `O(1)`, `O(n)`, `O(log n)`, `O(n log n)`
+### Common growth rates
 
-`O(1)` is constant complexity: the operation does not depend on input size. Example: array access by index.
+- `O(1)`: constant work, such as array access by index.
+- `O(log n)`: the remaining problem shrinks by a constant factor, as in binary search.
+- `O(n)`: one full pass over `n` elements.
+- `O(n log n)`: common for efficient comparison sorting.
+- `O(n²)`: work over many pairs, such as a simple double comparison loop.
+- `O(2ⁿ)` or `O(n!)`: exhaustive combinations or permutations; practical only for small inputs unless pruned.
 
-`O(n)` is linear complexity: the input needs to be traversed once. Example: finding an element in an unsorted array.
+Count total work rather than loop syntax. Two consecutive `O(n)` loops are `O(n)`, not `O(n²)`. Nested loops may be `O(n²)`, `O(n log n)` or `O(n × m)` depending on their bounds. A loop that repeatedly halves its range is `O(log n)`.
 
-`O(log n)` is logarithmic complexity: at each step, the search space decreases, for example **binary search**.
+## Search
 
-`O(n log n)` often appears in efficient sorting algorithms such as **merge sort** and average-case **quicksort**.
+Linear search over an unsorted list is `O(n)`. Binary search is `O(log n)`, but it requires data sorted with the same ordering used by the search.
 
-`O(n^2)` is quadratic complexity: the amount of work grows roughly as the input size multiplied by itself. Common examples are two nested passes over the same collection or a simple sorting algorithm such as **bubble sort**.
+Binary search is effective on arrays and random-access lists because reading the middle element is `O(1)`. On a linked list, locating each middle position requires traversal, removing the practical advantage.
 
-A simple heuristic: one pass over a collection usually gives `O(n)`, a nested loop often gives `O(n^2)`, and halving the search space gives `O(log n)`.
+Sorting once costs about `O(n log n)`. It may be worthwhile before many searches, but not necessarily before a single lookup. If frequent membership checks are the goal and ordering is unnecessary, building a `HashSet` in `O(n)` often gives expected `O(1)` lookups.
 
-## Search, Sorting and Collections
+## Sorting
 
-### Binary search in a sorted array
-
-In a sorted array, **binary search** can be used with `O(log n)` complexity.
-
-The idea: compare the target value with the middle of the array and discard half of the range. This is much faster than linear search `O(n)` on large data.
-
-But if the array is not sorted, **binary search** cannot be used without sorting first. Classic **binary search** works well for arrays or `ArrayList`, because access to the middle by index costs `O(1)`. For `LinkedList`, it is usually not useful: moving to the middle of the list already requires traversing nodes.
-
-### Sorting: Bubble sort, Insertion sort, Merge sort and Quicksort
-
-Popular sorting algorithms: **bubble sort**, **insertion sort**, **merge sort**, **quicksort**.
-
-| Algorithm | Average case | Worst case | Details |
-| --- | --- | --- | --- |
-| **Bubble sort** | `O(n^2)` | `O(n^2)` | Simple educational sorting algorithm, almost never used in real code. |
-| **Insertion sort** | `O(n^2)` | `O(n^2)` | Can be efficient for small or nearly sorted data. |
-| **Merge sort** | `O(n log n)` | `O(n log n)` | Predictable complexity, but usually requires additional `O(n)` memory. |
-| **Quicksort** | `O(n log n)` | `O(n^2)` | Fast in practice, but depends on pivot selection and implementation. |
-
-**Quicksort** runs in `O(n log n)` on average, but in the worst case can degrade to `O(n^2)` if the pivot is chosen poorly. In practice, good implementations use random pivot, median-of-three or hybrid approaches.
-
-**Important:** for **quicksort**, remember both average case and worst case. **Quicksort** is usually fast in practice and often works in-place, but the worst case still exists.
-
-### Collections: `ArrayList`, `LinkedList`, `HashMap` and `HashSet` complexity
-
-**`ArrayList`** gives `O(1)` access by index and usually `O(1)` append to the end, but when the internal array grows, append can become `O(n)`. Insert or remove in the middle costs `O(n)` because elements need to be shifted.
-
-**`LinkedList`** gives `O(1)` insert or remove if the node is already known, but finding the required element is usually `O(n)`. In real Android/Java code, **`LinkedList`** often loses to **`ArrayList`** because of poor cache locality.
-
-**`HashMap`** gives `O(1)` on average for `put()` / `get()` / `remove()`, but depends on `hashCode()`, `equals()` and key distribution. Degradation is possible in bad cases, so custom keys need correct `equals()` / `hashCode()` implementations.
-
-| Structure | Access | Search | Insert | Remove | Practical note |
+| Algorithm | Best | Average | Worst | Auxiliary space | Practical note |
 | --- | --- | --- | --- | --- | --- |
-| `ArrayList` | `O(1)` by index | `O(n)` by value | Usually `O(1)` at the end, `O(n)` in the middle | `O(n)` from the middle | A good default for lists with frequent index-based reads. |
-| `LinkedList` | `O(n)` by index | `O(n)` | `O(1)` if the node is already known | `O(1)` if the node is already known | Rarely wins in regular Android/Java code because of search cost and cache locality. |
-| `HashMap` | Not indexed | Usually `O(1)` by key | Usually `O(1)` for `put()` | Usually `O(1)` for `remove()` | `hashCode()` and `equals()` quality directly affects performance. |
-| `HashSet` | Not indexed | Usually `O(1)` for `contains()` | Usually `O(1)` for `add()` | Usually `O(1)` for `remove()` | Useful when fast membership checks matter. |
+| Bubble sort | `O(n)` with early exit | `O(n²)` | `O(n²)` | `O(1)` | Educational; rarely appropriate in production. |
+| Insertion sort | `O(n)` | `O(n²)` | `O(n²)` | `O(1)` | Useful inside hybrid sorts for small or nearly sorted ranges. |
+| Merge sort | `O(n log n)` | `O(n log n)` | `O(n log n)` | Usually `O(n)` | Predictable and stable in common implementations. |
+| Quicksort | `O(n log n)` | `O(n log n)` | `O(n²)` | `O(log n)` average, `O(n)` worst stack | Fast in-place partitioning; quality depends on pivot and implementation. |
 
-### Is HashMap thread-safe?
+Production sort functions are commonly optimized or hybrid implementations. Prefer the standard library unless the algorithm itself is the task. Check API guarantees when stability, memory or worst-case bounds matter.
 
-`HashMap` is not thread-safe. Concurrent reads are safe only when no thread modifies the map; if at least one thread writes, external synchronization or a concurrent collection is required.
+## Collection operation costs
 
-Unsafe concurrent access can cause race conditions, lost updates, visibility issues, internal data corruption and `ConcurrentModificationException` during iteration. This is only a short warning for collection complexity; for practical concurrent maps, see [`ConcurrentHashMap`](../java/concurrency.md#concurrenthashmap).
+The table describes common JVM implementations and typical costs, not every `List` or `Map` implementation.
 
-**Key idea:** `ArrayList` is usually better for sequential data and index access, `HashMap` / `HashSet` for fast lookup by key or membership checks, and `LinkedList` should be chosen only when there is a clear reason and the actual operations are known.
+| Structure | Read / lookup | Insert | Remove | Practical note |
+| --- | --- | --- | --- | --- |
+| `ArrayList` | `O(1)` by index; `O(n)` by value | Amortized `O(1)` at end; `O(n)` in middle | `O(n)` in middle | Strong default for sequential data and iteration. |
+| `LinkedList` | `O(n)` by index or value | `O(1)` at known node or end; otherwise `O(n)` to locate | Same: locating often dominates | Nodes are not exposed by the Java API; poor locality often outweighs theoretical benefits. |
+| `ArrayDeque` | `O(1)` at either end | Amortized `O(1)` at either end | `O(1)` at either end | Prefer for stack or queue behavior. |
+| `HashMap` | Expected `O(1)` by key | Expected `O(1)` | Expected `O(1)` | Depends on hashing, equality, capacity and key distribution. |
+| `HashSet` | Expected `O(1)` membership | Expected `O(1)` | Expected `O(1)` | Useful for uniqueness and membership checks. |
+
+`ArrayList.add()` is amortized `O(1)`: most appends are constant-time, while occasional growth copies the backing array in `O(n)`. A sequence of `n` appends still costs `O(n)` overall.
+
+Hash collections rely on stable, consistent `equals()` and `hashCode()`. Mutating fields used by either function while an object is a key or set element can make it effectively unreachable. Poor distribution increases collisions and degrades performance.
+
+`HashMap` is not thread-safe. Concurrent structural modification requires external synchronization or a concurrent collection; see [`ConcurrentHashMap`](../java/concurrency.md#concurrenthashmap).
+
+## Complexity in Android code
+
+Big O predicts scaling, but two `O(n)` implementations can behave very differently because of allocations, cache locality, boxing, I/O or work performed on the main thread. A small input may not justify a more complex algorithm; a linear operation repeated for every frame may still cause jank.
+
+First identify realistic input sizes and the user-visible bottleneck. Use profiling, Microbenchmark for isolated hot code, and Macrobenchmark for flows such as startup or scrolling. Optimize measured work while keeping correctness and readability.
+
+Related topics: [Collections](../kotlin/collections.md), [Java Core](../java/core.md), [Performance & Memory](../android/performance-memory.md), and [Java Concurrency](../java/concurrency.md).
