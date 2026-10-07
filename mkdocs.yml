@@ -131,6 +131,14 @@ plugins:
             Design Patterns: Design Patterns
             Algorithms & Complexity: Algorithms & Complexity
             Memory & Runtime Basics: Memory & Runtime Basics
+            System Design Fundamentals: Основы System Design
+            Scalability & Capacity: Scalability & Capacity
+            Data Storage & Consistency: Data Storage & Consistency
+            Caching & Data Freshness: Caching & Data Freshness
+            Async Processing & Messaging: Async Processing & Messaging
+            Reliability & Failure Handling: Reliability & Failure Handling
+            System Design Diagrams: Диаграммы System Design
+            Offline-First Mobile Application: Offline-First Mobile Application
             RxJava: RxJava
 
 markdown_extensions:
@@ -271,7 +279,16 @@ nav:
       - SOLID: engineering/solid.md
       - Design Patterns: engineering/design-patterns.md
       - Algorithms & Complexity: engineering/algorithms-complexity.md
-      - Memory & Runtime Basics: engineering/memory-runtime-basics.md        
+      - Memory & Runtime Basics: engineering/memory-runtime-basics.md
+      - System Design:
+          - System Design Fundamentals: engineering/system-design/fundamentals.md
+          - Scalability & Capacity: engineering/system-design/scalability-capacity.md
+          - Data Storage & Consistency: engineering/system-design/data-storage-consistency.md
+          - Caching & Data Freshness: engineering/system-design/caching.md
+          - Async Processing & Messaging: engineering/system-design/async-messaging.md
+          - Reliability & Failure Handling: engineering/system-design/reliability.md
+          - System Design Diagrams: engineering/system-design/diagrams.md
+          - Offline-First Mobile Application: engineering/system-design/offline-first-mobile.md
   - Legacy:
       - Overview: legacy/index.md
       - RxJava: legacy/rxjava.md

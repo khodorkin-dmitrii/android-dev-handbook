@@ -2,6 +2,8 @@
 
 Modern Android architecture separates UI, state management, business rules and data access so that each part has a clear responsibility and can evolve independently.
 
+This page focuses on architecture inside an Android application. For reasoning across the mobile client, APIs, services, databases, caches, queues, and external systems, see [System Design Fundamentals](../engineering/system-design/fundamentals.md).
+
 ## Layers
 
 ### Modern Android architecture
@@ -66,3 +68,4 @@ UI state has the same ownership principle. A screen should render from one state
 - [UI State Architecture](ui-state.md)
 - [MV* Patterns](mv-patterns.md)
 - [Multi-module Architecture](multi-module.md)
+- [System Design Fundamentals](../engineering/system-design/fundamentals.md)

@@ -51,3 +51,8 @@ Store files needed only by your app in app-specific storage. Use `filesDir` for 
 To publish photos and videos outside your app, use `MediaStore`; to let users select existing photos or videos, use the system photo picker. For documents chosen or created by the user, use the Storage Access Framework. Treat returned `content://` URIs as handles to content rather than assuming a filesystem path. Access rules and permissions depend on the operation and Android version.
 
 See the [Android storage overview](https://developer.android.com/training/data-storage) for API selection and the [Android Keystore guidance](https://developer.android.com/privacy-and-security/keystore) for cryptographic keys.
+
+## Related topics
+
+- [Data Storage & Consistency](../engineering/system-design/data-storage-consistency.md)
+- [Offline-First Mobile Application](../engineering/system-design/offline-first-mobile.md)

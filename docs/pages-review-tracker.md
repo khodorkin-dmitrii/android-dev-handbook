@@ -14,14 +14,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 
 ## Current snapshot
 1. Last tracker update: 2026-10-07
-1. Total articles tracked: 99
+1. Total articles tracked: 107
 1. Updated: 58
-1. TODO: 41
+1. TODO: 49
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 32 | 30      | 2    |
+| P1 | 40 | 30      | 10   |
 | P2 | 40 | 1       | 39   |
 
 ## Tracker
@@ -83,6 +83,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-06, `engineering/memory-runtime-basics.md`, Memory & Runtime Basics, Clarified managed heap, thread stacks and native memory boundaries, object reachability and reference cycles, leak causes, reference strengths, resource cleanup, allocation pressure and Android profiling; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-06, `android/binder-ipc-aidl.md`, Binder IPC and AIDL, Added a terminology glossary; clarified AIDL imports and parameter directions, local versus remote interface resolution, transaction-size limits, oneway semantics, connection and process-death handling, caller-identity security, and Stable AIDL compatibility; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-07, `architecture/legacy-refactoring.md`, Legacy & Refactoring, Clarified safe refactoring, lifecycle checks and Rx/Compose migration.
+1. P1, **TODO**, , `engineering/system-design/fundamentals.md`, System Design Fundamentals
+1. P1, **TODO**, , `engineering/system-design/scalability-capacity.md`, Scalability & Capacity
+1. P1, **TODO**, , `engineering/system-design/data-storage-consistency.md`, Data Storage & Consistency
+1. P1, **TODO**, , `engineering/system-design/caching.md`, Caching & Data Freshness
+1. P1, **TODO**, , `engineering/system-design/async-messaging.md`, Async Processing & Messaging
+1. P1, **TODO**, , `engineering/system-design/reliability.md`, Reliability & Failure Handling
+1. P1, **TODO**, , `engineering/system-design/diagrams.md`, System Design Diagrams
+1. P1, **TODO**, , `engineering/system-design/offline-first-mobile.md`, Offline-First Mobile Application
 1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
 1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
 1. P2, **TODO**, , `android/index.md`, Android Overview

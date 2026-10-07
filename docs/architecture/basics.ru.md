@@ -2,6 +2,8 @@
 
 Современная Android-архитектура разделяет UI, управление состоянием, бизнес-правила и доступ к данным. Благодаря этому у каждой части есть понятная ответственность и возможность развиваться независимо.
 
+Эта страница посвящена архитектуре внутри Android-приложения. Проектирование взаимодействия мобильного клиента, API, сервисов, баз данных, кэшей, очередей и внешних систем разобрано в [Основах System Design](../engineering/system-design/fundamentals.ru.md).
+
 ## Слои
 
 ### Современная Android-архитектура
@@ -66,3 +68,4 @@ Single source of truth означает, что у каждого типа да�
 - [UI State Architecture](ui-state.ru.md)
 - [MV* Patterns](mv-patterns.ru.md)
 - [Multi-module Architecture](multi-module.ru.md)
+- [Основы System Design](../engineering/system-design/fundamentals.ru.md)

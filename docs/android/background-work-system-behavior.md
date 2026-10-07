@@ -44,3 +44,4 @@ Restrictions also affect services, implicit broadcasts, location, jobs, and netw
 - [Android Components](components.md)
 - [Activity, Fragment & Lifecycle](activity-fragment-lifecycle.md)
 - [Coroutine Scopes & Cancellation](../coroutines-flow/scopes-cancellation.md)
+- [Offline-First Mobile Application](../engineering/system-design/offline-first-mobile.md)

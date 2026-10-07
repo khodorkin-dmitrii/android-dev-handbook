@@ -51,3 +51,8 @@ DataStore хранит небольшие постоянные значения 
 Для публикации фото и видео вне приложения используйте `MediaStore`; для выбора пользователем уже существующих фото и видео - системный выбор фотографий. Для документов, выбираемых или создаваемых пользователем, используйте Storage Access Framework. Возвращённый URI вида `content://` указывает на содержимое: не считайте его путём к файлу. Правила доступа и разрешения зависят от операции и версии Android.
 
 Выбор API подробнее описан в [руководстве по хранению данных Android](https://developer.android.com/training/data-storage); хранение криптографических ключей - в [руководстве по Android Keystore](https://developer.android.com/privacy-and-security/keystore).
+
+## Связанные темы
+
+- [Data Storage & Consistency](../engineering/system-design/data-storage-consistency.ru.md)
+- [Offline-First Mobile Application](../engineering/system-design/offline-first-mobile.ru.md)

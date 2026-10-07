@@ -44,3 +44,4 @@ FCM даёт короткое окно для обработки push-сообщ
 - [Компоненты Android](components.ru.md)
 - [Activity, Fragment и Lifecycle](activity-fragment-lifecycle.ru.md)
 - [Области корутин и отмена](../coroutines-flow/scopes-cancellation.ru.md)
+- [Offline-First Mobile Application](../engineering/system-design/offline-first-mobile.ru.md)
