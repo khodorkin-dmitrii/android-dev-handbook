@@ -24,7 +24,7 @@ Android Dev Handbook - это структурированный справоч�
 * [Security](security/index.md) - основы безопасности Android, HTTPS и TLS, certificate pinning, secure storage, OAuth, PKCE и управление токенами.
 * [Tools](tools/overview.md) - debugging, diagnostics, profiling, benchmarking, production monitoring и QA-friendly internal builds.
 * [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso и Compose UI tests.
-* [Engineering](engineering/index.md) - базовые инженерные темы: OOP, SOLID, паттерны проектирования, алгоритмы, сложность, память и runtime-концепции.
+* [Engineering](engineering/index.md) - базовые инженерные темы: OOP, SOLID, паттерны проектирования, алгоритмы, сложность, память, runtime-концепции и System Design.
 * [Legacy](legacy/index.md) - старые, но всё ещё встречающиеся подходы и библиотеки Android/Java/Kotlin: RxJava, RxAndroid, legacy patterns и миграция на современный стек.
 
 ## Как читать

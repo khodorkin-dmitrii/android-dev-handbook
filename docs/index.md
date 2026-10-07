@@ -24,7 +24,7 @@ The goal of the project is to collect practical explanations, compact notes, imp
 * [Security](security/index.md) - Android security basics, HTTPS and TLS, certificate pinning, secure storage, OAuth, PKCE and token management.
 * [Tools](tools/overview.md) - debugging, diagnostics, profiling, benchmarking, production monitoring and QA-friendly internal builds.
 * [Testing](testing/index.md) - testing strategy, unit tests, `ViewModel` tests, Coroutines & Flow testing, Espresso and Compose UI tests.
-* [Engineering](engineering/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory and runtime concepts.
+* [Engineering](engineering/index.md) - core engineering topics: OOP, SOLID, design patterns, algorithms, complexity, memory, runtime concepts and System Design.
 * [Legacy](legacy/index.md) - older but still common Android/Java/Kotlin approaches and libraries: RxJava, RxAndroid, legacy patterns and migration to a modern stack.
 
 ## How to read

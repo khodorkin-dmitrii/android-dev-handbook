@@ -17,6 +17,7 @@
 System Design находится уровнем выше application-level Android architecture. Он рассматривает полные потоки данных через мобильные клиенты, API, сервисы, хранилища, кэши, очереди, workers и внешние системы.
 
 - [Основы System Design](system-design/fundamentals.ru.md)
+- [System Design Shorts](system-design/system-design-shorts.ru.md)
 - [Scalability & Capacity](system-design/scalability-capacity.ru.md)
 - [Data Storage & Consistency](system-design/data-storage-consistency.ru.md)
 - [Caching & Data Freshness](system-design/caching.ru.md)

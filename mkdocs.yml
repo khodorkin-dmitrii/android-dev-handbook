@@ -132,6 +132,7 @@ plugins:
             Algorithms & Complexity: Algorithms & Complexity
             Memory & Runtime Basics: Memory & Runtime Basics
             System Design Fundamentals: Основы System Design
+            System Design Shorts: System Design Shorts
             Scalability & Capacity: Scalability & Capacity
             Data Storage & Consistency: Data Storage & Consistency
             Caching & Data Freshness: Caching & Data Freshness
@@ -282,6 +283,7 @@ nav:
       - Memory & Runtime Basics: engineering/memory-runtime-basics.md
       - System Design:
           - System Design Fundamentals: engineering/system-design/fundamentals.md
+          - System Design Shorts: engineering/system-design/system-design-shorts.md
           - Scalability & Capacity: engineering/system-design/scalability-capacity.md
           - Data Storage & Consistency: engineering/system-design/data-storage-consistency.md
           - Caching & Data Freshness: engineering/system-design/caching.md
