@@ -34,7 +34,7 @@ Schema evolution must support data written by older software and, during rolling
 
 A transaction groups operations under defined atomicity and isolation guarantees. Use it to protect invariants that must change together, while recognizing that broad distributed transactions can reduce availability and throughput.
 
-**Strong consistency** commonly means a read observes the latest completed write under the stated model. **Eventual consistency** means replicas can temporarily differ but converge when updates stop and delivery succeeds. It is not random data: the allowed observations and convergence rules still need a contract.
+**Strong consistency** is an umbrella term in informal system-design discussion: it generally means clients do not observe arbitrarily stale state, but the exact guarantee should be stated when it matters, for example linearizable reads, read-after-write consistency, or session-level guarantees. **Eventual consistency** means replicas can temporarily differ but converge when updates stop and delivery succeeds. It is not random data: the allowed observations and convergence rules still need a contract.
 
 Read-after-write consistency is often a user-facing requirement. After a profile update, the same user usually expects an immediate read to show the new value. Analytics counters may tolerate delayed convergence. Different operations in one system can make different consistency choices.
 

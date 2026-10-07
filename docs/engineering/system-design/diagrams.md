@@ -28,16 +28,23 @@ sequenceDiagram
     participant API
     participant Service
     participant DB
-    User->>App: tap
-    App->>API: POST
+    User->>App: submit edit
+    App->>API: mutation with operation ID
     API->>Service: validate and execute
-    Service->>DB: query
-    DB-->>Service: result
+    Service->>DB: commit change
+    DB-->>Service: committed
     Service-->>API: result
-    API-->>App: response
+    alt response delivered
+        API-->>App: success
+    else timeout or response lost
+        API--xApp: outcome unknown
+        App->>App: preserve pending operation
+        App->>API: later status or retry with same ID
+        API-->>App: known result
+    end
 ```
 
-Sequence diagrams are especially useful for retries, timeouts, ordering, races, synchronous versus asynchronous boundaries, and partial failures. Include alternate or failure paths when they change the design. Mark when acknowledgement occurs so readers do not confuse accepted work with completed work.
+Sequence diagrams are especially useful for retries, timeouts, ordering, races, synchronous versus asynchronous boundaries, and partial failures. Here, a lost response creates uncertainty even though the database committed the change. Preserving the logical operation ID lets a later status check or retry refer to the same intent. Include alternate or failure paths when they change the design, and mark when acknowledgement occurs so readers do not confuse accepted work with completed work.
 
 ## Data-flow diagram
 

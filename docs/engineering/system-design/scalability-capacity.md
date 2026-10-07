@@ -21,6 +21,8 @@ For an order-of-magnitude estimate:
 
 The average is not a capacity target. Traffic peaks, regional time zones, launches, retries, bursts, and expensive endpoints may multiply the required capacity. Estimate peak read and write paths separately, state the safety margin, measure production behavior, and revise the model.
 
+Mobile client behavior can hide important load behind DAU and average RPS. Polling intervals, many clients reconnecting after network recovery, push-triggered refreshes, app launches after a notification, long-lived realtime connections, and retries after temporary connectivity failures can create synchronized bursts or sustained connection load. Client behavior is therefore part of capacity design.
+
 ## Scaling approaches
 
 **Vertical scaling** gives one node more CPU, memory, or I/O capacity. It is simple but has hardware and failure-domain limits. **Horizontal scaling** adds nodes and can improve capacity and redundancy, but requires routing, coordination, deployment, and observability across instances.

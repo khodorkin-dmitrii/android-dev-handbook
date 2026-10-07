@@ -28,16 +28,23 @@ sequenceDiagram
     participant API
     participant Service
     participant DB
-    User->>App: tap
-    App->>API: POST
+    User->>App: submit edit
+    App->>API: mutation with operation ID
     API->>Service: validate and execute
-    Service->>DB: query
-    DB-->>Service: result
+    Service->>DB: commit change
+    DB-->>Service: committed
     Service-->>API: result
-    API-->>App: response
+    alt response delivered
+        API-->>App: success
+    else timeout or response lost
+        API--xApp: outcome unknown
+        App->>App: preserve pending operation
+        App->>API: later status or retry with same ID
+        API-->>App: known result
+    end
 ```
 
-Sequence diagrams особенно полезны для анализа retries, timeouts, ordering, races, синхронных и асинхронных границ и частичных отказов. Показывайте альтернативные пути или ошибки, если они меняют дизайн. Отмечайте момент acknowledgement, чтобы принятую работу не путали с завершённой.
+Sequence diagrams особенно полезны для анализа retries, timeouts, ordering, races, синхронных и асинхронных границ и частичных отказов. В этом примере потеря ответа создаёт неопределённость, хотя изменение уже сохранено в базе. Стабильный operation ID позволяет связать последующий запрос статуса или retry с тем же намерением. Показывайте альтернативные пути и ошибки, если они меняют дизайн, и отмечайте момент acknowledgement, чтобы принятую работу не путали с завершённой.
 
 ## Data-flow diagram
 

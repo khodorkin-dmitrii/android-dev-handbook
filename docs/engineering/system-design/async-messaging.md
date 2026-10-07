@@ -7,16 +7,25 @@ Synchronous request-response is appropriate when the caller needs an immediate r
 A queue buffers work between a **producer**, which submits messages, and a **consumer** or **worker**, which processes them. This can absorb bursts, control concurrency, and keep slow or expensive work outside an HTTP request.
 
 ```mermaid
-flowchart TD
-    C[Client] --> API[API]
-    API --> R[Create Upload Record]
-    R --> Q[[Queue]]
-    Q --> W[Media Processing Worker]
-    W --> O[(Object Storage)]
-    W --> D[(Database)]
+sequenceDiagram
+    participant App as Mobile App
+    participant API
+    participant Storage as Object Storage
+    participant Queue
+    participant Worker as Media Processing Worker
+    participant DB as Database
+    App->>API: create upload
+    API-->>App: upload target and upload ID
+    App->>Storage: upload bytes
+    Storage->>Queue: upload completed
+    Queue->>Worker: process durable object
+    Worker->>Storage: write processed object
+    Worker->>DB: update status and metadata
 ```
 
-The API can return an identifier and `pending` status after durably recording the upload. The client later polls, observes an update, or receives a notification. The trade-off is explicit eventual processing: acceptance no longer means the final result exists.
+The API creates a stable upload record and target, while media bytes go to durable object storage. Processing is queued only after the uploaded object is available; a worker must not assume that media exists merely because an upload record was created. The client can receive a `pending` state and later poll, observe an event, or receive a notification. The trade-off is explicit eventual processing: acceptance no longer means the final result exists.
+
+A mobile process may disappear after receiving `accepted` or `pending`. The server should return a stable operation or job identifier so the client can recover status later. Polling, realtime events, or push can prompt an update, but a push notification should normally trigger reconciliation or refresh rather than become the source of truth itself.
 
 Queue depth, message age, worker capacity, and failure rate are important operational signals. Backpressure limits producers or worker concurrency when downstream systems cannot keep up.
 

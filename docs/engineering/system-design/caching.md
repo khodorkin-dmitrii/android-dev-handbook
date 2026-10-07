@@ -8,10 +8,12 @@ Caches can exist on the mobile client, in a service, near a database query path,
 
 ```mermaid
 flowchart TD
-    C[Client] --> K[(Cache)]
-    K -->|miss| S[Service]
-    S --> D[(Database)]
-    S --> K
+    C[Client] --> S[Service]
+    S -->|check| K[(Cache)]
+    K -->|miss| S
+    S -->|read on miss| D[(Database)]
+    D -->|result| S
+    S -->|populate| K
 ```
 
 With **cache-aside**, the application controls the cache:
@@ -29,7 +31,7 @@ For writes, one approach invalidates the entry so the next read reloads it. Anot
 
 Invalidation should follow ownership: the component that authoritatively changes data needs a reliable way to expire or replace affected entries. Even then, races and delivery failures can leave stale data. Define whether stale results are acceptable, for whom, and for how long.
 
-**Stale-while-revalidate** serves an existing value quickly and refreshes it in the background. It is useful when low latency matters more than immediate freshness. **Negative caching** temporarily stores a not-found or failure result to protect a dependency, but its TTL must account for data that may soon appear or recover.
+**Stale-while-revalidate** serves an existing value quickly and refreshes it in the background. It is useful when low latency matters more than immediate freshness. **Negative caching** commonly stores a known negative result such as “resource does not exist.” Do not blindly cache transient network, server, authorization, or user-specific failures. If selected failures are cached, define the policy explicitly and use a TTL short enough not to hide recovery.
 
 ## Failure and load patterns
 

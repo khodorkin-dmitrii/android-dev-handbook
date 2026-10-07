@@ -7,6 +7,8 @@ Application architecture: UI -> ViewModel -> use case -> repository -> local/rem
 System design: Mobile client -> APIs -> services -> databases / caches / queues / workers
 ```
 
+This section approaches system design primarily from a senior mobile engineer's perspective. The mobile application is one participant in a larger distributed system, so backend and infrastructure concepts are covered to the depth needed to reason about contracts, data ownership and flow, synchronization, caching, reliability, product-visible consistency, failure behavior, connectivity, and mobile lifecycle constraints.
+
 ## Boundaries, components, and requirements
 
 A system boundary states what the design owns and what it treats as an external dependency. Inside it, each component needs a clear responsibility, interface, and data owner. An API contract, database schema, or event is a boundary between components, not merely an implementation detail.

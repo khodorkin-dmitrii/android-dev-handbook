@@ -8,6 +8,8 @@ Every remote call needs a timeout derived from the caller's latency budget. With
 
 Retries can recover from transient failures but also multiply load and repeat side effects. Use a retry budget, bounded attempts, exponential backoff, and jitter. Coordinate retry layers so the client, API, and service do not create a retry storm.
 
+Define which layer owns retry behavior for one logical mobile operation. UI callbacks, HTTP interceptors, repositories, API gateways, backend services, and durable workers should not independently multiply attempts. An interactive retry of a safe read, a mutation retry with an idempotency key, and durable retry after mobile process death have different constraints; ownership depends on the operation rather than one universal implementation.
+
 ```text
 Mobile App -> API -> Payment Service -> timeout
 ```
@@ -40,7 +42,7 @@ Graceful degradation preserves core behavior when an optional dependency fails. 
 
 ## Redundancy and recovery
 
-Redundancy removes single points of failure only when replicas do not share the same failure mode. Health checks should distinguish whether a process is alive, ready to receive traffic, and able to reach critical dependencies. Replication improves resilience but can introduce lag and correlated configuration errors.
+Redundancy removes single points of failure only when replicas do not share the same failure mode. **Liveness** asks whether a process is alive enough that restarting it may help; **readiness** asks whether this instance should currently receive traffic; startup checks can protect slow initialization. Dependency health is also an important observable signal, but every readiness check should not automatically probe every downstream service. If all upstream instances become “not ready” because one shared dependency is unavailable, the policy can amplify that outage into a cascading failure. Replication improves resilience but can introduce lag and correlated configuration errors.
 
 Design for partial success and uncertain outcomes. A multi-step workflow may need compensating action, reconciliation, or a visible pending state rather than pretending it was atomic. Recovery plans should cover restoring durable data, draining backlogs, replaying safe work, and verifying invariants.
 

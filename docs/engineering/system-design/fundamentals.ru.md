@@ -1,11 +1,13 @@
 # Основы System Design
 
-System design описывает работу продукта целиком: от клиентов и API до сервисов, хранилищ, кэшей, очередей, workers и внешних систем. Android application architecture организует код внутри клиента, а system design прослеживает данные и ответственность через всю систему.
+System design описывает работу продукта целиком: от клиентов и API до сервисов, хранилищ, кэшей, очередей, workers и внешних систем. Android application architecture организует код внутри клиента, а system design рассматривает движение данных и распределение ответственности во всей системе.
 
 ```text
 Application architecture: UI -> ViewModel -> use case -> repository -> local/remote data
 System design: Mobile client -> APIs -> services -> databases / caches / queues / workers
 ```
+
+Этот раздел рассматривает system design прежде всего с позиции senior mobile engineer. Мобильное приложение является одним из участников большой распределённой системы, поэтому концепции backend и инфраструктуры разобраны в объёме, необходимом для понимания контрактов, владения данными и их движения, синхронизации, кэширования, надёжности, видимой пользователю consistency, поведения при сбоях, качества связи и ограничений mobile lifecycle.
 
 ## Границы, компоненты и требования
 

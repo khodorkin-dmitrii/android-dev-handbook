@@ -7,18 +7,27 @@
 Очередь буферизует работу между **producer**, который отправляет сообщения, и **consumer** или **worker**, который их обрабатывает. Она помогает поглощать всплески, контролировать параллелизм и выносить медленную или дорогую работу из HTTP-запроса.
 
 ```mermaid
-flowchart TD
-    C[Client] --> API[API]
-    API --> R[Create Upload Record]
-    R --> Q[[Queue]]
-    Q --> W[Media Processing Worker]
-    W --> O[(Object Storage)]
-    W --> D[(Database)]
+sequenceDiagram
+    participant App as Mobile App
+    participant API
+    participant Storage as Object Storage
+    participant Queue
+    participant Worker as Media Processing Worker
+    participant DB as Database
+    App->>API: create upload
+    API-->>App: upload target and upload ID
+    App->>Storage: upload bytes
+    Storage->>Queue: upload completed
+    Queue->>Worker: process durable object
+    Worker->>Storage: write processed object
+    Worker->>DB: update status and metadata
 ```
 
-API может вернуть идентификатор и статус `pending` после надёжной фиксации загрузки. Затем клиент опрашивает статус, наблюдает обновление или получает уведомление. Компромисс состоит в явной eventual processing: принятие запроса ещё не означает готовность результата.
+API создаёт стабильную запись о загрузке и возвращает адрес назначения, а байты медиафайла поступают в надёжное object storage. Задача на обработку ставится в очередь только после того, как загруженный объект стал доступен: worker не должен считать, что медиафайл существует, лишь потому что запись о загрузке уже создана. Клиент может получить статус `pending`, а затем опрашивать состояние, наблюдать событие или получить уведомление. Компромисс состоит в eventual processing: принятие запроса ещё не означает готовность результата.
 
-Глубина очереди, возраст сообщения, capacity workers и частота ошибок являются важными эксплуатационными сигналами. Backpressure ограничивает producers или параллелизм workers, когда downstream-системы не справляются.
+Мобильный процесс может завершиться после получения `accepted` или `pending`. Серверу следует вернуть стабильный идентификатор операции или job, чтобы клиент позже восстановил её статус. Polling, realtime events или push могут инициировать обновление, но push-уведомление обычно должно запускать reconciliation или refresh, а не становиться source of truth.
+
+Глубина очереди, возраст сообщения, суммарная capacity workers и частота ошибок являются важными эксплуатационными сигналами. Backpressure ограничивает producers или параллелизм workers, когда downstream-системы не справляются.
 
 ## Pub/sub и event-driven взаимодействие
 

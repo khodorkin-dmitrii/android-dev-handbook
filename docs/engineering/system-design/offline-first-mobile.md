@@ -31,7 +31,7 @@ flowchart TD
     U -->|user actions| S
 ```
 
-The local database is the immediate source for UI state. Network synchronization writes accepted server state into the database; the UI continues to observe the same source instead of switching between unrelated “network state” and “database state.” The backend remains authoritative for shared server state, authorization, and cross-device coordination.
+The local database is the local source of truth for presentation. Network synchronization writes accepted server state into the database; the UI continues to observe the same source instead of switching between unrelated “network state” and “database state.” The backend remains the server authority for shared and domain state, authorization, and cross-device coordination. These roles are complementary rather than competing universal sources of truth.
 
 The repository owns the client boundary: local reads and writes, network calls, mapping, and sync policy. This extends the [Repository and single-source-of-truth](../../architecture/basics.md#data-ownership) ideas without duplicating their application-layer details.
 
@@ -40,6 +40,8 @@ The repository owns the client boundary: local reads and writes, network calls, 
 Records need stable identifiers that can be created offline. A client-generated UUID is one option; another is a local identifier mapped to a server identifier. Each mutation should have a stable operation ID, type, target, payload or patch, creation time, and sync state such as `pending`, `in_flight`, `failed`, or `synchronized`.
 
 Pending mutations must be stored durably with the affected data. An in-memory queue would lose work after process death. The local transaction should update the visible record and enqueue its mutation together when the storage technology supports it.
+
+`in_flight` represents one attempt, not permanent truth. If the process dies, an attempt times out, or its processing lease expires, an unfinished mutation must become retryable again instead of remaining stuck. Its stable operation ID or idempotency key makes resubmission safe when the previous server outcome is uncertain. For sensitive side effects, the client may need to reconcile or query status before retrying.
 
 ```mermaid
 flowchart TD
