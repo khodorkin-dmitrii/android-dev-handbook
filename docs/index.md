@@ -46,7 +46,7 @@ A personal Android development handbook focused on practical engineering notes, 
 * Handbook repository: [khodorkin-dmitrii/android-dev-handbook](https://github.com/khodorkin-dmitrii/android-dev-handbook)
 
 <!-- BEGIN GENERATED HANDBOOK STATS -->
-## Handbook stats  <a class="handbook-hidden-link" href="../en/pages-review-tracker/" aria-label="Pages Review Tracker">▤</a>  <a class="handbook-hidden-link" href="shorts/" aria-label="Short answers">⚡︎</a>
+## Handbook stats  <a class="handbook-hidden-link" href="../en/pages-review-tracker/" aria-label="Pages Review Tracker">▤</a>  <a class="handbook-hidden-link" href="shorts/" aria-label="Short answers">⚡︎</a>  <a class="handbook-hidden-link" href="engineering/system-design/system-design-shorts/" aria-label="System Design Shorts">⚡︎</a>
 
 _Last updated: {{LAST_UPDATED}}_
 

@@ -46,7 +46,7 @@ Android Dev Handbook - это структурированный справоч�
 * Handbook repository: [khodorkin-dmitrii/android-dev-handbook](https://github.com/khodorkin-dmitrii/android-dev-handbook)
 
 <!-- BEGIN GENERATED HANDBOOK STATS -->
-## Handbook stats  <a class="handbook-hidden-link" href="../en/pages-review-tracker/" aria-label="Pages Review Tracker">▤</a>  <a class="handbook-hidden-link" href="shorts/" aria-label="Короткие ответы">⚡︎</a>
+## Handbook stats  <a class="handbook-hidden-link" href="../en/pages-review-tracker/" aria-label="Pages Review Tracker">▤</a>  <a class="handbook-hidden-link" href="shorts/" aria-label="Короткие ответы">⚡︎</a>  <a class="handbook-hidden-link" href="engineering/system-design/system-design-shorts/" aria-label="System Design Shorts">⚡︎</a>
 
 _Последнее обновление: {{LAST_UPDATED}}_
 
