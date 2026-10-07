@@ -1,49 +1,72 @@
 # Legacy & Refactoring
 
-Legacy и refactoring в Android требуют аккуратности: важно сохранять существующее поведение, постепенно улучшать boundaries и не превращать migration в большой рискованный rewrite.
+Работа с legacy-кодом в Android требует сохранять существующее поведение и снижать риск изменений. **Рефакторинг** меняет внутреннюю структуру без изменения наблюдаемого поведения; **миграция** заменяет технологию или API и требует проверки их семантики, а также поведения.
 
 ## Legacy
 
 ### Legacy-код в Android-проекте
 
-Legacy-код - это не обязательно плохой код. Обычно это код, который долго живёт в проекте, написан под старые требования, старые архитектурные решения, устаревшие библиотеки или до появления текущих team conventions.
+Legacy-код содержит поведение и ограничения, которые трудно безопасно изменить: неясные обязанности, скрытые зависимости, отсутствие тестов или неподдерживаемые библиотеки. Возраст сам по себе не делает код legacy; XML-разметка и RxJava не являются проблемой автоматически.
 
-В Android legacy часто выглядит как massive `Activity` / `Fragment`, XML + callbacks, RxJava chains, ручной DI/service locator, static singletons, сложные inheritance hierarchies, старые navigation approaches или смешение UI, business logic и data access в одном классе.
+Типичные признаки: большая `Activity` / `Fragment`, смешивающая отрисовку, бизнес-правила и доступ к данным, глобальное изменяемое состояние, неявные предположения о жизненном цикле и сильная связанность зависимостей.
 
-Работа с legacy требует осторожности: сначала нужно понять текущий behavior, покрыть критичные сценарии тестами или хотя бы characterization tests, и только потом менять структуру.
+Начинайте с конкретных проблем: повторяющихся багов, рискованных изменений, трудностей с тестированием или неподдерживаемой зависимости. Стабильный код без понятной выгоды от замены можно оставить как есть.
 
-Главный принцип - не переписывать всё ради "красивой архитектуры", а снижать риск и постепенно улучшать boundaries: выносить data access в repository, бизнес-логику в use case/domain, UI state во `ViewModel`, а side effects делать явными.
+**Characterization tests (тесты текущего поведения)** фиксируют то, что реализация действительно делает, включая неожиданные граничные случаи. Они защищают поведение при изменении структуры, но не доказывают, что оно всегда правильно. Обнаруженные баги исправляйте отдельно, явно задавая новое ожидаемое поведение. Ручной чек-лист может дополнять тесты, но менее надёжен для повторных проверок регрессий.
 
-**Коротко:** legacy code is code with existing behavior and constraints; refactor it incrementally, first protecting behavior with tests or checks, then improving boundaries and reducing coupling.
+Улучшайте границы там, где это полезно: выносите доступ к данным за репозиторий, храните состояние экрана во `ViewModel`, делайте побочные эффекты явными. Use case нужен для сложной или переиспользуемой бизнес-логики, а не как обязательная обёртка над каждым вызовом репозитория.
 
-### Incremental refactoring
+### Инкрементальный рефакторинг
 
-Incremental refactoring - постепенное улучшение кода маленькими безопасными шагами без большого big bang rewrite.
+Инкрементальный рефакторинг улучшает одну обязанность или границу за раз небольшими проверяемыми изменениями.
 
-В Android это особенно важно, потому что feature может быть связана с lifecycle, navigation, analytics, caching, push/deep links, permissions и разными версиями OS. Большой rewrite легко ломает скрытые сценарии.
+1. Выберите конкретную проблему и определите ожидаемую пользу.
+2. Зафиксируйте обычные сценарии, ошибки и поведение жизненного цикла точечными тестами.
+3. Создайте **seam (точку подмены)**: заменяемую границу, например зависимость через конструктор или интерфейс вокруг legacy API.
+4. Извлеките или замените одну часть за этой границей, сохраняя контракт для вызывающего кода.
+5. Проверьте поведение, постепенно переведите потребителей, затем удалите старую реализацию.
 
-Практичный процесс: найти pain point, зафиксировать текущее поведение, добавить тесты или ручной checklist, выделить small seams, затем переносить логику по частям.
+Например, сначала скройте существующий Rx API за репозиторием, а уже потом меняйте состояние экрана или отрисовку. Адаптер позволяет новым потребителям использовать другой контракт, пока старые продолжают работать.
 
-Примеры small steps: вынести network call из `Activity` в repository, заменить callback на suspend function/Flow, ввести `UiState`, отделить mapper, добавить interface для legacy dependency, покрыть `ViewModel` тестами, постепенно удалить дублирование.
+В Android проверяйте поворот экрана, уход и возврат через навигацию, восстановление после пересоздания процесса, deep links, работу без сети, ошибки и дублирование запросов или событий аналитики, если это актуально. `ViewModel` переживает изменения конфигурации, но восстановление после пересоздания процесса требует подходящего сохранённого состояния или постоянного хранилища.
 
-Важно сохранять public contracts и мигрировать call sites постепенно. Если нужно менять API, лучше сначала добавить новый путь, перевести клиентов, потом удалить старый.
-
-**Коротко:** incremental refactoring reduces risk by changing one boundary at a time, keeping behavior stable and continuously verifying the result.
+Разделяйте исправления багов и изменения структуры так, чтобы их можно было проверить независимо. Измеряйте ожидаемый результат: например, снижение числа падений или упрощение тестов. При рискованной миграции функции поэтапный rollout и временный feature flag помогают вернуть старый путь; необратимые изменения данных требуют отдельного плана восстановления.
 
 ## Migration
 
-### Migration from XML/RxJava to Compose/Flow
+### Миграция с XML/RxJava на Compose/Flow
 
-Миграция с XML/RxJava на Compose/Flow обычно должна быть постепенной, потому что в реальном Android-проекте UI, navigation, lifecycle, DI, analytics и data layer часто сильно связаны.
+Замена UI и реактивного стека - независимые задачи. Сначала стабилизируйте контракты состояния и событий, затем заменяйте по одной реализации.
 
-Для UI можно использовать interoperability: добавлять Compose через `ComposeView` внутри XML/Fragment или, наоборот, встраивать `AndroidView` / `ViewBinding` в Compose, если нужно временно переиспользовать старый `View`.
+**Views → Compose:**
 
-Для state management полезно сначала привести экран к `ViewModel` + `UiState`, а уже потом менять rendering layer. Если `ViewModel` отдаёт стабильный `StateFlow<UiState>`, UI можно заменить с XML на Compose с меньшим риском.
+- Добавьте `ComposeView` в существующий Fragment. Используйте `ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed`, чтобы связать композицию с жизненным циклом представления Fragment.
+- Переиспользуйте старый `View` через `AndroidView`; для существующей XML-разметки с View Binding используйте `AndroidViewBinding`.
+- Сохраняйте независимость `ViewModel` + `UiState` от отрисовки. Собирайте состояние через `collectAsStateWithLifecycle()` в Compose или `repeatOnLifecycle()` с `viewLifecycleOwner` во Fragment.
+- Проверяйте восстановление состояния, фокус, доступность, прокрутку и навигацию. Замена UI-инструментария не сохраняет их автоматически.
 
-Для RxJava миграции важно не делать механическую замену операторов. Нужно понять semantics: cold/hot streams, backpressure, schedulers, error handling, cancellation/disposal и lifecycle. Rx `Observable` / `Single` / `Completable` можно постепенно адаптировать в suspend functions или `Flow` на границах слоя.
+**RxJava → корутины/Flow:**
 
-Практичный путь: сначала изолировать Rx внутри repository/data layer, наружу отдавать suspend/Flow для нового кода, затем постепенно переписывать внутреннюю реализацию. Для UI collection использовать lifecycle-aware APIs: `collectAsStateWithLifecycle()` в Compose и `repeatOnLifecycle()` во View System.
+- Однократный `Single<T>` обычно соответствует suspend-функции, возвращающей `T`; `Completable` - функции, возвращающей `Unit`. Используйте подходящий модуль интеграции: `kotlinx-coroutines-rx2` или `kotlinx-coroutines-rx3`.
+- Адаптируйте потоки на границах слоёв, затем проверяйте время жизни подписки, холодное/горячее поведение, буферизацию/backpressure, ошибки и контекст выполнения. `StateFlow` хранит текущее состояние и объединяет обновления; он не является прямой заменой любого Rx-потока или канала событий.
+- Сбор с учётом жизненного цикла останавливает и заново создаёт подписки. Уточните, должна ли работа источника перезапускаться или оставаться общей для потребителей.
 
-**Важно:** нельзя одновременно менять UI framework, reactive stack и бизнес-логику без чёткой проверки поведения. Лучше разделять migration steps и делать rollback-friendly изменения.
+Минимальный адаптер для RxJava 3; `LegacyApi` и `User` - типы приложения:
 
-**Коротко:** prefer migration in layers: first stabilize state contracts, then bridge old and new UI/reactive APIs, and only then replace implementations gradually.
+```kotlin
+import kotlinx.coroutines.rx3.await
+
+class UserRepository(private val api: LegacyApi) {
+    // LegacyApi.loadUser(id) returns Single<User>.
+    suspend fun loadUser(id: String): User = api.loadUser(id).await()
+}
+```
+
+`await()` приостанавливает корутину без блокировки и освобождает подписку при отмене ожидающей корутины. Освобождение подписки останавливает работу источника только при поддержке отмены самим источником. Адаптер не переносит блокирующую работу при подписке в фоновый поток: сохраните подходящие Rx scheduler или явно переключите контекст для блокирующей работы. Не превращайте отмену корутины в обычную ошибку.
+
+## Источники
+
+- [Domain layer в Android](https://developer.android.com/topic/architecture/domain-layer)
+- [Compose внутри Views](https://developer.android.com/develop/ui/compose/migrate/interoperability-apis/compose-in-views)
+- [Интеграция RxJava 3 и корутин](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-rx3/)
+- [RxJava await](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/await.html)

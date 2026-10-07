@@ -13,15 +13,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-06
+1. Last tracker update: 2026-10-07
 1. Total articles tracked: 99
-1. Updated: 57
-1. TODO: 42
+1. Updated: 58
+1. TODO: 41
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 32 | 29      | 3    |
+| P1 | 32 | 30      | 2    |
 | P2 | 40 | 1       | 39   |
 
 ## Tracker
@@ -82,7 +82,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-05, `engineering/algorithms-complexity.md`, Algorithms & Complexity, Added worst, average and amortized analysis; clarified loop counting, search and sorting trade-offs, auxiliary space, ArrayList growth, LinkedList limitations, hash-key stability and ArrayDeque usage; connected asymptotic complexity with Android profiling and benchmarking; synchronized EN/RU and removed repetition.
 1. P1, **UPDATED**, 2026-10-06, `engineering/memory-runtime-basics.md`, Memory & Runtime Basics, Clarified managed heap, thread stacks and native memory boundaries, object reachability and reference cycles, leak causes, reference strengths, resource cleanup, allocation pressure and Android profiling; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-06, `android/binder-ipc-aidl.md`, Binder IPC and AIDL, Added a terminology glossary; clarified AIDL imports and parameter directions, local versus remote interface resolution, transaction-size limits, oneway semantics, connection and process-death handling, caller-identity security, and Stable AIDL compatibility; synchronized EN/RU.
-1. P1, **TODO**, , `architecture/legacy-refactoring.md`, Legacy & Refactoring
+1. P1, **UPDATED**, 2026-10-07, `architecture/legacy-refactoring.md`, Legacy & Refactoring, Clarified safe refactoring, lifecycle checks and Rx/Compose migration.
 1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
 1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
 1. P2, **TODO**, , `android/index.md`, Android Overview
