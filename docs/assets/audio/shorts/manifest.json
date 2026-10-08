@@ -26,7 +26,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/01-ru-shorts-computer-science.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/01-ru-shorts-computer-science.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },

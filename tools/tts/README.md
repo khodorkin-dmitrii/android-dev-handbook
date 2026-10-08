@@ -303,3 +303,85 @@ Generated audio, timing ledgers and subtitle drafts under `build/audio/` are
 ignored by Git. The public copies under `docs/assets/audio/` are tracked source
 files and should be updated only after user review. Do not commit or push unless
 explicitly requested.
+
+## Role-audio pipeline for the remaining Russian chapters
+
+`role_audio.py` implements the staged publication workflow for chapters 01-08
+and 10. Chapter 09 is protected and excluded from the default manifest because
+its role-based audio and subtitles are already complete. The tool never moves
+review artifacts into `docs/assets/`.
+
+The preparation phase is local and makes no speech-service requests:
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/role_audio.py prepare --dry-run
+build/tts-venv/Scripts/python tools/tts/role_audio.py prepare
+build/tts-venv/Scripts/python tools/tts/role_audio.py validate --stage prepared
+```
+
+It writes a machine-readable manifest, a human-readable plan, and eleven batch
+descriptions under `build/audio/role-ru/`: one title batch, one question batch,
+and one answer batch for each of the nine active chapters. Canonical text and
+speech-ready text remain distinct. The manifest records source and
+pronunciation-map hashes.
+
+Before a live phase, inspect the exact work without contacting `edge-tts`:
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/role_audio.py synthesize --group shared --dry-run
+build/tts-venv/Scripts/python tools/tts/role_audio.py synthesize --group answers --chapter 01 --dry-run
+```
+
+Live synthesis is always sequential. It writes the raw batch MP3 and the
+`WordBoundary` response metadata atomically, retries a failed batch once after
+five seconds, waits between batches, and reuses a successful result when its
+text and voice-setting fingerprint still matches:
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/role_audio.py synthesize --group shared
+build/tts-venv/Scripts/python tools/tts/role_audio.py validate --stage synthesized --group shared
+build/tts-venv/Scripts/python tools/tts/role_audio.py synthesize --group answers
+```
+
+The remaining commands do not contact the speech service. Run `split` for the
+same group after synthesis. It uses the saved word boundaries to create ordered
+MP3 and Markdown artifacts inside each chapter directory. It fails instead of
+guessing when the returned boundary text cannot be matched exactly.
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/role_audio.py split --group shared
+build/tts-venv/Scripts/python tools/tts/role_audio.py split --group answers
+build/tts-venv/Scripts/python tools/tts/role_audio.py assemble
+build/tts-venv/Scripts/python tools/tts/role_audio.py subtitles
+build/tts-venv/Scripts/python tools/tts/role_audio.py validate --stage subtitles
+```
+
+Use repeatable `--chapter NN` filters for answer synthesis, splitting, assembly,
+or subtitles when work should proceed one chapter at a time. Use `--force` only
+when an existing current artifact must deliberately be replaced. The
+`--include-protected` preparation option exists only for a future explicitly
+approved rebuild of chapter 09 and must not be used in the current iteration.
+
+### Run prepared answer parts sequentially
+
+The manual answer-part plan for chapters 02-08 and 10 is stored in
+`build/audio/role-ru/synthesis/answers-remaining-commands.txt`. Preview its
+state without making network requests:
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/run_tts_commands.py --commands build/audio/role-ru/synthesis/answers-remaining-commands.txt --dry-run
+```
+
+Run pending parts sequentially with the default eight-minute pause after every
+completed command:
+
+```powershell
+build/tts-venv/Scripts/python -u tools/tts/run_tts_commands.py --commands build/audio/role-ru/synthesis/answers-remaining-commands.txt
+```
+
+The runner streams each child command's output to the console and appends the
+same messages to `answers-remaining-commands.log`. It makes no automatic retry.
+A repeated run skips parts that already have non-empty MP3 and boundary JSON
+outputs. `Ctrl+C` stops the active command or pause. Use `--force` only to
+deliberately regenerate completed parts, and use `--pause-seconds N` only when a
+different interval is explicitly required.
