@@ -226,7 +226,7 @@ def main() -> None:
                           help="Write one TXT per English Shorts chapter; no audio")
     parser.add_argument("--voice", default=DEFAULT_VOICE,
                         help=f"Microsoft voice name (default: {DEFAULT_VOICE})")
-    parser.add_argument("--rate", default="-5%", help="Speech rate (default: -5%%)")
+    parser.add_argument("--rate", default="+25%", help="Speech rate (default: +25%%)")
     parser.add_argument("--volume", default="+0%", help="Volume (default: +0%%)")
     parser.add_argument("--pitch", default="+0Hz", help="Pitch (default: +0Hz)")
     parser.add_argument("--output", type=Path, default=OUTPUT,
@@ -245,8 +245,11 @@ def main() -> None:
     for name, pattern in (("rate", r"[+-]\d+%"), ("volume", r"[+-]\d+%"),
                           ("pitch", r"[+-]\d+Hz")):
         if not re.fullmatch(pattern, getattr(args, name)):
+            example = "+0Hz" if name == "pitch" else (
+                "+25%" if name == "rate" else "+0%"
+            )
             parser.error(f"Invalid --{name}; use a signed value such as "
-                         + ("+0Hz" if name == "pitch" else "-5%"))
+                         + example)
     output = args.output if args.output.is_absolute() else ROOT / args.output
     if output.suffix.lower() != ".mp3":
         parser.error("--output must have an .mp3 extension")

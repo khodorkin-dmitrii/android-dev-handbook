@@ -74,7 +74,7 @@ answers. Generated files remain ignored by Git under `build/`.
 build/tts-venv/Scripts/python tools/tts/generate.py
 ```
 
-The default voice is `ru-RU-DmitryNeural` at rate `-5%`, volume `+0%`, pitch
+The default voice is `ru-RU-DmitryNeural` at rate `+25%`, volume `+0%`, pitch
 `+0Hz`. This command writes `build/audio/shorts-ru-preview-dmitry.txt` and
 `build/audio/shorts-ru-preview-dmitry.mp3`.
 
@@ -128,16 +128,178 @@ build/tts-venv/Scripts/python -m edge_tts --list-voices | Select-String 'ru-RU'
 Override the voice or speech controls and choose a separate output:
 
 ```powershell
-build/tts-venv/Scripts/python tools/tts/generate.py --voice ru-RU-SvetlanaNeural --rate=-10% --volume=+0% --pitch=+0Hz --output build/audio/shorts-ru-preview-svetlana.mp3
+build/tts-venv/Scripts/python tools/tts/generate.py --voice ru-RU-SvetlanaNeural --rate=+25% --volume=+0% --pitch=+0Hz --output build/audio/shorts-ru-preview-svetlana.mp3
 ```
 
 `--output` changes both the MP3 and its matching `.txt` path. Relative paths
-resolve from the repository root. Use `--rate=-10%` with an equals sign for
-negative values. The voice determines pauses and pronunciation beyond the
+resolve from the repository root. Use a signed value such as `--rate=+25%`
+with an equals sign. The voice determines pauses and pronunciation beyond the
 explicit map. See the [edge-tts documentation](https://github.com/rany2/edge-tts)
 for supported controls.
 
-Generated audio and debug text are intentionally not committed: `build/audio/`
-is ignored by Git. Successful runs replace the selected MP3; failed runs retain
-any previous MP3, which may no longer match newly written debug text. This remains
-a small TTS experiment, not a publishing pipeline.
+## Produce a role-based track
+
+For a role-based track, keep every intermediate and review artifact together in
+one ignored build directory. Use this naming pattern:
+
+```text
+build/audio/shorts-ru/09-ru-libraries-and-build/
+```
+
+The track number, language and short topic id must be in the directory name.
+For English, use `build/audio/shorts-eng/NN-en-<topic-id>/`. Do not mix source
+files from different tracks or languages in the same directory.
+
+Split the track into ordered, independently generated segments. The current
+Russian track 09 is the reference layout:
+
+```text
+01-title-andrew.txt / .mp3
+02-question-1-svetlana.txt / .mp3
+03-answer-1-dmitry.txt / .mp3
+04-question-2-svetlana.txt / .mp3
+05-answer-2-dmitry.txt / .mp3
+09-ru-shorts-libraries-build.mp3       # assembled review track
+09-ru-shorts-libraries-build.srt       # subtitle draft for review
+timing.md                               # measured durations, trims and offsets
+```
+
+Use `docs/shorts.ru.md` as the canonical source for Russian wording and order,
+and `docs/shorts.md` for English. The title is the section title, question
+segments are the Markdown question headings, and answer segments contain only
+their corresponding answer text. Keep canonical readable wording separate from
+TTS text: Russian pronunciation-map spellings belong only in Russian `.txt`
+files sent to speech synthesis, never in subtitles. Do not apply that map to
+English; synthesize English from its canonical text.
+
+The selected pilot voice sets are:
+
+| Language | Section title | Question headings | Answers |
+| --- | --- | --- | --- |
+| Russian | `en-US-AndrewMultilingualNeural` (male) | `ru-RU-SvetlanaNeural` (female) | `ru-RU-DmitryNeural` (male) |
+| English | `en-US-AndrewMultilingualNeural` (male) | `en-US-AriaNeural` (female) | `en-US-GuyNeural` (male) |
+
+This keeps the male/female/male role pattern in both languages, while giving
+the two male roles different voices. Treat these as the current pilot choices;
+record the exact voice, rate, volume, pitch and pronunciation-map status for
+each segment rather than relying on implicit defaults.
+
+Synthesize each prepared text with an explicit command so all controls are
+visible and repeatable. Example for an answer segment:
+
+```powershell
+build/tts-venv/Scripts/python -m edge_tts --voice ru-RU-DmitryNeural --rate=+25% --volume=+0% --pitch=+0Hz --file build/audio/shorts-ru/09-ru-libraries-and-build/03-answer-1-dmitry.txt --write-media build/audio/shorts-ru/09-ru-libraries-and-build/03-answer-1-dmitry.mp3
+```
+
+Change only the role voice and input/output segment paths for other segments.
+Do not omit the explicit rate, volume or pitch.
+
+### Use Edge TTS carefully
+
+Edge TTS is a shared public service. Never submit segment syntheses in parallel
+or launch a batch of concurrent requests. Submit one request, wait for it to
+finish and verify the MP3, then wait at least 1 second before starting the next
+request. If a request fails transiently, pause before retrying; do not repeat
+segments that already succeeded. Retry one failed segment at most once, after a
+5-second pause; if it fails again, stop and report the failure rather than
+continuing to poll the service. Reuse valid segment files and synthesize only
+the missing or deliberately changed text.
+
+Generate only missing or intentionally changed segments. A failed synthesis
+must not be mistaken for a current segment: verify each output exists, has a
+plausible duration and corresponds to its adjacent `.txt`. Do not synthesize
+the full track again just to change one role segment. Assemble the numbered
+segments in order with FFmpeg. If trimming leading/trailing silence or adding
+gaps, record the exact input trim points and gap lengths in `timing.md` before
+or while assembling. Do not rely on undocumented manual edits.
+
+## Timing notes and subtitle draft
+
+`timing.md` is the compact timing ledger for the track. Keep measured values,
+not estimates based on text length. Include:
+
+- canonical source file and section heading;
+- final assembled audio duration;
+- for each segment: filename, role/voice, raw duration, trim-in and trim-out,
+  assembled start/end, and deliberate pause after it;
+- for each subtitle cue: cue number, corresponding question/answer phrase,
+  segment-local start/end, and assembled start/end;
+- any uncertain boundary that needs listening review.
+
+Use this compact layout to make regeneration and subtitle follow-ups refer to
+stable cue and segment ids without duplicating the full chapter text:
+
+```md
+# Timing: 09-ru-libraries-and-build
+
+- Source: `docs/shorts.ru.md` - `Libraries and Build`
+- Pronunciation map: `build/audio/pronunciation-ru.json` (record SHA-256)
+- Assembled track: `09-ru-shorts-libraries-build.mp3`
+- Assembled duration: `00:00:32.830`
+
+## Segments
+
+| ID | File | Voice / rate | Raw duration | Trim in-out | Track start-end | Gap after |
+| --- | --- | --- | ---: | --- | --- | ---: |
+
+## Cue alignment
+
+| Cue | Segment | Segment-local start-end | Track start-end | Boundary evidence / review note |
+| ---: | --- | --- | --- | --- |
+```
+
+Keep cue wording only in the SRT; use cue numbers and source order here. Record
+times to milliseconds. For each cue boundary, note the audible pause or the
+specific speech onset/offset used to place it. Mark uncertain boundaries rather
+than filling them with guessed times.
+
+Segment boundaries establish the search range for subtitle alignment. Within a
+long answer, use the actual audio and natural pauses to place cue boundaries.
+Use the canonical Markdown for subtitle wording and the speech-ready `.txt` only
+to locate the spoken equivalent. Do not estimate timestamps from character or
+word counts, regenerate wording from speech recognition, or change cue text while
+doing a timing-only update.
+
+### Required English/Russian cue parity
+
+When English and Russian transcripts are both provided for a track, they must
+have exactly the same number of cues in the same order. Match them one-to-one:
+the title maps to the title, each question to its translation, and each answer
+cue to the equivalent phrase or clause in the other language. Keep the phrase
+boundaries semantically equivalent; matching cue count alone is not sufficient.
+Use the canonical source for each language to verify wording. Timestamps are
+aligned independently to each language's actual audio and do not need to match.
+Before review or promotion, compare both SRTs cue by cue and confirm the 1:1
+mapping. If a phrase cannot be matched cleanly, resolve the split or report it
+for review instead of silently adding, omitting or combining a cue.
+
+Whenever a segment is regenerated, remeasure its duration. Recalculate the
+assembled offsets of all following segments and recheck affected subtitle cues;
+do not carry old offsets forward. If only a segment's speech changes but its
+position does not, still verify its internal cue boundaries against the new
+audio. Before review, validate SRT numbering, syntax, positive durations,
+chronological non-overlap and final cue end against the assembled MP3 duration.
+
+Keep the working SRT draft beside the segments in the track directory. The user
+reviews the assembled track and draft first. After approval, copy only the
+approved MP3 and SRT into `docs/assets/audio/shorts/{ru|en}/` and
+`docs/assets/audio/shorts/subtitles/{ru|en}/`, respectively. Update
+`docs/assets/audio/shorts/manifest.json` only when a transcript URL/format needs
+to be added or a published path changes. Then validate the manifest, build with
+`mkdocs build --strict`, and verify that the expected assets were copied to
+`site/`. A local copy in `docs/` is prepared for publication; it is not live
+until the repository's deployment process runs.
+
+## Keep follow-up tasks small
+
+For a follow-up, specify the track id, language, exact canonical source, track
+directory and the intended scope (text, selected role segments, assembly or
+timing-only). Point to `timing.md` and the current SRT rather than restating the
+whole chapter. Do not reopen or regenerate unrelated tracks. Preserve existing
+segment choices unless the request changes them, and report only changed files,
+measured duration, validation result and unresolved listening checks.
+
+Generated audio, timing ledgers and subtitle drafts under `build/audio/` are
+ignored by Git. The public copies under `docs/assets/audio/` are tracked source
+files and should be updated only after user review. Do not commit or push unless
+explicitly requested.
