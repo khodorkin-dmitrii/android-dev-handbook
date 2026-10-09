@@ -37,6 +37,10 @@ Prefer listening? **Short Audio Notes** is a concise audio review of the key Han
 
 [Listen to Short Audio Notes →](audio-shorts.md)
 
+## System Design Shorts 🎧
+
+[Listen to System Design Shorts →](system-design-audio.md)
+
 ## Created and maintained by Dmitrii Khodorkin
 
 A personal Android development handbook focused on practical engineering notes, interview preparation, and concise explanations of Android, Kotlin, Jetpack Compose, Coroutines, architecture, testing, and related topics.

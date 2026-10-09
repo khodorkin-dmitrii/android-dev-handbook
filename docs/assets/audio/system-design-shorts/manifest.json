@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "id": "system-design-shorts",
+  "title": {
+    "en": "System Design Shorts",
+    "ru": "System Design Shorts"
+  },
+  "availableLanguages": [
+    "ru"
+  ],
+  "tracks": [
+    {
+      "id": "system-design.fundamentals",
+      "order": 1,
+      "title": {
+        "en": "System Design Fundamentals",
+        "ru": "Основы System Design"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/01-ru-system-design-fundamentals.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/01-ru-system-design-fundamentals.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.scalability-capacity",
+      "order": 2,
+      "title": {
+        "en": "Scalability & Capacity",
+        "ru": "Scalability & Capacity"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/02-ru-system-design-scalability-capacity.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/02-ru-system-design-scalability-capacity.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.data-storage-consistency",
+      "order": 3,
+      "title": {
+        "en": "Data Storage & Consistency",
+        "ru": "Data Storage & Consistency"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/03-ru-system-design-data-storage-consistency.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/03-ru-system-design-data-storage-consistency.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.caching-data-freshness",
+      "order": 4,
+      "title": {
+        "en": "Caching & Data Freshness",
+        "ru": "Caching & Data Freshness"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/04-ru-system-design-caching-data-freshness.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/04-ru-system-design-caching-data-freshness.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.async-processing-messaging",
+      "order": 5,
+      "title": {
+        "en": "Async Processing & Messaging",
+        "ru": "Async Processing & Messaging"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/05-ru-system-design-async-processing-messaging.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/05-ru-system-design-async-processing-messaging.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.reliability-failure-handling",
+      "order": 6,
+      "title": {
+        "en": "Reliability & Failure Handling",
+        "ru": "Reliability & Failure Handling"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/06-ru-system-design-reliability-failure-handling.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/06-ru-system-design-reliability-failure-handling.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.diagrams",
+      "order": 7,
+      "title": {
+        "en": "System Design Diagrams",
+        "ru": "System Design Diagrams"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/07-ru-system-design-diagrams.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/07-ru-system-design-diagrams.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    },
+    {
+      "id": "system-design.offline-first-mobile",
+      "order": 8,
+      "title": {
+        "en": "Offline-First Mobile Application",
+        "ru": "Offline-First Mobile Application"
+      },
+      "media": {
+        "ru": {
+          "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/08-ru-system-design-offline-first-mobile.mp3",
+          "transcriptUrl": null,
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/ru/08-ru-system-design-offline-first-mobile.srt",
+          "timedTranscriptFormat": "srt"
+        }
+      }
+    }
+  ]
+}

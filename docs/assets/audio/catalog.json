@@ -12,6 +12,17 @@
         "ru"
       ],
       "manifestUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/manifest.json"
+    },
+    {
+      "id": "system-design-shorts",
+      "title": {
+        "en": "System Design Shorts",
+        "ru": "System Design Shorts"
+      },
+      "availableLanguages": [
+        "ru"
+      ],
+      "manifestUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/system-design-shorts/manifest.json"
     }
   ]
 }

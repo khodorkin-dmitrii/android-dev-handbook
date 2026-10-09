@@ -37,6 +37,10 @@ Android Dev Handbook - это структурированный справоч�
 
 [Слушать Short Audio Notes →](audio-shorts.md)
 
+## System Design Shorts 🎧
+
+[Слушать System Design Shorts →](system-design-audio.md)
+
 ## Автор и редактор - Dmitrii Khodorkin
 
 Личный справочник по Android-разработке с практическими инженерными заметками, материалами для подготовки к интервью и краткими объяснениями Android, Kotlin, Jetpack Compose, Coroutines, архитектуры, тестирования и связанных тем.
