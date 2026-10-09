@@ -282,8 +282,8 @@ chronological non-overlap and final cue end against the assembled MP3 duration.
 
 Keep the working SRT draft beside the segments in the track directory. The user
 reviews the assembled track and draft first. After approval, copy only the
-approved MP3 and SRT into `docs/assets/audio/shorts/{ru|en}/` and
-`docs/assets/audio/shorts/subtitles/{ru|en}/`, respectively. Update
+approved MP3 and SRT into the matching language directory at
+`docs/assets/audio/shorts/{ru|en}/`. Update
 `docs/assets/audio/shorts/manifest.json` only when a transcript URL/format needs
 to be added or a published path changes. Then validate the manifest, build with
 `mkdocs build --strict`, and verify that the expected assets were copied to
@@ -320,7 +320,7 @@ build/tts-venv/Scripts/python tools/tts/role_audio.py validate --stage prepared
 ```
 
 It writes a machine-readable manifest, a human-readable plan, and eleven batch
-descriptions under `build/audio/role-ru/`: one title batch, one question batch,
+descriptions under `build/audio/shorts-ru/role-ru/`: one title batch, one question batch,
 and one answer batch for each of the nine active chapters. Canonical text and
 speech-ready text remain distinct. The manifest records source and
 pronunciation-map hashes.
@@ -365,18 +365,18 @@ approved rebuild of chapter 09 and must not be used in the current iteration.
 ### Run prepared answer parts sequentially
 
 The manual answer-part plan for chapters 02-08 and 10 is stored in
-`build/audio/role-ru/synthesis/answers-remaining-commands.txt`. Preview its
+`build/audio/shorts-ru/role-ru/synthesis/answers-remaining-commands.txt`. Preview its
 state without making network requests:
 
 ```powershell
-build/tts-venv/Scripts/python tools/tts/run_tts_commands.py --commands build/audio/role-ru/synthesis/answers-remaining-commands.txt --dry-run
+build/tts-venv/Scripts/python tools/tts/run_tts_commands.py --commands build/audio/shorts-ru/role-ru/synthesis/answers-remaining-commands.txt --dry-run
 ```
 
 Run pending parts sequentially with the default 10-minute pause after every
 completed command:
 
 ```powershell
-build/tts-venv/Scripts/python -u tools/tts/run_tts_commands.py --commands build/audio/role-ru/synthesis/answers-remaining-commands.txt
+build/tts-venv/Scripts/python -u tools/tts/run_tts_commands.py --commands build/audio/shorts-ru/role-ru/synthesis/answers-remaining-commands.txt
 ```
 
 The runner streams each child command's output to the console and appends the
@@ -384,4 +384,29 @@ same messages to `answers-remaining-commands.log`. It makes no automatic retry.
 A repeated run skips parts that already have non-empty MP3 and boundary JSON
 outputs. `Ctrl+C` stops the active command or pause. Use `--force` only to
 deliberately regenerate completed parts, and use `--pause-seconds N` only when a
-different interval is explicitly required.
+different interval is explicitly required. During a pause, the console updates
+a one-line `MM:SS` countdown without writing every tick to the log. Completed
+command blocks are separated by an empty line in both outputs.
+
+### Prepare Russian System Design Shorts
+
+Preparation is separate from the regular Shorts pipeline and writes only under
+`build/audio/system-design-shorts-ru/`. It does not contact Edge TTS:
+
+```powershell
+build/tts-venv/Scripts/python tools/tts/prepare_system_design_audio.py
+```
+
+The preparer reads `system-design-shorts.ru.md`, applies the shared Russian
+pronunciation map, converts registered `text` diagrams into semantic narration,
+and creates requests of at most 200 words. Diagram rules and explicit Russian
+replacements live in `SYSTEM_DESIGN_AUDIO.md` and
+`system_design_diagrams.ru.json`.
+
+Review the generated `role-ru/plan.md`, batch `.txt` files, and command lists
+before starting synthesis. The combined list can later be executed by the
+existing runner, which waits 10 minutes between requests by default:
+
+```powershell
+build/tts-venv/Scripts/python -u tools/tts/run_tts_commands.py --commands build/audio/system-design-shorts-ru/role-ru/all-commands.txt
+```

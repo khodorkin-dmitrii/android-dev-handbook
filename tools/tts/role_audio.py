@@ -24,7 +24,7 @@ from markdown_it import MarkdownIt
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "docs/shorts.ru.md"
 PRONUNCIATION = ROOT / "build/audio/pronunciation-ru.json"
-WORK_DIR = ROOT / "build/audio/role-ru"
+WORK_DIR = ROOT / "build/audio/shorts-ru/role-ru"
 CHAPTERS_DIR = ROOT / "build/audio/shorts-ru"
 MANIFEST = WORK_DIR / "manifest.json"
 PROTECTED_CHAPTER = 9

@@ -13,7 +13,7 @@ import role_audio
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SYNTHESIS_DIR = ROOT / "build/audio/role-ru/synthesis"
+SYNTHESIS_DIR = ROOT / "build/audio/shorts-ru/role-ru/synthesis"
 
 
 def duration(path: Path) -> float:

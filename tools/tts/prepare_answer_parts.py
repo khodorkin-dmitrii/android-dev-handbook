@@ -11,8 +11,8 @@ import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MANIFEST = ROOT / "build/audio/role-ru/manifest.json"
-OUTPUT_DIR = ROOT / "build/audio/role-ru/synthesis"
+MANIFEST = ROOT / "build/audio/shorts-ru/role-ru/manifest.json"
+OUTPUT_DIR = ROOT / "build/audio/shorts-ru/role-ru/synthesis"
 DEFAULT_CHAPTERS = (2, 3, 4, 5, 6, 7, 8, 10)
 
 
@@ -66,7 +66,7 @@ def balanced_parts(answers: list[dict[str, object]], word_limit: int) -> list[li
 
 def command(chapter: int, part: int) -> str:
     stem = f"answers-{chapter:02d}-part-{part:02d}"
-    base = "build\\audio\\role-ru\\synthesis"
+    base = "build\\audio\\shorts-ru\\role-ru\\synthesis"
     return (
         "build\\tts-venv\\Scripts\\python.exe tools\\tts\\synthesize_part.py "
         "--voice ru-RU-DmitryNeural --rate=+25% --volume=+0% --pitch=+0Hz "

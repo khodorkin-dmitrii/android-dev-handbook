@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
+import math
 from pathlib import Path
 import shlex
 import subprocess
@@ -69,6 +70,29 @@ def emit(message: str, log_file) -> None:
     print(message, flush=True)
     log_file.write(message + "\n")
     log_file.flush()
+
+
+def format_remaining(seconds: int) -> str:
+    minutes, remaining_seconds = divmod(max(0, seconds), 60)
+    return f"{minutes:02d}:{remaining_seconds:02d}"
+
+
+def wait_with_countdown(seconds: float, label: str) -> None:
+    if seconds <= 0:
+        return
+    deadline = time.monotonic() + seconds
+    while True:
+        remaining_time = deadline - time.monotonic()
+        remaining_seconds = max(0, math.ceil(remaining_time))
+        print(
+            f"\r{label} NEXT REQUEST IN {format_remaining(remaining_seconds)}",
+            end="",
+            flush=True,
+        )
+        if remaining_time <= 0:
+            break
+        time.sleep(min(1.0, remaining_time))
+    print(flush=True)
 
 
 def has_pending(commands: list[tuple[str, list[str], Path, Path]], start: int, force: bool) -> bool:
@@ -149,9 +173,10 @@ def run(args: argparse.Namespace) -> int:
                     f"{label} FAILED {timestamp()} exit={return_code} elapsed={elapsed:.1f}s",
                     log_file,
                 )
+            emit("", log_file)
             if has_pending(commands, index, args.force):
                 emit(f"{label} PAUSE {args.pause_seconds:.0f}s", log_file)
-                time.sleep(args.pause_seconds)
+                wait_with_countdown(args.pause_seconds, label)
         emit(
             f"=== Run finished {timestamp()}: completed={completed}, skipped={skipped}, failed={len(failures)} ===",
             log_file,

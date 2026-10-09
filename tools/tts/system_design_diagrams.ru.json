@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "language": "ru",
+  "diagrams": [
+    {
+      "id": "application-architecture-vs-system-design",
+      "source": "Архитектура приложения: UI -> ViewModel -> use case -> repository -> local/remote data\nSystem design: Mobile client -> APIs -> services -> databases / caches / queues / workers",
+      "narration": "В архитектуре приложения поток обычно идёт от UI к ViewModel, затем к use case, repository и локальным или удалённым источникам данных. В system design масштаб шире: мобильный клиент взаимодействует с API, а дальше система включает сервисы, базы данных, кэши, очереди и workers."
+    },
+    {
+      "id": "cache-aside-flow",
+      "source": "Client -> Service -> Cache\n                    | miss\n                    v\n                 Database\n                    |\n                    +-> populate cache",
+      "narration": "Клиент отправляет запрос сервису. Сервис сначала проверяет кэш. Если значение найдено, его можно сразу вернуть. При cache miss сервис читает данные из базы, сохраняет их в кэше и затем возвращает клиенту."
+    }
+  ]
+}
