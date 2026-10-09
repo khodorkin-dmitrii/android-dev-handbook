@@ -163,10 +163,18 @@ def render_stats_block(
         f'<a class="handbook-hidden-link" href="shorts/" '
         f'aria-label="{shorts_label}">⚡︎</a>'
     )
+    system_design_shorts_link = (
+        '<a class="handbook-hidden-link" '
+        'href="engineering/system-design/system-design-shorts/" '
+        'aria-label="System Design Shorts">⚡︎</a>'
+    )
 
     return "\n".join(
         [
-            f"## Handbook stats  {tracker_link}  {shorts_link}",
+            (
+                f"## Handbook stats  {tracker_link}  {shorts_link}  "
+                f"{system_design_shorts_link}"
+            ),
             "",
             last_updated,
             "",

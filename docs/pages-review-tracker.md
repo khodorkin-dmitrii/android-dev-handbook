@@ -13,15 +13,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-07
+1. Last tracker update: 2026-10-09
 1. Total articles tracked: 107
-1. Updated: 58
-1. TODO: 49
+1. Updated: 60
+1. TODO: 47
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 40 | 30      | 10   |
+| P1 | 40 | 32      | 8    |
 | P2 | 40 | 1       | 39   |
 
 ## Tracker
@@ -83,8 +83,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-06, `engineering/memory-runtime-basics.md`, Memory & Runtime Basics, Clarified managed heap, thread stacks and native memory boundaries, object reachability and reference cycles, leak causes, reference strengths, resource cleanup, allocation pressure and Android profiling; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-06, `android/binder-ipc-aidl.md`, Binder IPC and AIDL, Added a terminology glossary; clarified AIDL imports and parameter directions, local versus remote interface resolution, transaction-size limits, oneway semantics, connection and process-death handling, caller-identity security, and Stable AIDL compatibility; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-07, `architecture/legacy-refactoring.md`, Legacy & Refactoring, Clarified safe refactoring, lifecycle checks and Rx/Compose migration.
-1. P1, **TODO**, , `engineering/system-design/fundamentals.md`, System Design Fundamentals
-1. P1, **TODO**, , `engineering/system-design/scalability-capacity.md`, Scalability & Capacity
+1. P1, **UPDATED**, 2026-10-08, `engineering/system-design/fundamentals.md`, System Design Fundamentals, Added measurable requirements, capacity estimates and a reusable design process; clarified scoped sources of truth, API success semantics, idempotency, SLI/SLO, observability, mobile lifecycle and unreliable-network failure handling; synchronized EN/RU.
+1. P1, **UPDATED**, 2026-10-09, `engineering/system-design/scalability-capacity.md`, Scalability & Capacity, Added peak-RPS, concurrency and storage-growth estimates; clarified throughput, saturation, headroom, load testing, failure capacity and autoscaling signals; expanded mobile burst, retry, backoff and jitter guidance; synchronized EN/RU.
 1. P1, **TODO**, , `engineering/system-design/data-storage-consistency.md`, Data Storage & Consistency
 1. P1, **TODO**, , `engineering/system-design/caching.md`, Caching & Data Freshness
 1. P1, **TODO**, , `engineering/system-design/async-messaging.md`, Async Processing & Messaging
