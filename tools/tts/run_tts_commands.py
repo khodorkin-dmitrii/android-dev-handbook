@@ -164,7 +164,7 @@ def run(args: argparse.Namespace) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--commands", required=True)
-    parser.add_argument("--pause-seconds", type=float, default=480.0)
+    parser.add_argument("--pause-seconds", type=float, default=600.0)
     parser.add_argument("--log")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--dry-run", action="store_true")

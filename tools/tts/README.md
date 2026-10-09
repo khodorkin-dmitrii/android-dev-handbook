@@ -372,7 +372,7 @@ state without making network requests:
 build/tts-venv/Scripts/python tools/tts/run_tts_commands.py --commands build/audio/role-ru/synthesis/answers-remaining-commands.txt --dry-run
 ```
 
-Run pending parts sequentially with the default eight-minute pause after every
+Run pending parts sequentially with the default 10-minute pause after every
 completed command:
 
 ```powershell

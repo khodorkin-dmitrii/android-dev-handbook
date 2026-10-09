@@ -47,7 +47,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/02-ru-shorts-kotlin.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/02-ru-shorts-kotlin.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -67,7 +68,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/03-ru-shorts-android-basics.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/03-ru-shorts-android-basics.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -87,7 +89,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/04-ru-shorts-jetpack-compose.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/04-ru-shorts-jetpack-compose.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -107,7 +110,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/05-ru-shorts-coroutines-flow.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/05-ru-shorts-coroutines-flow.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -127,7 +131,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/06-ru-shorts-architecture.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/06-ru-shorts-architecture.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -147,7 +152,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/07-ru-shorts-dependency-injection.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/07-ru-shorts-dependency-injection.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -167,7 +173,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/08-ru-shorts-networking.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/08-ru-shorts-networking.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     },
@@ -209,7 +216,8 @@
         "ru": {
           "audioUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/ru/10-ru-shorts-testing.mp3",
           "transcriptUrl": null,
-          "timedTranscriptUrl": null
+          "timedTranscriptUrl": "https://khodorkin-dmitrii.github.io/android-dev-handbook/assets/audio/shorts/subtitles/ru/10-ru-shorts-testing.srt",
+          "timedTranscriptFormat": "srt"
         }
       }
     }
