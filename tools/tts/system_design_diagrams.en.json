@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "language": "en",
+  "diagrams": [
+    {
+      "id": "application-architecture-vs-system-design",
+      "source": "Application architecture: UI -> ViewModel -> use case -> repository -> local/remote data\nSystem design: Mobile client -> APIs -> services -> databases / caches / queues / workers",
+      "narration": "In application architecture, the flow usually starts at the user interface, then moves through the ViewModel, a use case, and a repository to local or remote data sources. System design looks at a wider scope: the mobile client communicates with APIs, and the system also includes services, databases, caches, queues, and workers."
+    },
+    {
+      "id": "cache-aside-flow",
+      "source": "Client -> Service -> Cache\n                    | miss\n                    v\n                 Database\n                    |\n                    +-> populate cache",
+      "narration": "The client sends a request to the service. The service checks the cache first. If the value is present, it can return it immediately. On a cache miss, the service reads the data from the database, stores it in the cache, and then returns it to the client."
+    }
+  ]
+}

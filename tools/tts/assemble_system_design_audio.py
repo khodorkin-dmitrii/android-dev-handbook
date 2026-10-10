@@ -17,6 +17,7 @@ ROOT = preparation.ROOT
 WORK_DIR = preparation.WORK_DIR
 OUTPUT_ROOT = preparation.OUTPUT_ROOT
 MANIFEST_PATH = WORK_DIR / "manifest.json"
+LANGUAGE = "ru"
 GAP_SECONDS = 0.8
 SAMPLE_RATE = 24000
 BITRATE = "48k"
@@ -30,11 +31,14 @@ def read_manifest() -> tuple[dict[str, Any], list[preparation.Segment]]:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     if manifest.get("schema") != 1 or manifest.get("collection") != "system-design-shorts":
         raise ValueError(f"Unsupported System Design manifest: {MANIFEST_PATH}")
+    if manifest.get("language") != LANGUAGE:
+        raise ValueError(f"Expected a {LANGUAGE} manifest, got {manifest.get('language')}")
     expected_hashes = {
         "source_sha256": preparation.sha256(preparation.SOURCE),
-        "pronunciation_sha256": preparation.sha256(preparation.PRONUNCIATION),
         "diagram_narration_sha256": preparation.sha256(preparation.DIAGRAMS),
     }
+    if LANGUAGE == "ru":
+        expected_hashes["pronunciation_sha256"] = preparation.sha256(preparation.PRONUNCIATION)
     for key, expected in expected_hashes.items():
         if manifest.get(key) != expected:
             raise ValueError(f"Prepared manifest is stale: {key} changed; prepare it again")
@@ -43,7 +47,7 @@ def read_manifest() -> tuple[dict[str, Any], list[preparation.Segment]]:
 
 
 def chapter_dir(segment: preparation.Segment) -> Path:
-    return OUTPUT_ROOT / f"{segment.section:02d}-ru-{segment.section_slug}"
+    return OUTPUT_ROOT / f"{segment.section:02d}-{LANGUAGE}-{segment.section_slug}"
 
 
 def run_ffmpeg(command: list[str]) -> None:
@@ -155,7 +159,7 @@ def assemble_chapter(items: list[preparation.Segment], force: bool) -> None:
     if any(not path.is_file() or path.stat().st_size == 0 for path in inputs):
         missing = next(path for path in inputs if not path.is_file() or path.stat().st_size == 0)
         raise FileNotFoundError(f"Missing split segment: {missing}")
-    track_name = f"{items[0].section:02d}-ru-system-design-{items[0].section_slug}.mp3"
+    track_name = f"{items[0].section:02d}-{LANGUAGE}-system-design-{items[0].section_slug}.mp3"
     output = directory / track_name
     timing_path = directory / "timing.json"
     if output.exists() and timing_path.exists() and not force:
@@ -189,7 +193,7 @@ def assemble_chapter(items: list[preparation.Segment], force: bool) -> None:
     timing_path.write_text(json.dumps({"schema": 1, "fingerprint": fingerprint, "gap": GAP_SECONDS, "track": track_name, "segments": timing_segments, "duration": duration}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (directory / "timing.md").write_text(
         "\n".join([
-            f"# Timing: {items[0].section:02d}-ru-system-design-{items[0].section_slug}", "",
+            f"# Timing: {items[0].section:02d}-{LANGUAGE}-system-design-{items[0].section_slug}", "",
             f"- Source: `{preparation.SOURCE.relative_to(ROOT).as_posix()}` - `{items[0].section_title}`",
             f"- Assembled track: `{track_name}`", f"- Assembled duration: `{role_audio.format_clock(duration)}`",
             f"- Gap between segments: `{GAP_SECONDS:.3f} s`", "", "## Segments", "",
@@ -208,7 +212,11 @@ def align_system_cues(
     expected = (
         [item.tts_text]
         if item.kind != "answer"
-        else [role_audio.apply_pronunciation(value, mapping) for value in canonical_cues]
+        else (
+            [role_audio.apply_pronunciation(value, mapping) for value in canonical_cues]
+            if mapping
+            else canonical_cues
+        )
     )
     alignment_segments = [
         role_audio.Segment(
@@ -243,11 +251,11 @@ def make_subtitles(items: list[preparation.Segment], force: bool) -> None:
     split = json.loads((directory / "segments.json").read_text(encoding="utf-8"))
     timing_lookup = {value["id"]: value for value in timing["segments"]}
     split_lookup = {value["id"]: value for value in split["segments"]}
-    output = directory / f"{items[0].section:02d}-ru-system-design-{items[0].section_slug}.srt"
+    output = directory / f"{items[0].section:02d}-{LANGUAGE}-system-design-{items[0].section_slug}.srt"
     metadata_path = output.with_suffix(".srt.json")
     if (output.exists() or metadata_path.exists()) and not force:
         raise FileExistsError(f"Subtitles already exist; use --force to replace: {output}")
-    mapping = role_audio.read_pronunciation(preparation.PRONUNCIATION)
+    mapping = role_audio.read_pronunciation(preparation.PRONUNCIATION) if LANGUAGE == "ru" else {}
     cues: list[tuple[str, float, float]] = []
     for item in items:
         timing_entry = timing_lookup[item.id]
@@ -270,10 +278,20 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--language", choices=("ru", "en"), default="ru")
     parser.add_argument("--force", action="store_true", help="replace existing segment, track, and subtitle outputs")
     args = parser.parse_args()
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
         parser.error("ffmpeg and ffprobe are required")
+    global preparation, WORK_DIR, OUTPUT_ROOT, MANIFEST_PATH, LANGUAGE
+    if args.language == "en":
+        import prepare_system_design_audio_en as preparation
+    else:
+        import prepare_system_design_audio as preparation
+    WORK_DIR = preparation.WORK_DIR
+    OUTPUT_ROOT = preparation.OUTPUT_ROOT
+    MANIFEST_PATH = WORK_DIR / "manifest.json"
+    LANGUAGE = args.language
     manifest, segments = read_manifest()
     # Split outputs are generated from the saved WordBoundary data, with no network calls.
     split_requests(manifest, segments, args.force)

@@ -1,0 +1,171 @@
+1
+00:00:00,165 --> 00:00:01,855
+<u>Data Storage & Consistency</u>
+
+2
+00:00:03,185 --> 00:00:04,515
+<i>How should storage be selected?</i>
+
+3
+00:00:05,770 --> 00:00:11,200
+Start from data ownership, access patterns, transactions, consistency needs, scale, failure behavior, and cost.
+
+4
+00:00:11,900 --> 00:00:15,280
+“SQL vs NoSQL” is a requirements decision, not an ideology.
+
+5
+00:00:16,785 --> 00:00:18,475
+<i>When is relational storage attractive?</i>
+
+6
+00:00:19,990 --> 00:00:23,470
+Relational storage is attractive when relationships, structured queries, constraints,
+
+7
+00:00:23,600 --> 00:00:25,210
+and multi-record transactions matter.
+
+8
+00:00:25,910 --> 00:00:29,430
+A relational database can also scale; it is not inherently a small-system choice.
+
+9
+00:00:30,961 --> 00:00:32,901
+<i>When can non-relational storage be useful?</i>
+
+10
+00:00:34,435 --> 00:00:38,795
+Document, key-value, or wide-column storage can fit simple known access patterns, flexible schemas,
+
+11
+00:00:38,925 --> 00:00:42,095
+specialized workloads, or designs where horizontal partitioning is central.
+
+12
+00:00:43,625 --> 00:00:44,565
+<i>What is an index?</i>
+
+13
+00:00:46,091 --> 00:00:49,001
+An index is an additional data structure that speeds selected reads.
+
+14
+00:00:49,701 --> 00:00:53,671
+It consumes storage and makes writes more expensive, so indexes should follow real query patterns.
+
+15
+00:00:55,185 --> 00:00:56,165
+<i>What is replication?</i>
+
+16
+00:00:57,670 --> 00:01:01,630
+Replication maintains copies of data for redundancy, locality, or read capacity.
+
+17
+00:01:02,340 --> 00:01:05,380
+Replicas can lag behind the primary, so copied data may be stale.
+
+18
+00:01:06,889 --> 00:01:07,959
+<i>What is a read replica?</i>
+
+19
+00:01:09,499 --> 00:01:12,749
+A read replica serves reads from a replicated copy instead of the primary.
+
+20
+00:01:13,459 --> 00:01:18,129
+It can reduce primary read load, but replication lag may violate immediate read-after-write expectations.
+
+21
+00:01:19,649 --> 00:01:21,099
+<i>What is partitioning or sharding?</i>
+
+22
+00:01:22,614 --> 00:01:26,234
+Partitioning, or sharding, divides data across nodes, usually by a key.
+
+23
+00:01:26,944 --> 00:01:31,614
+A poor partition key can create hot partitions, uneven storage, and expensive cross-partition operations.
+
+24
+00:01:33,489 --> 00:01:34,539
+<i>What is a transaction?</i>
+
+25
+00:01:35,786 --> 00:01:39,476
+A transaction groups operations under defined atomicity and isolation guarantees.
+
+26
+00:01:40,176 --> 00:01:42,686
+It is used to protect invariants that must change together.
+
+27
+00:01:44,209 --> 00:01:45,139
+<i>What is durability?</i>
+
+28
+00:01:46,675 --> 00:01:51,225
+Durability asks whether acknowledged data survives failures such as process, node, or regional loss.
+
+29
+00:01:51,935 --> 00:01:55,295
+The guarantee depends on logging, replica acknowledgements, and the failure model.
+
+30
+00:01:56,801 --> 00:01:58,101
+<i>What is strong consistency?</i>
+
+31
+00:01:59,622 --> 00:02:04,382
+Strong consistency is an umbrella term for guarantees that prevent clients from observing arbitrarily stale state.
+
+32
+00:02:05,082 --> 00:02:09,202
+When precision matters, name the exact guarantee, such as linearizable reads, read-after-write,
+
+33
+00:02:09,362 --> 00:02:10,622
+or session-level consistency.
+
+34
+00:02:12,158 --> 00:02:13,578
+<i>What is eventual consistency?</i>
+
+35
+00:02:15,099 --> 00:02:20,769
+Eventual consistency allows replicas to temporarily differ but requires them to converge when updates stop and delivery succeeds.
+
+36
+00:02:21,459 --> 00:02:23,379
+It does not mean random or undefined data.
+
+37
+00:02:24,894 --> 00:02:26,554
+<i>What is read-after-write consistency?</i>
+
+38
+00:02:28,430 --> 00:02:33,240
+Read-after-write consistency means a client can observe its completed write in subsequent reads according to the stated scope.
+
+39
+00:02:33,940 --> 00:02:37,090
+This is often important for user-visible updates such as profile changes.
+
+40
+00:02:38,354 --> 00:02:40,134
+<i>What does CAP theorem actually say?</i>
+
+41
+00:02:41,651 --> 00:02:45,071
+CAP stands for Consistency, Availability, and Partition tolerance.
+
+42
+00:02:45,771 --> 00:02:49,561
+During a network partition, an affected operation must trade consistency against availability;
+
+43
+00:02:49,761 --> 00:02:52,511
+CAP is not a generic rule to “choose any two” for the whole system.

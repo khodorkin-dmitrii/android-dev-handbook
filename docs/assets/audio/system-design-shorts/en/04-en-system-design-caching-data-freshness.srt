@@ -1,0 +1,179 @@
+1
+00:00:00,160 --> 00:00:01,610
+<u>Caching & Data Freshness</u>
+
+2
+00:00:02,940 --> 00:00:03,750
+<i>What is a cache?</i>
+
+3
+00:00:05,002 --> 00:00:08,772
+A cache stores a reusable copy of data closer to the consumer or in a faster medium.
+
+4
+00:00:09,472 --> 00:00:14,312
+It reduces latency or source load, but creates freshness, invalidation, eviction, and failure questions.
+
+5
+00:00:15,825 --> 00:00:16,725
+<i>What is a cache hit?</i>
+
+6
+00:00:18,238 --> 00:00:21,688
+A cache hit happens when the requested value is found and can be served from the cache.
+
+7
+00:00:22,398 --> 00:00:24,718
+A cache miss falls through to the underlying source of truth.
+
+8
+00:00:26,238 --> 00:00:27,228
+<i>What is cache-aside?</i>
+
+9
+00:00:28,771 --> 00:00:32,811
+In cache-aside, the application explicitly checks the cache and loads the source of truth on a miss.
+
+10
+00:00:33,521 --> 00:00:35,331
+The client sends a request to the service.
+
+11
+00:00:36,031 --> 00:00:37,501
+The service checks the cache first.
+
+12
+00:00:38,201 --> 00:00:40,691
+If the value is present, it can return it immediately.
+
+13
+00:00:41,401 --> 00:00:44,871
+On a cache miss, the service reads the data from the database, stores it in the cache,
+
+14
+00:00:45,071 --> 00:00:46,301
+and then returns it to the client.
+
+15
+00:00:47,830 --> 00:00:48,740
+<i>What is TTL?</i>
+
+16
+00:00:50,267 --> 00:00:53,477
+TTL (Time To Live) limits how long a cached entry may be reused.
+
+17
+00:00:54,177 --> 00:00:57,627
+Shorter TTLs usually improve freshness but increase cache misses and source load.
+
+18
+00:00:59,510 --> 00:01:00,770
+<i>What is cache invalidation?</i>
+
+19
+00:01:02,018 --> 00:01:05,708
+Cache invalidation removes or expires cached data when the authoritative value changes.
+
+20
+00:01:06,398 --> 00:01:10,348
+The difficult part is handling races, failed invalidations, and multiple related keys.
+
+21
+00:01:11,857 --> 00:01:12,627
+<i>What is eviction?</i>
+
+22
+00:01:14,155 --> 00:01:17,625
+Eviction removes entries because they expire or the cache reaches a resource limit.
+
+23
+00:01:18,335 --> 00:01:21,755
+Eviction policy affects hit rate, memory usage, and which data stays hot.
+
+24
+00:01:23,273 --> 00:01:24,243
+<i>What is cache warming?</i>
+
+25
+00:01:25,763 --> 00:01:28,643
+Cache warming preloads likely-needed entries before demand arrives.
+
+26
+00:01:29,343 --> 00:01:33,563
+It can reduce cold-start misses, but broad warming can waste resources or overload dependencies.
+
+27
+00:01:35,097 --> 00:01:36,497
+<i>What is stale-while-revalidate?</i>
+
+28
+00:01:38,038 --> 00:01:42,178
+Stale-while-revalidate serves a bounded stale value immediately and refreshes it in the background.
+
+29
+00:01:42,878 --> 00:01:45,718
+It trades some freshness for lower latency and better availability.
+
+30
+00:01:47,238 --> 00:01:48,368
+<i>What is negative caching?</i>
+
+31
+00:01:49,891 --> 00:01:53,971
+Negative caching stores a known negative result, such as “resource not found,” for a short period.
+
+32
+00:01:54,671 --> 00:01:59,511
+Transient network, server, or authorization failures should not be cached blindly because that can hide recovery.
+
+33
+00:02:01,385 --> 00:02:02,575
+<i>What is a cache stampede?</i>
+
+34
+00:02:03,826 --> 00:02:09,046
+A cache stampede, or thundering herd, happens when many callers reload the same popular value at once after expiration.
+
+35
+00:02:09,746 --> 00:02:14,016
+Request coalescing, jittered TTLs, bounded stale serving, or controlled warming can reduce it.
+
+36
+00:02:15,537 --> 00:02:17,037
+<i>What can happen when a cache fails?</i>
+
+37
+00:02:18,555 --> 00:02:22,665
+If a cache becomes unavailable, traffic may suddenly fall through to the database or another source.
+
+38
+00:02:23,375 --> 00:02:25,615
+Capacity planning must include this degraded mode.
+
+39
+00:02:27,121 --> 00:02:28,471
+<i>What is a client-side cache?</i>
+
+40
+00:02:29,985 --> 00:02:34,685
+A client-side cache keeps data on the device to reduce latency and network usage and can support offline behavior.
+
+41
+00:02:35,395 --> 00:02:39,575
+It is still a replicated view and needs explicit refresh, staleness, storage, and cleanup rules.
+
+42
+00:02:41,105 --> 00:02:42,935
+<i>What does freshness mean for mobile UI?</i>
+
+43
+00:02:44,459 --> 00:02:46,919
+Freshness is a product contract, not just a timestamp.
+
+44
+00:02:47,629 --> 00:02:50,369
+The UI may need to show when data is stale, when local writes are pending,
+
+45
+00:02:50,559 --> 00:02:52,249
+and when the latest server state is not yet known.

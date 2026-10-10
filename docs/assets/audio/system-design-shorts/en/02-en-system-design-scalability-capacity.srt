@@ -1,0 +1,179 @@
+1
+00:00:00,165 --> 00:00:01,835
+<u>Scalability & Capacity</u>
+
+2
+00:00:03,166 --> 00:00:04,156
+<i>What is scalability?</i>
+
+3
+00:00:05,410 --> 00:00:09,030
+Scalability is the ability of a system to handle growth in users, traffic, data,
+
+4
+00:00:09,250 --> 00:00:11,980
+or work without unacceptable loss of quality or cost efficiency.
+
+5
+00:00:13,497 --> 00:00:14,687
+<i>What is capacity planning?</i>
+
+6
+00:00:16,198 --> 00:00:18,728
+Capacity planning estimates when a resource will reach a limit.
+
+7
+00:00:19,428 --> 00:00:23,768
+Its purpose is to identify likely constraints early, not to predict every production number exactly.
+
+8
+00:00:25,273 --> 00:00:26,203
+<i>What is RPS?</i>
+
+9
+00:00:27,739 --> 00:00:31,799
+RPS (Requests Per Second) is the number of requests received or processed per second.
+
+10
+00:00:32,509 --> 00:00:36,859
+It is useful, but it does not describe payload size, work cost, concurrent connections, storage growth,
+
+11
+00:00:37,029 --> 00:00:37,949
+or external quotas.
+
+12
+00:00:39,478 --> 00:00:41,168
+<i>Why is average RPS not enough?</i>
+
+13
+00:00:42,683 --> 00:00:47,493
+Average traffic hides peaks, regional concentration, launches, retries, bursts, and expensive endpoints.
+
+14
+00:00:48,193 --> 00:00:51,723
+Capacity should be estimated for peak critical paths, not only daily averages.
+
+15
+00:00:53,270 --> 00:00:54,260
+<i>What is concurrency?</i>
+
+16
+00:00:55,803 --> 00:00:59,163
+Concurrency is the number of operations or connections in progress at the same time.
+
+17
+00:00:59,873 --> 00:01:03,743
+A system can have moderate RPS but still be stressed by many long-lived or slow requests.
+
+18
+00:01:05,257 --> 00:01:06,347
+<i>What is vertical scaling?</i>
+
+19
+00:01:07,862 --> 00:01:11,422
+Vertical scaling gives one node more CPU, memory, or I/O capacity.
+
+20
+00:01:12,132 --> 00:01:16,982
+It is simple, but one machine has limits and remains a single failure domain unless redundancy is added separately.
+
+21
+00:01:18,497 --> 00:01:19,777
+<i>What is horizontal scaling?</i>
+
+22
+00:01:21,294 --> 00:01:23,004
+Horizontal scaling adds more nodes.
+
+23
+00:01:23,714 --> 00:01:28,324
+It can increase capacity and redundancy, but requires routing, coordination, deployment, observability,
+
+24
+00:01:28,494 --> 00:01:30,034
+and state management across instances.
+
+25
+00:01:31,905 --> 00:01:33,235
+<i>What does stateless service mean?</i>
+
+26
+00:01:34,490 --> 00:01:37,170
+A stateless service keeps durable request state outside the process,
+
+27
+00:01:37,400 --> 00:01:39,700
+so requests can be routed to interchangeable instances.
+
+28
+00:01:40,400 --> 00:01:44,730
+Temporary in-memory state may still exist, but correctness must not depend on one specific instance.
+
+29
+00:01:46,225 --> 00:01:47,295
+<i>What is a load balancer?</i>
+
+30
+00:01:48,801 --> 00:01:51,671
+A load balancer distributes traffic across multiple instances.
+
+31
+00:01:52,381 --> 00:01:54,221
+It can improve utilization and availability,
+
+32
+00:01:54,441 --> 00:01:57,531
+but it does not remove downstream bottlenecks such as an overloaded database.
+
+33
+00:01:59,057 --> 00:01:59,977
+<i>What is a bottleneck?</i>
+
+34
+00:02:01,494 --> 00:02:04,984
+A bottleneck is the resource that currently limits system performance or capacity.
+
+35
+00:02:05,694 --> 00:02:11,414
+It may be CPU, database writes, a hot partition, a lock, a connection pool, an external quota, or a slow network path.
+
+36
+00:02:12,945 --> 00:02:13,935
+<i>What is a hotspot?</i>
+
+37
+00:02:15,459 --> 00:02:19,539
+A hotspot is a disproportionately busy key, partition, tenant, region, or resource.
+
+38
+00:02:20,249 --> 00:02:24,059
+Total system capacity can look healthy while one hotspot causes latency or failures.
+
+39
+00:02:25,585 --> 00:02:26,535
+<i>What is backpressure?</i>
+
+40
+00:02:28,075 --> 00:02:33,005
+Backpressure is a mechanism that limits, delays, or rejects incoming work when downstream capacity is exhausted.
+
+41
+00:02:33,705 --> 00:02:37,035
+It prevents unbounded queues and gives overloaded components a chance to recover.
+
+42
+00:02:38,542 --> 00:02:40,582
+<i>How can mobile clients create traffic spikes?</i>
+
+43
+00:02:42,102 --> 00:02:45,742
+Polling intervals, reconnect storms after connectivity returns, push-triggered refreshes,
+
+44
+00:02:45,892 --> 00:02:47,742
+app launches after notifications, retries,
+
+45
+00:02:47,932 --> 00:02:51,632
+and long-lived realtime connections can create bursts that DAU and average RPS do not reveal.

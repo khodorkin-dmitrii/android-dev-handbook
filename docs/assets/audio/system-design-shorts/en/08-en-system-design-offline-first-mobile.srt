@@ -1,0 +1,167 @@
+1
+00:00:00,160 --> 00:00:01,930
+<u>Offline-First Mobile Application</u>
+
+2
+00:00:03,377 --> 00:00:04,637
+<i>What does offline-first mean?</i>
+
+3
+00:00:05,890 --> 00:00:09,160
+An offline-first application remains useful with intermittent connectivity.
+
+4
+00:00:09,860 --> 00:00:14,710
+Users can read previously loaded data, make local changes, and synchronize later without silently losing work.
+
+5
+00:00:16,209 --> 00:00:18,599
+<i>Why can the local database be the UI source of truth?</i>
+
+6
+00:00:20,110 --> 00:00:24,870
+Using one observable local source prevents the UI from switching between unrelated network and database states.
+
+7
+00:00:25,560 --> 00:00:29,470
+Network synchronization updates the local store, and the UI keeps observing the same model.
+
+8
+00:00:30,985 --> 00:00:33,605
+<i>Does local source of truth mean the server is not authoritative?</i>
+
+9
+00:00:35,126 --> 00:00:35,596
+No.
+
+10
+00:00:36,296 --> 00:00:40,936
+The local database can be the source of truth for presentation while the backend remains authoritative for shared domain state,
+
+11
+00:00:41,116 --> 00:00:42,976
+authorization, and cross-device coordination.
+
+12
+00:00:44,494 --> 00:00:45,704
+<i>What is a pending mutation?</i>
+
+13
+00:00:47,219 --> 00:00:51,479
+A pending mutation is a durable record of a local change that has not yet been confirmed by the server.
+
+14
+00:00:52,179 --> 00:00:55,809
+It allows the app to recover synchronization after process death or connectivity loss.
+
+15
+00:00:57,321 --> 00:00:59,641
+<i>Why does a mutation need a stable operation ID?</i>
+
+16
+00:01:01,155 --> 00:01:04,885
+A stable operation ID lets the server recognize retries of the same logical change.
+
+17
+00:01:05,585 --> 00:01:08,705
+It is essential when the client cannot know whether an earlier request completed.
+
+18
+00:01:10,254 --> 00:01:12,124
+<i>Why should pending mutations be persisted?</i>
+
+19
+00:01:13,627 --> 00:01:16,007
+An in-memory queue disappears when the process dies.
+
+20
+00:01:16,707 --> 00:01:22,487
+Persisting the visible change and its mutation together prevents local state from being updated without preserving the work required to synchronize it.
+
+21
+00:01:24,353 --> 00:01:25,773
+<i>What is an optimistic update?</i>
+
+22
+00:01:27,034 --> 00:01:30,644
+An optimistic update changes local UI immediately before server confirmation.
+
+23
+00:01:31,344 --> 00:01:36,174
+It improves responsiveness but requires pending/failed state and a recovery path if the server rejects the change.
+
+24
+00:01:37,665 --> 00:01:40,125
+<i>What happens if the app dies while a mutation is in flight?</i>
+
+25
+00:01:41,657 --> 00:01:44,587
+in_flight should represent an attempt, not permanent truth.
+
+26
+00:01:45,287 --> 00:01:47,337
+After restart, timeout, or an expired lease,
+
+27
+00:01:47,467 --> 00:01:51,407
+unfinished work must become retryable or be reconciled using the same stable operation ID.
+
+28
+00:01:52,945 --> 00:01:54,775
+<i>How should retries work in offline sync?</i>
+
+29
+00:01:56,299 --> 00:02:00,629
+Keep failed transient mutations durable and retry later with bounded attempts, backoff, and jitter.
+
+30
+00:02:01,339 --> 00:02:04,409
+Permanent validation or authorization errors should not retry forever.
+
+31
+00:02:05,921 --> 00:02:08,781
+<i>Why are connectivity callbacks not proof of backend reachability?</i>
+
+32
+00:02:10,278 --> 00:02:15,818
+A device can have a network route while DNS, TLS, the API, authentication, or a dependency is still unavailable.
+
+33
+00:02:16,518 --> 00:02:20,318
+Connectivity changes can trigger an attempt, but the request result remains authoritative.
+
+34
+00:02:21,849 --> 00:02:23,769
+<i>What is a conflict in offline-first sync?</i>
+
+35
+00:02:25,294 --> 00:02:28,364
+A conflict happens when local and server versions change independently.
+
+36
+00:02:29,074 --> 00:02:32,794
+The correct resolution depends on domain semantics rather than one universal policy.
+
+37
+00:02:34,297 --> 00:02:35,927
+<i>What conflict strategies are common?</i>
+
+38
+00:02:37,454 --> 00:02:42,884
+Common strategies include server-wins, client-wins, last-write-wins, field-level merge, and domain-specific resolution.
+
+39
+00:02:43,594 --> 00:02:46,784
+Each trades simplicity against risk of losing user or remote intent.
+
+40
+00:02:48,305 --> 00:02:49,245
+<i>What is a tombstone?</i>
+
+41
+00:02:51,121 --> 00:02:55,371
+A tombstone records that an entity was deleted without immediately erasing all evidence of the deletion.
+
+42
+00:02:56,081 --> 00:02:59,271
+It allows the delete to synchronize across server and replicas before cleanup.

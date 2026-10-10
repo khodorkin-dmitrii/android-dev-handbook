@@ -1,0 +1,203 @@
+1
+00:00:00,090 --> 00:00:01,380
+<u>System Design Fundamentals</u>
+
+2
+00:00:02,450 --> 00:00:03,520
+<i>What is system design?</i>
+
+3
+00:00:04,762 --> 00:00:10,582
+System design describes how a complete product works across clients, APIs, services, storage, caches, queues, workers,
+
+4
+00:00:10,712 --> 00:00:11,632
+and external systems.
+
+5
+00:00:12,332 --> 00:00:16,852
+For a mobile engineer, the key shift is from code inside the app to the behavior of the whole distributed system.
+
+6
+00:00:18,364 --> 00:00:20,944
+<i>How is system design different from application architecture?</i>
+
+7
+00:00:22,462 --> 00:00:25,372
+Application architecture organizes code inside one application.
+
+8
+00:00:26,082 --> 00:00:29,522
+System design follows responsibilities and data across multiple components.
+
+9
+00:00:30,222 --> 00:00:34,482
+In application architecture, the flow usually starts at the user interface, then moves through the ViewModel,
+
+10
+00:00:34,642 --> 00:00:37,442
+a use case, and a repository to local or remote data sources.
+
+11
+00:00:38,152 --> 00:00:43,092
+System design looks at a wider scope: the mobile client communicates with APIs, and the system also includes services,
+
+12
+00:00:43,242 --> 00:00:45,412
+databases, caches, queues, and workers.
+
+13
+00:00:46,926 --> 00:00:48,086
+<i>What is a system boundary?</i>
+
+14
+00:00:49,627 --> 00:00:53,337
+A system boundary defines what the design owns and what it treats as an external dependency.
+
+15
+00:00:54,047 --> 00:00:58,327
+Clear boundaries make responsibilities, contracts, trust zones, and failure ownership explicit.
+
+16
+00:00:59,849 --> 00:01:01,239
+<i>What are functional requirements?</i>
+
+17
+00:01:02,747 --> 00:01:07,757
+Functional requirements describe what users or other systems must be able to do, such as upload media, send a message,
+
+18
+00:01:07,897 --> 00:01:10,057
+edit data offline, or receive notifications.
+
+19
+00:01:11,937 --> 00:01:13,557
+<i>What are non-functional requirements?</i>
+
+20
+00:01:14,810 --> 00:01:19,850
+Non-functional requirements describe qualities and constraints such as latency, throughput, availability, durability,
+
+21
+00:01:19,960 --> 00:01:22,480
+consistency, security, cost, and operability.
+
+22
+00:01:23,977 --> 00:01:26,047
+<i>Why should assumptions and constraints be explicit?</i>
+
+23
+00:01:27,566 --> 00:01:33,306
+Traffic, data volume, regions, device connectivity, budget, platform limits, and regulatory rules can change the design.
+
+24
+00:01:34,016 --> 00:01:37,446
+Hidden assumptions make an architecture look correct only until real conditions differ.
+
+25
+00:01:38,969 --> 00:01:40,549
+<i>What is a component responsibility?</i>
+
+26
+00:01:42,078 --> 00:01:45,048
+A component responsibility is the specific job a component owns.
+
+27
+00:01:45,758 --> 00:01:50,448
+Good boundaries reduce overlap and make it clearer which component owns data, validation, persistence, retries,
+
+28
+00:01:50,628 --> 00:01:51,758
+or external communication.
+
+29
+00:01:53,289 --> 00:01:55,619
+<i>What is an interface or contract between components?</i>
+
+30
+00:01:57,147 --> 00:02:00,247
+A contract defines how components interact and what each side can rely on.
+
+31
+00:02:00,937 --> 00:02:06,457
+It may be an API, event schema, database boundary, or protocol and should include success, validation, compatibility,
+
+32
+00:02:06,637 --> 00:02:07,567
+and failure semantics.
+
+33
+00:02:09,102 --> 00:02:10,242
+<i>What is data ownership?</i>
+
+34
+00:02:11,779 --> 00:02:15,679
+Data ownership means identifying which component is authoritative for changing a piece of state.
+
+35
+00:02:16,379 --> 00:02:20,569
+Other components may cache or replicate it, but they should not silently become competing authorities.
+
+36
+00:02:22,433 --> 00:02:23,523
+<i>What is a source of truth?</i>
+
+37
+00:02:24,778 --> 00:02:28,268
+A source of truth is the primary owner from which a particular view of state is derived.
+
+38
+00:02:28,968 --> 00:02:29,918
+The exact scope matters:
+
+39
+00:02:30,098 --> 00:02:35,338
+a local database can be the source of truth for mobile UI presentation while the backend remains authoritative for shared domain state.
+
+40
+00:02:36,849 --> 00:02:37,699
+<i>What is latency?</i>
+
+41
+00:02:39,219 --> 00:02:42,249
+Latency is the time one operation takes from the perspective being measured.
+
+42
+00:02:42,949 --> 00:02:48,419
+Client-perceived latency may include radio wakeup, DNS/TLS, network transfer, server processing, retries,
+
+43
+00:02:48,569 --> 00:02:49,299
+and local rendering.
+
+44
+00:02:50,838 --> 00:02:51,678
+<i>What is throughput?</i>
+
+45
+00:02:53,203 --> 00:02:58,013
+Throughput is the amount of work completed per unit of time, for example requests per second, messages per second,
+
+46
+00:02:58,173 --> 00:02:59,343
+or jobs processed per minute.
+
+47
+00:03:00,053 --> 00:03:02,063
+High throughput does not guarantee low latency.
+
+48
+00:03:03,574 --> 00:03:05,474
+<i>What is the basic system design process?</i>
+
+49
+00:03:07,019 --> 00:03:11,489
+Start with requirements, then constraints and assumptions, high-level architecture, data model and APIs,
+
+50
+00:03:11,639 --> 00:03:14,839
+critical data flows, scaling strategy, failure handling, and trade-offs.
+
+51
+00:03:15,539 --> 00:03:19,189
+The process is iterative because discoveries in one step can change earlier decisions.
