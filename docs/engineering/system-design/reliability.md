@@ -21,7 +21,7 @@ POST /payments
 Idempotency-Key: <stable-request-identifier>
 ```
 
-The service must persist the key and result within an appropriate scope and retention period. A header alone does not provide idempotency.
+The service must atomically bind the key to the operation's outcome within an appropriate scope and retention period; reuse with a different payload should be rejected. A header alone does not provide idempotency.
 
 ## Isolation and graceful degradation
 

@@ -23,7 +23,7 @@ sequenceDiagram
     Worker->>DB: update status and metadata
 ```
 
-The API creates a stable upload record and target, while media bytes go to durable object storage. Processing is queued only after the uploaded object is available; a worker must not assume that media exists merely because an upload record was created. The client can receive a `pending` state and later poll, observe an event, or receive a notification. The trade-off is explicit eventual processing: acceptance no longer means the final result exists.
+The API creates a stable upload record and target, while media bytes go to durable object storage. Processing is queued only after the uploaded object is available; a worker must not assume that media exists merely because an upload record was created. Make the completion event recoverable: if the object is durable but queue publication fails, a reconciler or transactional handoff must enqueue it later. The client can receive a `pending` state and later poll, observe an event, or receive a notification. The trade-off is explicit eventual processing: acceptance no longer means the final result exists.
 
 A mobile process may disappear after receiving `accepted` or `pending`. The server should return a stable operation or job identifier so the client can recover status later. Polling, realtime events, or push can prompt an update, but a push notification should normally trigger reconciliation or refresh rather than become the source of truth itself.
 
@@ -59,7 +59,7 @@ Ordering guarantees also need a scope. Global ordering is expensive and often un
 
 Retry transient failures with bounded attempts, backoff, and jitter. A **DLQ (Dead-Letter Queue)** isolates messages that repeatedly fail so they do not block healthy work. A DLQ is not a resolution by itself: teams need alerts, diagnosis, replay or correction procedures, and retention rules.
 
-Queues do not guarantee that work happens exactly once. Durable enqueueing, consumer idempotency, observability, and recovery procedures together define reliability.
+Queues do not guarantee that work happens exactly once. Durable enqueueing, consumer idempotency, observability, and recovery procedures together define reliability. Acknowledge the message after durably recording its business effect, within the broker's delivery contract.
 
 ## See also
 

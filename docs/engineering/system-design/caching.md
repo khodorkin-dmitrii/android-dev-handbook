@@ -27,7 +27,7 @@ For writes, one approach invalidates the entry so the next read reloads it. Anot
 
 ## Lifetime, eviction, and freshness
 
-**TTL (Time To Live)** limits how long an entry may be reused. A shorter TTL improves expected freshness but increases misses and load. Eviction removes entries because they expire or the cache reaches a resource limit. Cache warming preloads likely entries, but can waste resources or overwhelm dependencies if applied broadly.
+**TTL (Time To Live)** sets an expiration policy, not a guarantee that data stays fresh until expiration. A shorter TTL bounds ordinary reuse of stale entries more tightly but increases misses and load; explicit stale serving can extend that window. Eviction removes entries because they expire or the cache reaches a resource limit. Cache warming preloads likely entries, but can waste resources or overwhelm dependencies if applied broadly.
 
 Invalidation should follow ownership: the component that authoritatively changes data needs a reliable way to expire or replace affected entries. Even then, races and delivery failures can leave stale data. Define whether stale results are acceptable, for whom, and for how long.
 
@@ -37,7 +37,7 @@ Invalidation should follow ownership: the component that authoritatively changes
 
 When a popular entry expires, many callers may reload it simultaneously. This cache stampede, or thundering herd, can overload the source. Request coalescing, jittered expiration, controlled warming, or serving a bounded stale value can reduce the spike.
 
-A cache outage can also increase database load abruptly. Capacity plans should cover degraded operation, and cache keys must avoid accidental hotspots or cross-user data exposure.
+A cache outage can also increase database load abruptly. Capacity plans should cover degraded operation. Cache keys and access controls must include the relevant tenant or user scope to prevent cross-user data exposure; avoid accidental hotspots.
 
 ## Mobile caches
 

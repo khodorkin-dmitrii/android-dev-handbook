@@ -34,7 +34,7 @@ Schema evolution must support data written by older software and, during rolling
 
 A transaction groups operations under defined atomicity and isolation guarantees. Use it to protect invariants that must change together, while recognizing that broad distributed transactions can reduce availability and throughput.
 
-**Strong consistency** is an umbrella term in informal system-design discussion: it generally means clients do not observe arbitrarily stale state, but the exact guarantee should be stated when it matters, for example linearizable reads, read-after-write consistency, or session-level guarantees. **Eventual consistency** means replicas can temporarily differ but converge when updates stop and delivery succeeds. It is not random data: the allowed observations and convergence rules still need a contract.
+**Strong consistency** is an umbrella term in informal system-design discussion: it generally means clients do not observe arbitrarily stale state, but the exact guarantee should be stated when it matters, for example linearizable reads, read-after-write consistency, or session-level guarantees. **Eventual consistency** means replicas can temporarily differ but converge when updates stop, delivery succeeds, and conflicts are resolved by a defined rule. It is not random data: the allowed observations and convergence rules still need a contract.
 
 Read-after-write consistency is often a user-facing requirement. After a profile update, the same user usually expects an immediate read to show the new value. Analytics counters may tolerate delayed convergence. Different operations in one system can make different consistency choices.
 
@@ -42,7 +42,7 @@ Durability asks whether acknowledged data survives process, node, or regional fa
 
 ## CAP theorem in context
 
-CAP refers to **Consistency, Availability, and Partition tolerance**. It is misleading to say that a system simply “chooses any two.” When a network partition prevents nodes from communicating, the system must decide, for an affected operation, whether to reject or delay work to preserve its consistency guarantee, or serve work with a risk of divergent state to preserve availability.
+CAP refers to **Consistency, Availability, and Partition tolerance**. Here consistency means a linearizable view of shared data; availability means every request to a non-failing node eventually receives a response, not necessarily a successful write. It is misleading to say that a system simply “chooses any two.” When a network partition prevents nodes from communicating, the system must decide, for an affected operation, whether to reject or delay work to preserve its consistency guarantee, or serve work with a risk of divergent state to preserve availability.
 
 Partitions are not a normal tuning knob, and consistency is not one universal setting. Choices may differ by operation: an account balance, a profile view, and an analytics counter can require different behavior. State the failure scenario and the guarantee instead of labeling an entire system only “CP” or “AP.”
 

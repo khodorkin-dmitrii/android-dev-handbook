@@ -13,15 +13,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-09
+1. Last tracker update: 2026-10-10
 1. Total articles tracked: 107
-1. Updated: 60
-1. TODO: 47
+1. Updated: 66
+1. TODO: 41
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 40 | 32      | 8    |
+| P1 | 40 | 38      | 2    |
 | P2 | 40 | 1       | 39   |
 
 ## Tracker
@@ -85,12 +85,12 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-07, `architecture/legacy-refactoring.md`, Legacy & Refactoring, Clarified safe refactoring, lifecycle checks and Rx/Compose migration.
 1. P1, **UPDATED**, 2026-10-08, `engineering/system-design/fundamentals.md`, System Design Fundamentals, Added measurable requirements, capacity estimates and a reusable design process; clarified scoped sources of truth, API success semantics, idempotency, SLI/SLO, observability, mobile lifecycle and unreliable-network failure handling; synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-09, `engineering/system-design/scalability-capacity.md`, Scalability & Capacity, Added peak-RPS, concurrency and storage-growth estimates; clarified throughput, saturation, headroom, load testing, failure capacity and autoscaling signals; expanded mobile burst, retry, backoff and jitter guidance; synchronized EN/RU.
-1. P1, **TODO**, , `engineering/system-design/data-storage-consistency.md`, Data Storage & Consistency
-1. P1, **TODO**, , `engineering/system-design/caching.md`, Caching & Data Freshness
-1. P1, **TODO**, , `engineering/system-design/async-messaging.md`, Async Processing & Messaging
-1. P1, **TODO**, , `engineering/system-design/reliability.md`, Reliability & Failure Handling
-1. P1, **TODO**, , `engineering/system-design/diagrams.md`, System Design Diagrams
-1. P1, **TODO**, , `engineering/system-design/offline-first-mobile.md`, Offline-First Mobile Application
+1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/data-storage-consistency.md`, Data Storage & Consistency, Уточнены гарантии consistency, сходимость реплик и смысл CAP.
+1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/caching.md`, Caching & Data Freshness, Уточнены TTL, negative caching и изоляция пользовательских данных.
+1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/async-messaging.md`, Async Processing & Messaging, Уточнены загрузка медиа, восстановление постановки в очередь и подтверждение обработки.
+1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/reliability.md`, Reliability & Failure Handling, Уточнены повторные попытки, идемпотентность и проверки состояния сервиса.
+1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/diagrams.md`, System Design Diagrams, Добавлен сценарий потерянного ответа и прояснён смысл связей на схемах.
+1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/offline-first-mobile.md`, Offline-First Mobile Application, Уточнены сохранение операций, безопасные повторы, удаления и смена аккаунта.
 1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
 1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
 1. P2, **TODO**, , `android/index.md`, Android Overview

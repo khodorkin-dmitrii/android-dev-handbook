@@ -15,7 +15,7 @@ flowchart TD
     O --> D[(Database)]
 ```
 
-Use this view to discuss system boundaries, responsibility, trust zones, synchronous and asynchronous links, and possible bottlenecks. Avoid mixing classes, database tables, cloud resources, and user journeys in one unexplained diagram.
+Use this view to discuss system boundaries, responsibility, trust zones, synchronous and asynchronous links, and possible bottlenecks. The arrows here show dependencies; label them if they instead represent requests or data movement. Avoid mixing classes, database tables, cloud resources, and user journeys in one unexplained diagram.
 
 ## Sequence diagram
 
@@ -60,7 +60,7 @@ flowchart LR
     S -->|invalidation| C[(Cache)]
 ```
 
-Label sources of truth, replicas, sensitive fields, protocols, and trust boundaries when relevant. A data-flow view is useful for freshness, privacy, retention, and reconciliation questions that a component diagram can hide.
+Label sources of truth, replicas, sensitive fields, protocols, and trust boundaries when relevant. Distinguish a write to the primary from asynchronous replication and cache invalidation. A data-flow view is useful for freshness, privacy, retention, and reconciliation questions that a component diagram can hide.
 
 ## Lightweight C4 model
 

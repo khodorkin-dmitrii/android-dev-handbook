@@ -39,7 +39,7 @@ The repository owns the client boundary: local reads and writes, network calls, 
 
 Records need stable identifiers that can be created offline. A client-generated UUID is one option; another is a local identifier mapped to a server identifier. Each mutation should have a stable operation ID, type, target, payload or patch, creation time, and sync state such as `pending`, `in_flight`, `failed`, or `synchronized`.
 
-Pending mutations must be stored durably with the affected data. An in-memory queue would lose work after process death. The local transaction should update the visible record and enqueue its mutation together when the storage technology supports it.
+Pending mutations must be stored durably with the affected data. An in-memory queue would lose work after process death. The local transaction should update the visible record and enqueue its mutation atomically in the same database. If separate stores are unavoidable, define a crash-recovery protocol.
 
 `in_flight` represents one attempt, not permanent truth. If the process dies, an attempt times out, or its processing lease expires, an unfinished mutation must become retryable again instead of remaining stuck. Its stable operation ID or idempotency key makes resubmission safe when the previous server outcome is uncertain. For sensitive side effects, the client may need to reconcile or query status before retrying.
 
@@ -61,9 +61,8 @@ A sync run can:
 
 1. Load a bounded batch of pending mutations in deterministic order.
 2. Send each operation with its stable ID or idempotency key.
-3. Apply the server response and authoritative version to the local database.
-4. Mark accepted operations synchronized.
-5. Pull server changes since a cursor or version and merge them locally.
+3. In one local transaction, apply the server response and authoritative version, then mark accepted operations synchronized. A lost response must leave an operation safe to retry.
+4. Pull server changes since a cursor or version and merge them locally.
 
 If the network fails, keep the mutation pending and retry later with bounded backoff and jitter:
 
@@ -94,11 +93,11 @@ Server updates may arrive through polling, push-triggered refresh, or a real-tim
 
 ## Deletion, failures, and recovery
 
-Deleting a local row immediately can erase the information needed to synchronize the deletion. A tombstone records that the entity is deleted until the server acknowledges it and relevant replicas have had time to observe it. Retention and cleanup rules prevent tombstones from growing forever.
+Deleting a local row immediately can erase the information needed to synchronize the deletion. A tombstone records that the entity is deleted until the server acknowledges it. The server also needs a deletion-retention policy so long-offline clients cannot resurrect deleted data. Retention and cleanup rules prevent tombstones from growing forever.
 
 Retries require idempotent server handling because a response can be lost after a successful write. Permanent validation or authorization failures should not retry indefinitely. Preserve the local user content, expose a recoverable error where useful, and provide reconciliation or manual correction for conflicts that cannot be merged.
 
-The sync engine should expose observability for pending count, oldest mutation age, failure reasons, last success, and conflict rate. Tests should cover process death, duplicate delivery, out-of-order responses, schema migration, account switching, and long periods offline.
+The sync engine should expose observability for pending count, oldest mutation age, failure reasons, last success, and conflict rate. Tests should cover process death, duplicate delivery, out-of-order responses, schema migration, account switching, and long periods offline. On sign-out, separate or clear account-scoped records and pending work according to the product's data-retention policy.
 
 ## Trade-offs
 
