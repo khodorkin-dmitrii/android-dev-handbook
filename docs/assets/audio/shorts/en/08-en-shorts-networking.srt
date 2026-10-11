@@ -1,0 +1,139 @@
+1
+00:00:00,150 --> 00:00:00,590
+<u>Networking</u>
+
+2
+00:00:01,918 --> 00:00:03,108
+<i>What is HTTP?</i>
+
+3
+00:00:04,378 --> 00:00:08,698
+HTTP is an application-layer protocol for exchanging messages between a client and a server.
+
+4
+00:00:09,398 --> 00:00:14,908
+A request contains a method, URL, headers, and sometimes a body, while a response contains a status code, headers, and a body.
+
+5
+00:00:16,430 --> 00:00:17,160
+<i>What is REST?</i>
+
+6
+00:00:18,675 --> 00:00:20,905
+REST stands for Representational State Transfer.
+
+7
+00:00:21,615 --> 00:00:26,335
+It is an architectural style for client-server communication based on resources and standard HTTP operations;
+
+8
+00:00:26,535 --> 00:00:30,605
+REST APIs are usually stateless, and resource representations are commonly transferred as JSON.
+
+9
+00:00:32,113 --> 00:00:33,803
+<i>What is the difference between GET and POST?</i>
+
+10
+00:00:35,323 --> 00:00:38,283
+GET is used to retrieve a resource and normally does not change server state.
+
+11
+00:00:38,973 --> 00:00:42,633
+POST sends data in the request body and often creates a resource or starts an operation.
+
+12
+00:00:44,177 --> 00:00:46,797
+<i>What is the difference between 401 and 403?</i>
+
+13
+00:00:48,323 --> 00:00:51,893
+401 Unauthorized usually means that authentication is missing or invalid.
+
+14
+00:00:52,603 --> 00:00:56,753
+403 Forbidden means the user is recognized but does not have permission to perform the action.
+
+15
+00:00:58,262 --> 00:01:00,852
+<i>How can a network request be made without freezing the UI?</i>
+
+16
+00:01:02,379 --> 00:01:04,729
+Use a non-blocking suspend API from a coroutine.
+
+17
+00:01:05,439 --> 00:01:08,279
+Retrofit suspend functions do not perform network I/O on the main thread,
+
+18
+00:01:08,469 --> 00:01:12,129
+while a blocking API should be called explicitly with withContext(Dispatchers.IO).
+
+19
+00:01:14,022 --> 00:01:14,992
+<i>What is Retrofit?</i>
+
+20
+00:01:16,266 --> 00:01:19,476
+Retrofit is a type-safe HTTP client for Android and the JVM.
+
+21
+00:01:20,176 --> 00:01:24,976
+It converts an annotated interface into an API implementation and usually works on top of OkHttp.
+
+22
+00:01:26,494 --> 00:01:28,554
+<i>What is an OkHttp interceptor?</i>
+
+23
+00:01:30,083 --> 00:01:34,653
+An interceptor can inspect and modify requests and responses, add headers, log traffic, refresh tokens,
+
+24
+00:01:34,813 --> 00:01:35,793
+or retry requests.
+
+25
+00:01:36,493 --> 00:01:38,453
+Heavy business logic should not be placed there.
+
+26
+00:01:39,974 --> 00:01:41,524
+<i>How should network errors be handled?</i>
+
+27
+00:01:43,035 --> 00:01:47,745
+Technical errors should be mapped to clear domain or UI states such as no internet, unauthorized, validation error,
+
+28
+00:01:47,865 --> 00:01:48,615
+or server error.
+
+29
+00:01:49,325 --> 00:01:52,875
+Raw exceptions or HTTP codes should not be shown to users without context.
+
+30
+00:01:54,409 --> 00:01:55,369
+<i>What is GraphQL?</i>
+
+31
+00:01:56,894 --> 00:02:01,444
+GraphQL is a query language and runtime for APIs where the client specifies exactly which fields it needs.
+
+32
+00:02:02,154 --> 00:02:05,694
+It reduces overfetching but requires careful schema, caching, and error handling.
+
+33
+00:02:07,217 --> 00:02:08,357
+<i>What is gRPC?</i>
+
+34
+00:02:09,899 --> 00:02:14,909
+gRPC is an RPC framework with a strict .proto contract and Protocol Buffers binary serialization.
+
+35
+00:02:15,619 --> 00:02:19,509
+It supports unary and streaming calls and is useful for high-performance or real-time scenarios.

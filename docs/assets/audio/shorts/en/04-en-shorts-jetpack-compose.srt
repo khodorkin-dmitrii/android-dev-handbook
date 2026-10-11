@@ -1,0 +1,171 @@
+1
+00:00:00,165 --> 00:00:01,055
+<u>Jetpack Compose</u>
+
+2
+00:00:02,393 --> 00:00:03,663
+<i>What is Jetpack Compose?</i>
+
+3
+00:00:04,930 --> 00:00:07,590
+Jetpack Compose is a declarative UI toolkit for Android.
+
+4
+00:00:08,280 --> 00:00:12,510
+UI is described as a function of state, and Compose updates the affected parts when that state changes.
+
+5
+00:00:14,030 --> 00:00:16,700
+<i>Which basic Compose containers are used to arrange elements?</i>
+
+6
+00:00:18,219 --> 00:00:22,279
+Row arranges elements horizontally, Column vertically, and Box allows elements to overlap.
+
+7
+00:00:22,979 --> 00:00:27,099
+For large scrollable collections, Compose provides LazyColumn, LazyRow, and lazy grids.
+
+8
+00:00:28,609 --> 00:00:30,779
+<i>Which stability annotations exist in Compose?</i>
+
+9
+00:00:32,289 --> 00:00:34,509
+The main annotations are @Immutable and @Stable.
+
+10
+00:00:35,209 --> 00:00:38,849
+They are contracts with the Compose compiler: @Immutable promises immutable public state,
+
+11
+00:00:39,059 --> 00:00:41,969
+while @Stable promises predictable and observable property changes.
+
+12
+00:00:43,510 --> 00:00:46,040
+<i>Are lambdas without captured variables stable in Compose?</i>
+
+13
+00:00:47,555 --> 00:00:50,955
+Usually, a non-capturing lambda is reused and treated as a stable value.
+
+14
+00:00:51,655 --> 00:00:53,945
+A lambda that captures mutable data or is recreated
+
+15
+00:00:53,965 --> 00:00:56,635
+can change identity and prevent recomposition from being skipped.
+
+16
+00:00:58,142 --> 00:00:59,822
+<i>What are the rendering phases in Compose?</i>
+
+17
+00:01:01,347 --> 00:01:03,727
+The main phases are composition, layout, and drawing.
+
+18
+00:01:04,427 --> 00:01:09,177
+Composition defines the UI structure, layout measures and positions elements, and drawing renders their content.
+
+19
+00:01:10,710 --> 00:01:13,300
+<i>Which structure stores the Compose composition tree and state?</i>
+
+20
+00:01:14,827 --> 00:01:16,917
+Internally, Compose uses the Slot Table.
+
+21
+00:01:17,617 --> 00:01:22,367
+The Composer stores composition groups, remember values, and data required for future recompositions there.
+
+22
+00:01:23,897 --> 00:01:24,977
+<i>What is recomposition?</i>
+
+23
+00:01:26,507 --> 00:01:30,677
+Recomposition is the repeated execution of composable functions that depend on changed state.
+
+24
+00:01:31,377 --> 00:01:35,487
+It is a normal Compose mechanism; it becomes a problem only when it is too frequent or expensive.
+
+25
+00:01:37,353 --> 00:01:39,663
+<i>What is the difference between remember and rememberSaveable?</i>
+
+26
+00:01:40,922 --> 00:01:44,422
+remember keeps a value across recompositions but does not survive recreation.
+
+27
+00:01:45,122 --> 00:01:48,432
+rememberSaveable also stores supported state through the saved state mechanism.
+
+28
+00:01:49,945 --> 00:01:51,065
+<i>What is mutableStateOf?</i>
+
+29
+00:01:52,579 --> 00:01:55,279
+mutableStateOf creates observable state tracked by Compose.
+
+30
+00:01:55,989 --> 00:01:59,889
+When its value changes, dependent composable functions may be scheduled for recomposition.
+
+31
+00:02:01,409 --> 00:02:02,459
+<i>What is state hoisting?</i>
+
+32
+00:02:03,995 --> 00:02:06,725
+State hoisting means moving state higher in the composable tree.
+
+33
+00:02:07,435 --> 00:02:11,755
+A component receives a value and callbacks, which makes it more stateless, reusable, and testable.
+
+34
+00:02:13,281 --> 00:02:14,751
+<i>When should LaunchedEffect be used?</i>
+
+35
+00:02:16,275 --> 00:02:20,245
+LaunchedEffect is used for coroutine side effects tied to the lifecycle of a composable and its key.
+
+36
+00:02:20,955 --> 00:02:24,205
+When the key changes, the previous coroutine is cancelled and a new one starts.
+
+37
+00:02:25,729 --> 00:02:27,669
+<i>When should rememberCoroutineScope be used?</i>
+
+38
+00:02:29,174 --> 00:02:32,654
+It is used to launch a coroutine in response to a UI event, such as a button click.
+
+39
+00:02:33,364 --> 00:02:36,304
+Screen-level business logic is usually better placed in a ViewModel.
+
+40
+00:02:37,817 --> 00:02:40,087
+<i>How can unnecessary recompositions be reduced?</i>
+
+41
+00:02:41,622 --> 00:02:45,562
+Organize state correctly, avoid passing unstable objects without a reason, use stable keys,
+
+42
+00:02:45,722 --> 00:02:47,282
+and move heavy work out of composables.
+
+43
+00:02:47,992 --> 00:02:50,882
+Optimization should start with measurement and finding a real bottleneck.

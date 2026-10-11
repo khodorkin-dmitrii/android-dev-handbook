@@ -1,0 +1,239 @@
+1
+00:00:00,160 --> 00:00:00,700
+<u>Architecture</u>
+
+2
+00:00:02,033 --> 00:00:03,323
+<i>What is ViewModel used for?</i>
+
+3
+00:00:04,594 --> 00:00:09,914
+A ViewModel stores and coordinates screen state, survives configuration changes, and separates UI from data orchestration.
+
+4
+00:00:10,614 --> 00:00:13,424
+It should not depend directly on a View, Fragment, or Activity.
+
+5
+00:00:14,937 --> 00:00:16,277
+<i>How should UI state be stored?</i>
+
+6
+00:00:17,787 --> 00:00:22,067
+Usually as StateFlow<UiState>, where UiState is an immutable data class or a sealed hierarchy.
+
+7
+00:00:22,777 --> 00:00:24,597
+The UI observes the state and renders it.
+
+8
+00:00:26,113 --> 00:00:27,843
+<i>How should state and effects be separated?</i>
+
+9
+00:00:29,371 --> 00:00:34,081
+State describes what the screen currently shows, while effects are one-time actions such as navigation or a snackbar.
+
+10
+00:00:34,791 --> 00:00:39,691
+State is usually stored in StateFlow, while effects are delivered through SharedFlow, Channel, or another explicit model.
+
+11
+00:00:41,225 --> 00:00:42,625
+<i>What is a single source of truth?</i>
+
+12
+00:00:44,142 --> 00:00:46,742
+It is a principle where data or state has one primary owner.
+
+13
+00:00:47,452 --> 00:00:50,922
+Other parts of the system receive it from that owner instead of keeping competing copies.
+
+14
+00:00:52,449 --> 00:00:54,019
+<i>Is a domain layer always required?</i>
+
+15
+00:00:55,563 --> 00:00:56,033
+No.
+
+16
+00:00:56,733 --> 00:01:01,573
+It is useful for complex business logic, reusable use cases, and separating rules from UI and data layers,
+
+17
+00:01:01,783 --> 00:01:03,773
+but it can be unnecessary for simple CRUD flows.
+
+18
+00:01:05,281 --> 00:01:06,771
+<i>What is a Repository used for?</i>
+
+19
+00:01:08,270 --> 00:01:12,410
+A Repository hides concrete data sources and exposes one contract to the UI or domain layer.
+
+20
+00:01:13,120 --> 00:01:15,880
+It can coordinate network, database, cache, and mapping.
+
+21
+00:01:17,753 --> 00:01:21,313
+<i>How would you design loading data from an API and saving it to a local database?</i>
+
+22
+00:01:22,594 --> 00:01:26,914
+A Repository coordinates remote and local data sources: it loads DTOs, maps them to entities,
+
+23
+00:01:27,044 --> 00:01:28,544
+and saves them to Room in a transaction.
+
+24
+00:01:29,244 --> 00:01:33,104
+The UI observes Room through Flow as the single source of truth; refresh policy, stale data,
+
+25
+00:01:33,334 --> 00:01:35,104
+and error behavior must be defined separately.
+
+26
+00:01:36,614 --> 00:01:37,914
+<i>MVVM or MVI?</i>
+
+27
+00:01:39,435 --> 00:01:42,235
+MVVM is usually simpler and works well for most screens.
+
+28
+00:01:42,935 --> 00:01:48,665
+MVI is useful for complex state-driven UI where explicit actions, immutable state, and predictable transitions are important.
+
+29
+00:01:50,190 --> 00:01:52,190
+<i>Is a separate framework required for MVI?</i>
+
+30
+00:01:53,702 --> 00:01:54,172
+No.
+
+31
+00:01:54,872 --> 00:02:00,562
+An MVI-style approach can be implemented with a regular ViewModel, StateFlow, immutable UiState, and sealed actions or effects.
+
+32
+00:02:02,086 --> 00:02:02,956
+<i>What is a reducer?</i>
+
+33
+00:02:04,470 --> 00:02:09,160
+A reducer computes a new state from the previous state and an action or result: State + Action -> New State.
+
+34
+00:02:09,870 --> 00:02:12,120
+In a strict Redux-style design it is a pure function,
+
+35
+00:02:12,300 --> 00:02:14,450
+which makes transitions predictable and easy to test.
+
+36
+00:02:15,969 --> 00:02:18,379
+<i>Is a reducer only a Redux or MVI concept?</i>
+
+37
+00:02:19,894 --> 00:02:20,364
+No.
+
+38
+00:02:21,064 --> 00:02:26,534
+The term is historically associated with Flux and Redux and is common in MVI, but MVVM can also use immutable UiState,
+
+39
+00:02:26,704 --> 00:02:28,264
+actions and reducer-like transitions.
+
+40
+00:02:28,974 --> 00:02:30,814
+Not every screen needs a formal reducer.
+
+41
+00:02:32,689 --> 00:02:35,289
+<i>What does reducer-like state management mean in modern Android?</i>
+
+42
+00:02:36,546 --> 00:02:42,576
+It means updating immutable state through explicit transitions, often directly in a ViewModel with _state.update { it.copy(...) }.
+
+43
+00:02:43,266 --> 00:02:47,596
+The code gains reducer benefits without requiring a dedicated Reducer class or Redux-style framework.
+
+44
+00:02:49,097 --> 00:02:50,277
+<i>What is Clean Architecture?</i>
+
+45
+00:02:51,798 --> 00:02:56,888
+It is an approach that separates UI, business logic, and data access and points dependencies toward more stable abstractions.
+
+46
+00:02:57,588 --> 00:03:00,718
+It should be applied pragmatically rather than adding layers without real value.
+
+47
+00:03:02,241 --> 00:03:05,191
+<i>What criteria should be used to split an application into modules?</i>
+
+48
+00:03:07,054 --> 00:03:10,504
+Modules should be separated by functional responsibility, dependency direction,
+
+49
+00:03:10,624 --> 00:03:12,324
+independent development, and reuse.
+
+50
+00:03:13,034 --> 00:03:16,934
+Typical boundaries are features, design system, networking, storage, and shared contracts;
+
+51
+00:03:17,074 --> 00:03:19,024
+each module should expose a clear public API.
+
+52
+00:03:20,290 --> 00:03:23,020
+<i>What is the difference between api and implementation in Gradle?</i>
+
+53
+00:03:24,523 --> 00:03:29,433
+implementation keeps the dependency internal to the current module and does not add it to the consumers' compile classpath.
+
+54
+00:03:30,143 --> 00:03:35,133
+api exposes it transitively, so it is used when types from that dependency appear in the module's public API.
+
+55
+00:03:36,665 --> 00:03:38,365
+<i>Why use a multi-module architecture?</i>
+
+56
+00:03:39,899 --> 00:03:44,009
+It helps separate features, reduce coupling, improve ownership, and speed up incremental builds.
+
+57
+00:03:44,719 --> 00:03:48,029
+However, splitting too early increases Gradle complexity and boilerplate.
+
+58
+00:03:49,545 --> 00:03:51,035
+<i>How should legacy code be handled?</i>
+
+59
+00:03:52,558 --> 00:03:55,698
+First, capture the current behavior, then make small and safe changes.
+
+60
+00:03:56,408 --> 00:04:01,277
+Incremental refactoring is usually safer than a full rewrite because it preserves hidden business rules and reduces risk.

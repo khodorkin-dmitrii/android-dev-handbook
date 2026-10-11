@@ -1,0 +1,79 @@
+1
+00:00:00,165 --> 00:00:01,015
+<u>Dependency Injection</u>
+
+2
+00:00:02,321 --> 00:00:03,921
+<i>Why is Dependency Injection needed?</i>
+
+3
+00:00:05,170 --> 00:00:09,450
+DI passes dependencies into a class from the outside, reducing coupling and making testing easier.
+
+4
+00:00:10,150 --> 00:00:12,970
+It also centralizes object creation and lifecycle management.
+
+5
+00:00:14,481 --> 00:00:16,651
+<i>What is the difference between DI and Service Locator?</i>
+
+6
+00:00:18,190 --> 00:00:21,640
+With DI, dependencies are passed explicitly through a constructor or method.
+
+7
+00:00:22,340 --> 00:00:25,850
+With Service Locator, a class asks a global container for dependencies itself,
+
+8
+00:00:26,050 --> 00:00:27,120
+which makes them less visible.
+
+9
+00:00:28,638 --> 00:00:29,278
+<i>What is Hilt?</i>
+
+10
+00:00:30,782 --> 00:00:34,752
+Hilt is a DI framework built on top of Dagger with ready-made Android lifecycle integration.
+
+11
+00:00:35,462 --> 00:00:40,352
+It simplifies dependency graphs, injection into Activity, Fragment, and ViewModel, and scope management.
+
+12
+00:00:41,969 --> 00:00:44,289
+<i>What is the difference between @Binds and @Provides?</i>
+
+13
+00:00:45,912 --> 00:00:49,652
+@Binds connects an interface to an implementation that can already be created by DI.
+
+14
+00:00:50,502 --> 00:00:55,562
+@Provides is used when an object must be created manually, for example Retrofit, Room, or an external SDK.
+
+15
+00:00:57,081 --> 00:00:58,211
+<i>What is a scope in DI?</i>
+
+16
+00:00:59,715 --> 00:01:03,015
+A scope defines how long one instance is reused inside the dependency graph.
+
+17
+00:01:03,725 --> 00:01:07,235
+It should match the real lifecycle of the object rather than defaulting everything to Singleton.
+
+18
+00:01:08,761 --> 00:01:10,451
+<i>Why should not everything be a singleton?</i>
+
+19
+00:01:11,995 --> 00:01:16,255
+A singleton increases an object's lifetime, can keep unnecessary state, and makes testing harder.
+
+20
+00:01:16,965 --> 00:01:20,715
+Only truly application-wide stateless services or resources should usually be long-lived.

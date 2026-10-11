@@ -1,0 +1,275 @@
+1
+00:00:00,160 --> 00:00:00,980
+<u>Android basics</u>
+
+2
+00:00:02,297 --> 00:00:04,607
+<i>Name the four main Android application components</i>
+
+3
+00:00:05,866 --> 00:00:08,936
+Activity, Service, BroadcastReceiver, and ContentProvider.
+
+4
+00:00:09,636 --> 00:00:12,706
+They are declared in the manifest and can serve as application entry points.
+
+5
+00:00:14,222 --> 00:00:16,492
+<i>How is a Bound Service different from a regular Service?</i>
+
+6
+00:00:18,022 --> 00:00:19,182
+A Bound Service is a Service
+
+7
+00:00:19,202 --> 00:00:22,702
+that other components connect to through bindService() and interact with through an IBinder.
+
+8
+00:00:23,412 --> 00:00:26,172
+A purely bound service exists while at least one client is bound.
+
+9
+00:00:26,882 --> 00:00:31,282
+A regular started service is launched with startService() and runs independently of the component that started it
+
+10
+00:00:31,302 --> 00:00:32,062
+until it is stopped.
+
+11
+00:00:33,577 --> 00:00:36,397
+<i>Which is initialized first: Application or ContentProvider?</i>
+
+12
+00:00:37,915 --> 00:00:41,715
+The Application object is created first, then ContentProvider instances are initialized,
+
+13
+00:00:41,885 --> 00:00:44,235
+and only after that Application.onCreate() is called.
+
+14
+00:00:44,935 --> 00:00:48,175
+This is why libraries often use providers for early auto-initialization.
+
+15
+00:00:49,702 --> 00:00:52,342
+<i>What is the difference between an explicit and an implicit Intent?</i>
+
+16
+00:00:53,867 --> 00:00:56,387
+An explicit Intent names the exact component to start.
+
+17
+00:00:57,097 --> 00:01:01,997
+An implicit Intent describes an action, and Android selects a matching application or component through intent filters.
+
+18
+00:01:03,537 --> 00:01:04,297
+<i>What is a Bundle?</i>
+
+19
+00:01:05,811 --> 00:01:10,201
+A Bundle is a container for passing small sets of mixed data between Android components and for saving state.
+
+20
+00:01:10,901 --> 00:01:15,011
+It supports primitive types, Parcelable, Serializable, and several other supported types.
+
+21
+00:01:16,513 --> 00:01:18,903
+<i>What is the difference between Parcelable and Serializable?</i>
+
+22
+00:01:20,438 --> 00:01:26,058
+Parcelable is optimized for Android IPC and is usually faster, but it requires a special implementation or @Parcelize.
+
+23
+00:01:26,768 --> 00:01:30,208
+Serializable is simpler, but it uses reflection and has more overhead.
+
+24
+00:01:32,081 --> 00:01:33,691
+<i>What happens when the device rotates?</i>
+
+25
+00:01:34,954 --> 00:01:39,334
+Rotation is a configuration change, and by default the current Activity is destroyed and recreated.
+
+26
+00:01:40,034 --> 00:01:41,634
+A ViewModel survives this recreation,
+
+27
+00:01:41,814 --> 00:01:45,314
+while small UI state can be preserved with SavedStateHandle or onSaveInstanceState().
+
+28
+00:01:46,833 --> 00:01:48,253
+<i>Can onDestroy() be skipped?</i>
+
+29
+00:01:49,755 --> 00:01:50,225
+Yes.
+
+30
+00:01:50,915 --> 00:01:53,345
+The system may terminate the process without calling onDestroy(),
+
+31
+00:01:53,565 --> 00:01:55,985
+so critical data must not rely on this callback being called.
+
+32
+00:01:57,505 --> 00:01:59,435
+<i>How does ViewModel survive device rotation?</i>
+
+33
+00:02:00,974 --> 00:02:06,004
+A ViewModel is stored in a ViewModelStore associated with the logical screen owner rather than a specific Activity instance.
+
+34
+00:02:06,704 --> 00:02:10,964
+After recreation, the new Activity receives the same ViewModel as long as the process has not been killed.
+
+35
+00:02:12,473 --> 00:02:14,013
+<i>How many Loopers can one thread have?</i>
+
+36
+00:02:15,539 --> 00:02:17,959
+A thread can have at most one Looper, and it may have none.
+
+37
+00:02:18,669 --> 00:02:20,299
+The main thread receives one automatically,
+
+38
+00:02:20,479 --> 00:02:23,429
+while a background thread can use Looper.prepare() or HandlerThread.
+
+39
+00:02:24,945 --> 00:02:27,815
+<i>Which Activity lifecycle methods are called during device rotation?</i>
+
+40
+00:02:29,326 --> 00:02:33,476
+With a normal configuration change, the old Activity goes through onPause() → onStop() → onDestroy(),
+
+41
+00:02:33,626 --> 00:02:35,986
+and the new one goes through onCreate() → onStart() → onResume().
+
+42
+00:02:36,696 --> 00:02:39,556
+onSaveInstanceState() is also usually called before destruction.
+
+43
+00:02:41,089 --> 00:02:43,739
+<i>What is the difference between invalidate() and requestLayout()?</i>
+
+44
+00:02:45,259 --> 00:02:48,079
+invalidate() requests a redraw and causes a new draw pass.
+
+45
+00:02:48,789 --> 00:02:52,449
+requestLayout() starts a new measure and layout pass when size or positioning has changed.
+
+46
+00:02:53,974 --> 00:02:56,034
+<i>Which methods are overridden in a custom ViewGroup?</i>
+
+47
+00:02:57,563 --> 00:03:01,783
+The main methods are onMeasure() for calculating sizes and onLayout() for positioning child views.
+
+48
+00:03:02,493 --> 00:03:05,403
+onDraw() is needed only when the container draws its own content.
+
+49
+00:03:07,281 --> 00:03:08,551
+<i>How does RecyclerView work?</i>
+
+50
+00:03:09,818 --> 00:03:13,658
+RecyclerView coordinates a LayoutManager, Recycler, Adapter, and ViewHolder.
+
+51
+00:03:14,358 --> 00:03:18,008
+The LayoutManager decides which item positions are needed and where their views should be placed.
+
+52
+00:03:18,708 --> 00:03:20,228
+It requests views through the Recycler,
+
+53
+00:03:20,418 --> 00:03:24,188
+which reuses an existing ViewHolder when possible or asks the Adapter to create and bind one:
+
+54
+00:03:24,408 --> 00:03:27,958
+RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder.
+
+55
+00:03:29,473 --> 00:03:31,673
+<i>What is the difference between ViewBinding and DataBinding?</i>
+
+56
+00:03:33,523 --> 00:03:37,133
+ViewBinding provides type-safe access to views with very little runtime complexity.
+
+57
+00:03:37,843 --> 00:03:43,503
+DataBinding additionally supports expressions in XML, two-way binding, and BindingAdapters, but it makes builds more complex.
+
+58
+00:03:44,762 --> 00:03:47,082
+<i>Activity Context or Application Context?</i>
+
+59
+00:03:48,587 --> 00:03:53,197
+Activity Context is required for UI, themes, dialogs, and operations tied to a screen lifecycle.
+
+60
+00:03:53,897 --> 00:03:58,587
+Application Context lives as long as the process and is suitable for long-lived dependencies, but not for UI.
+
+61
+00:04:00,124 --> 00:04:01,084
+<i>What is an ANR?</i>
+
+62
+00:04:02,619 --> 00:04:06,399
+ANR happens when the main thread does not respond to system or user events for too long.
+
+63
+00:04:07,109 --> 00:04:11,689
+Common causes are blocking operations, heavy computations, and incorrect synchronization on the main thread.
+
+64
+00:04:13,206 --> 00:04:13,926
+<i>What is jank?</i>
+
+65
+00:04:15,446 --> 00:04:18,086
+Jank is visible stutter caused by a frame missing its deadline.
+
+66
+00:04:18,796 --> 00:04:22,596
+At 60 FPS, the budget for one frame is about 16.6 ms.
+
+67
+00:04:24,113 --> 00:04:25,013
+<i>What is overdraw?</i>
+
+68
+00:04:26,531 --> 00:04:30,011
+Overdraw happens when the same pixels are drawn multiple times on top of each other.
+
+69
+00:04:30,721 --> 00:04:34,868
+It is not always a problem, but unnecessary backgrounds and layers can create extra GPU work.

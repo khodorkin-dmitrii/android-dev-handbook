@@ -1,0 +1,115 @@
+1
+00:00:00,160 --> 00:00:00,520
+<u>Testing</u>
+
+2
+00:00:01,990 --> 00:00:03,320
+<i>What are the main types of tests?</i>
+
+3
+00:00:04,570 --> 00:00:08,580
+Unit tests check isolated logic, integration tests check several components working together,
+
+4
+00:00:08,810 --> 00:00:11,990
+and UI tests check the interface and user actions on a device or emulator.
+
+5
+00:00:12,690 --> 00:00:17,090
+End-to-end tests cover critical flows through the whole application and real or production-like external systems,
+
+6
+00:00:17,310 --> 00:00:18,410
+so they are used selectively.
+
+7
+00:00:19,929 --> 00:00:22,469
+<i>How do you make sure a new feature is correct and reduce bugs?</i>
+
+8
+00:00:24,003 --> 00:00:28,843
+Clarify acceptance criteria and edge cases, design the state and contracts, cover critical logic with tests,
+
+9
+00:00:28,973 --> 00:00:29,773
+and use code review.
+
+10
+00:00:30,483 --> 00:00:35,993
+Also verify errors, retries, repeated actions, lifecycle behavior, offline scenarios, and a safe rollout strategy.
+
+11
+00:00:37,513 --> 00:00:39,743
+<i>How do you go from a feature idea to implementation?</i>
+
+12
+00:00:41,251 --> 00:00:47,261
+First, clarify the user goal, requirements, and constraints, then design the data flow, UI state, actions, and error handling.
+
+13
+00:00:47,971 --> 00:00:52,201
+After that, choose a sufficient architecture, split the work into testable steps, write code and tests,
+
+14
+00:00:52,351 --> 00:00:55,751
+verify scenarios, complete review, and monitor the result after release.
+
+15
+00:00:57,617 --> 00:00:58,807
+<i>What should be tested first?</i>
+
+16
+00:01:00,082 --> 00:01:04,322
+Start with business logic, mapping, use cases, reducers, and ViewModel state transitions.
+
+17
+00:01:05,012 --> 00:01:08,512
+Priority should be based on risk and value rather than trying to cover everything equally.
+
+18
+00:01:10,017 --> 00:01:10,967
+<i>Mocks or fakes?</i>
+
+19
+00:01:12,483 --> 00:01:16,413
+Fakes often produce clearer and more stable tests because they provide simple working behavior.
+
+20
+00:01:17,123 --> 00:01:20,183
+Mocks are useful when a specific interaction really needs to be verified.
+
+21
+00:01:21,697 --> 00:01:23,067
+<i>How should a ViewModel be tested?</i>
+
+22
+00:01:24,590 --> 00:01:27,780
+Send input actions and verify observable state transitions and effects.
+
+23
+00:01:28,470 --> 00:01:31,480
+Test behavior rather than private methods or implementation details.
+
+24
+00:01:32,993 --> 00:01:34,813
+<i>How should coroutines and Flow be tested?</i>
+
+25
+00:01:36,323 --> 00:01:38,713
+Use runTest, test dispatchers, and virtual time.
+
+26
+00:01:39,423 --> 00:01:42,153
+This keeps tests fast and deterministic without Thread.sleep().
+
+27
+00:01:43,689 --> 00:01:45,089
+<i>Why are UI tests needed?</i>
+
+28
+00:01:46,952 --> 00:01:50,382
+UI tests verify critical user flows and integration between components.
+
+29
+00:01:51,082 --> 00:01:54,792
+They are more expensive and fragile than unit tests, so they are usually used selectively.

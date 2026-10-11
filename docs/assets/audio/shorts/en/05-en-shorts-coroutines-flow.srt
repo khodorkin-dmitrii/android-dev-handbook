@@ -1,0 +1,295 @@
+1
+00:00:00,160 --> 00:00:01,220
+<u>Coroutines and Flow</u>
+
+2
+00:00:02,537 --> 00:00:05,227
+<i>How do you use coroutines and Flow in an Android application?</i>
+
+3
+00:00:06,490 --> 00:00:11,580
+I use coroutines for one-shot asynchronous work such as network requests, database operations, and parallel loading.
+
+4
+00:00:12,280 --> 00:00:17,580
+I use Flow for streams of updates such as UI state, Room observation, search, real-time data, and combining several sources.
+
+5
+00:00:19,094 --> 00:00:21,604
+<i>What is a coroutine, and how is it different from a Thread?</i>
+
+6
+00:00:23,115 --> 00:00:26,735
+A coroutine is a lightweight task that runs on top of threads and can suspend without blocking them.
+
+7
+00:00:27,445 --> 00:00:29,545
+One thread can serve many coroutines over time.
+
+8
+00:00:31,081 --> 00:00:32,111
+<i>What does suspend mean?</i>
+
+9
+00:00:33,643 --> 00:00:36,903
+suspend means that a function may pause and continue later without blocking the thread.
+
+10
+00:00:37,603 --> 00:00:40,163
+It does not automatically move the work to a background thread.
+
+11
+00:00:41,681 --> 00:00:43,531
+<i>What is the difference between launch and async?</i>
+
+12
+00:00:45,054 --> 00:00:47,934
+launch returns a Job and is used when no separate result is needed.
+
+13
+00:00:48,634 --> 00:00:51,664
+async returns Deferred<T>, and its result is received with await().
+
+14
+00:00:53,169 --> 00:00:54,539
+<i>What is structured concurrency?</i>
+
+15
+00:00:56,062 --> 00:00:59,232
+Structured concurrency ties coroutines to a specific scope and lifecycle.
+
+16
+00:00:59,932 --> 00:01:02,462
+A parent waits for its children and can cancel them as one group.
+
+17
+00:01:03,985 --> 00:01:06,795
+<i>What is the difference between coroutineScope and supervisorScope?</i>
+
+18
+00:01:08,289 --> 00:01:11,719
+In coroutineScope, a failure in one child usually cancels the other children.
+
+19
+00:01:12,429 --> 00:01:16,449
+In supervisorScope, child tasks are isolated and can handle failures independently.
+
+20
+00:01:18,329 --> 00:01:19,539
+<i>How does cancellation work?</i>
+
+21
+00:01:20,818 --> 00:01:25,408
+Cancellation is cooperative: a coroutine reacts at suspension points or when it explicitly checks isActive.
+
+22
+00:01:26,108 --> 00:01:29,098
+CancellationException normally should not be handled as a regular error.
+
+23
+00:01:30,609 --> 00:01:31,869
+<i>What are the main Dispatchers?</i>
+
+24
+00:01:33,387 --> 00:01:37,827
+Dispatchers.Main is used for UI work, IO for blocking I/O, and Default for CPU-intensive work.
+
+25
+00:01:38,527 --> 00:01:41,267
+withContext() changes the context inside a suspend function.
+
+26
+00:01:42,798 --> 00:01:45,468
+<i>Which synchronization tools are used with Kotlin Coroutines?</i>
+
+27
+00:01:46,987 --> 00:01:51,117
+Common options are Mutex for protecting suspending code, atomic operations for simple shared state,
+
+28
+00:01:51,327 --> 00:01:53,427
+and state confinement where one coroutine owns the state.
+
+29
+00:01:54,117 --> 00:01:57,647
+synchronized is also possible, but suspend functions must not be called inside it.
+
+30
+00:01:59,177 --> 00:01:59,877
+<i>What is Flow?</i>
+
+31
+00:02:01,403 --> 00:02:04,393
+Flow is an asynchronous stream of values from the coroutines ecosystem.
+
+32
+00:02:05,103 --> 00:02:08,013
+A regular Flow is cold: every collector starts the upstream again.
+
+33
+00:02:09,542 --> 00:02:11,312
+<i>What is Channel in Kotlin Coroutines?</i>
+
+34
+00:02:12,843 --> 00:02:16,083
+Channel is a hot coroutine primitive for sending values between coroutines.
+
+35
+00:02:16,783 --> 00:02:21,703
+It behaves like a queue with suspending send and receive operations, and each element is normally consumed by one receiver.
+
+36
+00:02:23,569 --> 00:02:24,969
+<i>How is Channel different from Flow?</i>
+
+37
+00:02:26,586 --> 00:02:30,076
+A regular Flow is usually a cold declarative stream started by each collector.
+
+38
+00:02:30,776 --> 00:02:34,766
+Channel is a hot point-to-point communication primitive: it exists independently of receivers,
+
+39
+00:02:34,956 --> 00:02:36,976
+and each sent element is consumed by only one of them.
+
+40
+00:02:38,234 --> 00:02:39,834
+<i>How is Channel different from SharedFlow?</i>
+
+41
+00:02:41,339 --> 00:02:44,179
+Channel normally delivers each element to one competing receiver.
+
+42
+00:02:44,879 --> 00:02:49,519
+SharedFlow broadcasts an emission to all active collectors and can replay values according to its configuration.
+
+43
+00:02:51,028 --> 00:02:53,058
+<i>When should Channel be used instead of SharedFlow?</i>
+
+44
+00:02:54,579 --> 00:02:58,529
+Use Channel when queue or single-consumer semantics matter, such as producer-consumer pipelines,
+
+45
+00:02:58,719 --> 00:03:00,779
+work distribution or actor-like communication.
+
+46
+00:03:01,489 --> 00:03:04,139
+Use SharedFlow when every active collector should observe the same emission;
+
+47
+00:03:04,309 --> 00:03:07,449
+neither primitive guarantees durable UI-event delivery across process death.
+
+48
+00:03:08,982 --> 00:03:11,232
+<i>What is the difference between Flow and a suspend function?</i>
+
+49
+00:03:12,763 --> 00:03:15,023
+A suspend function usually returns one result.
+
+50
+00:03:15,723 --> 00:03:18,963
+Flow can emit many values over time and is suitable for observing changes.
+
+51
+00:03:20,494 --> 00:03:22,464
+<i>What is the difference between cold and hot Flow?</i>
+
+52
+00:03:24,011 --> 00:03:26,201
+A cold Flow starts separately for every collector.
+
+53
+00:03:26,911 --> 00:03:30,581
+A hot Flow exists independently of collectors; StateFlow and SharedFlow are hot flows.
+
+54
+00:03:32,102 --> 00:03:34,332
+<i>What is the difference between collect and collectLatest?</i>
+
+55
+00:03:35,830 --> 00:03:37,880
+collect processes every value to completion.
+
+56
+00:03:38,590 --> 00:03:41,630
+collectLatest cancels the previous processing when a new value arrives.
+
+57
+00:03:43,513 --> 00:03:45,143
+<i>When should flatMapLatest be used?</i>
+
+58
+00:03:46,410 --> 00:03:50,000
+Use it when a new input value should switch to a new inner Flow and cancel the previous one.
+
+59
+00:03:50,700 --> 00:03:54,450
+A common example is search by changing query or observing data for a selected ID.
+
+60
+00:03:55,961 --> 00:03:57,841
+<i>What is the difference between combine and zip?</i>
+
+61
+00:03:59,363 --> 00:04:02,723
+combine emits when any source changes and uses the latest values from the others.
+
+62
+00:04:03,433 --> 00:04:06,653
+zip combines values pair by pair and waits for a new item from every source.
+
+63
+00:04:08,169 --> 00:04:09,059
+<i>What is StateFlow?</i>
+
+64
+00:04:10,587 --> 00:04:12,467
+StateFlow is a hot flow for holding state.
+
+65
+00:04:13,167 --> 00:04:17,067
+It always has a current value, and a new collector immediately receives the latest value.
+
+66
+00:04:18,606 --> 00:04:19,496
+<i>What is SharedFlow?</i>
+
+67
+00:04:21,014 --> 00:04:23,844
+SharedFlow is a configurable hot flow for broadcasting values.
+
+68
+00:04:24,554 --> 00:04:27,934
+It is often used for events and effects, with configurable replay and buffering.
+
+69
+00:04:29,446 --> 00:04:30,766
+<i>StateFlow or SharedFlow?</i>
+
+70
+00:04:32,291 --> 00:04:36,441
+StateFlow is suitable for state that must always have a current value and be available to new collectors.
+
+71
+00:04:37,151 --> 00:04:40,241
+SharedFlow is more commonly used for events, signals, and one-off effects.
+
+72
+00:04:41,774 --> 00:04:43,304
+<i>What is lifecycle-aware collection?</i>
+
+73
+00:04:44,811 --> 00:04:48,201
+It means collecting a Flow only while the screen is in an appropriate lifecycle state.
+
+74
+00:04:48,901 --> 00:04:54,148
+In Compose, state is usually collected with collectAsStateWithLifecycle(), while the View system commonly uses repeatOnLifecycle().

@@ -1,0 +1,315 @@
+1
+00:00:00,080 --> 00:00:00,870
+<u>Computer Science</u>
+
+2
+00:00:01,922 --> 00:00:03,332
+<i>Name the principles of OOP</i>
+
+3
+00:00:04,570 --> 00:00:07,550
+Encapsulation, inheritance, polymorphism, and abstraction.
+
+4
+00:00:08,250 --> 00:00:12,930
+They help separate responsibilities, hide implementation details, and work with objects through common contracts.
+
+5
+00:00:13,620 --> 00:00:17,700
+Encapsulation means hiding internal state and implementation details behind a public API.
+
+6
+00:00:18,410 --> 00:00:22,460
+For example, a field can be private, while access to it is controlled through methods or properties.
+
+7
+00:00:23,160 --> 00:00:26,470
+Polymorphism allows us to work with different implementations through a common type.
+
+8
+00:00:27,180 --> 00:00:32,410
+For example, a ViewModel can depend on a Repository interface, while a concrete implementation is provided through DI.
+
+9
+00:00:33,120 --> 00:00:36,990
+Inheritance allows a new class to be created from an existing one and reuse its behavior.
+
+10
+00:00:37,700 --> 00:00:42,050
+Deep inheritance hierarchies increase coupling, so composition is often preferred in application code.
+
+11
+00:00:42,750 --> 00:00:47,580
+Abstraction keeps the important properties and behavior visible while hiding unnecessary implementation details.
+
+12
+00:00:48,290 --> 00:00:53,060
+In Kotlin and Java, it is usually expressed through interfaces, abstract classes, and public contracts.
+
+13
+00:00:54,561 --> 00:00:56,171
+<i>What are mutability and immutability?</i>
+
+14
+00:00:57,689 --> 00:01:01,319
+A mutable object can be changed after creation, while an immutable object cannot.
+
+15
+00:01:02,019 --> 00:01:06,399
+Immutability makes state management, concurrency, and declarative UI easier to reason about.
+
+16
+00:01:08,257 --> 00:01:08,967
+<i>What is SOLID?</i>
+
+17
+00:01:10,242 --> 00:01:15,692
+SOLID is a set of five object-oriented design principles: SRP, OCP, LSP, ISP, and DIP.
+
+18
+00:01:16,392 --> 00:01:19,992
+Their goal is to reduce coupling and make code easier to extend, test, and maintain.
+
+19
+00:01:20,702 --> 00:01:25,342
+Single Responsibility Principle means that a class should have one main responsibility and one reason to change.
+
+20
+00:01:26,042 --> 00:01:31,282
+For example, a ViewModel should not handle networking, database access, formatting, and navigation at the same time.
+
+21
+00:01:31,992 --> 00:01:36,992
+Open/Closed Principle means that software entities should be open for extension but closed for constant modification.
+
+22
+00:01:37,702 --> 00:01:42,812
+New behavior is better added through composition, strategies, and new implementations rather than growing if or when blocks.
+
+23
+00:01:43,512 --> 00:01:47,102
+Liskov Substitution Principle means that a subtype must be able to replace its base type
+
+24
+00:01:47,122 --> 00:01:49,282
+without breaking its contract or expected behavior.
+
+25
+00:01:49,992 --> 00:01:55,162
+Interface Segregation Principle means that several small, focused interfaces are usually better than one large interface.
+
+26
+00:01:55,872 --> 00:01:58,212
+A client should not depend on methods it does not use.
+
+27
+00:01:58,912 --> 00:02:03,292
+Dependency Inversion Principle means that high-level logic should not depend directly on low-level details.
+
+28
+00:02:04,002 --> 00:02:08,292
+Both should depend on abstractions, for example a ViewModel depending on a Repository interface.
+
+29
+00:02:10,150 --> 00:02:11,970
+<i>What practices exist besides SOLID?</i>
+
+30
+00:02:13,234 --> 00:02:19,424
+Examples include DRY, KISS, YAGNI, separation of concerns, composition over inheritance, immutability, dependency injection,
+
+31
+00:02:19,564 --> 00:02:21,074
+code review, and automated testing.
+
+32
+00:02:21,774 --> 00:02:27,184
+These are guidelines rather than absolute rules, and they should be applied based on context to reduce complexity and the cost of change.
+
+33
+00:02:28,689 --> 00:02:29,669
+<i>What is a code smell?</i>
+
+34
+00:02:31,174 --> 00:02:34,564
+A code smell is a sign of a possible design problem, not necessarily a bug.
+
+35
+00:02:35,274 --> 00:02:40,354
+Examples include a very large class, a long method, duplicated code, too many parameters, and strong coupling.
+
+36
+00:02:41,881 --> 00:02:44,031
+<i>What are the main rules for designing a code API?</i>
+
+37
+00:02:45,571 --> 00:02:48,971
+An API should be minimal, clear, consistent, and difficult to misuse.
+
+38
+00:02:49,681 --> 00:02:53,731
+It should hide implementation details, use clear names and types, preserve backward compatibility,
+
+39
+00:02:53,881 --> 00:02:56,011
+and avoid exposing mutable state without a good reason.
+
+40
+00:02:57,550 --> 00:02:58,320
+<i>What is Big O?</i>
+
+41
+00:02:59,843 --> 00:03:04,293
+Big O describes how an algorithm's execution time or memory usage grows as the input size increases.
+
+42
+00:03:05,003 --> 00:03:08,033
+It is a scalability estimate, not an exact time in milliseconds.
+
+43
+00:03:09,537 --> 00:03:11,327
+<i>What is the complexity of binary search?</i>
+
+44
+00:03:12,838 --> 00:03:17,098
+Binary search works in O(log n) because it removes half of the remaining search range on every step.
+
+45
+00:03:17,808 --> 00:03:19,618
+It can only be used with sorted data.
+
+46
+00:03:21,481 --> 00:03:23,341
+<i>What is the average complexity of QuickSort?</i>
+
+47
+00:03:24,594 --> 00:03:28,854
+On average, QuickSort works in O(n log n), while the worst case is O(n²).
+
+48
+00:03:29,554 --> 00:03:33,224
+In practice, good implementations use safer pivot selection and hybrid approaches.
+
+49
+00:03:34,750 --> 00:03:35,880
+<i>ArrayList or LinkedList?</i>
+
+50
+00:03:37,403 --> 00:03:42,033
+ArrayList provides O(1) indexed access and usually performs better in practice because of cache locality.
+
+51
+00:03:42,743 --> 00:03:48,363
+LinkedList is useful less often: indexed lookup is O(n), and fast insertion only helps when the target node is already known.
+
+52
+00:03:49,881 --> 00:03:52,581
+<i>What must be overridden when a class is used as a HashMap key?</i>
+
+53
+00:03:54,099 --> 00:03:56,559
+equals() and hashCode() must be implemented correctly.
+
+54
+00:03:57,269 --> 00:04:00,669
+If two objects are equal according to equals(), they must return the same hash code.
+
+55
+00:04:02,190 --> 00:04:03,500
+<i>What data structures do you know?</i>
+
+56
+00:04:05,030 --> 00:04:10,580
+Common data structures include arrays, dynamic arrays, linked lists, stacks, queues, deques, hash tables, sets, trees,
+
+57
+00:04:10,710 --> 00:04:11,900
+heaps, tries, and graphs.
+
+58
+00:04:13,433 --> 00:04:16,383
+<i>What is the worst-case insertion complexity in a binary search tree?</i>
+
+59
+00:04:17,891 --> 00:04:22,821
+In an unbalanced binary search tree, insertion can degrade to O(n) if the tree becomes similar to a linked list.
+
+60
+00:04:23,531 --> 00:04:27,191
+In a balanced tree, such as an AVL or red-black tree, insertion is O(log n).
+
+61
+00:04:28,718 --> 00:04:30,648
+<i>What is the lookup complexity in a HashMap?</i>
+
+62
+00:04:32,187 --> 00:04:35,107
+Average lookup is O(1) when hash codes are distributed well.
+
+63
+00:04:35,807 --> 00:04:38,247
+In the worst case, many collisions can degrade it to O(n),
+
+64
+00:04:38,457 --> 00:04:42,507
+while modern Java implementations may use a treeified bucket and provide O(log n) lookup there.
+
+65
+00:04:44,377 --> 00:04:47,777
+<i>What happens if several threads modify a regular HashMap at the same time?</i>
+
+66
+00:04:49,026 --> 00:04:54,036
+HashMap is not thread-safe: this can cause lost updates, visibility problems, and an inconsistent internal state.
+
+67
+00:04:54,726 --> 00:04:56,696
+The solution is to confine access to one thread,
+
+68
+00:04:56,896 --> 00:04:59,696
+protect operations with the same lock, or use a concurrent collection.
+
+69
+00:05:01,222 --> 00:05:02,682
+<i>How does ConcurrentHashMap work?</i>
+
+70
+00:05:04,211 --> 00:05:07,721
+ConcurrentHashMap provides thread-safe access without one global lock for the whole map.
+
+71
+00:05:08,431 --> 00:05:13,151
+Reads are mostly non-blocking, while updates use atomic operations and local synchronization for individual buckets;
+
+72
+00:05:13,371 --> 00:05:16,801
+compound operations should use methods such as putIfAbsent(), compute(), or merge().
+
+73
+00:05:18,321 --> 00:05:19,361
+<i>What are stack and heap?</i>
+
+74
+00:05:20,878 --> 00:05:24,738
+The stack stores call frames, local variables, and references, while the heap stores objects.
+
+75
+00:05:25,428 --> 00:05:29,078
+Each thread has its own stack, while the heap is shared and managed by the Garbage Collector.
+
+76
+00:05:30,601 --> 00:05:31,591
+<i>What is a memory leak?</i>
+
+77
+00:05:33,115 --> 00:05:37,155
+A memory leak happens when an object is no longer needed but is still reachable through a chain of references,
+
+78
+00:05:37,335 --> 00:05:38,595
+so the GC cannot remove it.
+
+79
+00:05:39,305 --> 00:05:44,042
+Common Android causes include references to an Activity, listeners, callbacks, and long-lived singleton objects.
