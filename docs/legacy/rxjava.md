@@ -1,156 +1,38 @@
 # RxJava
 
-RxJava is a legacy reactive library for asynchronous streams, events and operator composition. In modern Android, many scenarios have moved to Coroutines and Flow, but RxJava is still common in production code.
+RxJava is a reactive library for composing asynchronous and event-based streams. It is now a legacy choice for most new Android code, where Coroutines and Flow are usually preferred, but it remains common in production applications and migration work.
 
-## Operators
+An Rx chain has three concerns:
 
-### `.map()` vs `.flatMap()`
+- a source such as `Observable`, `Single`, or `Flowable`;
+- operators that transform, combine, schedule, or observe emissions;
+- a subscription represented by a `Disposable`.
 
-`.map()` transforms each stream item into another item.
+Unless an operator states otherwise, an error terminates the stream. Disposing a subscription stops downstream delivery, but cancellation of the underlying work depends on whether the source supports it.
 
-```kotlin
-usersObservable
-    .map { user -> user.name }
-```
+## Core reactive types
 
-`.flatMap()` transforms each stream item into a new `Observable` / `Single` / another reactive source and then merges emissions into the outer stream.
+### `Observable` and `Flowable`
 
-```kotlin
-userIdsObservable
-    .flatMap { id -> api.getUser(id).toObservable() }
-```
+`Observable<T>` emits zero or more items and does not implement the Reactive Streams backpressure protocol. It fits UI events and ordinary streams where the producer cannot overwhelm the consumer or where sampling and dropping are explicitly acceptable.
 
-The main difference: `map` performs a synchronous value -> value transformation, while `flatMap` expands value -> stream and fits async-dependent operations.
+`Flowable<T>` is designed for streams whose producer may be faster than downstream. Backpressure means downstream can request a bounded number of items rather than accepting an unlimited push rate. It is useful for large or high-frequency streams, not automatically for every database or network call.
 
-Link: [RxJava Operator Map vs FlatMap](https://medium.com/mindorks/rxjava-operator-map-vs-flatmap-427c09678784)
+When adapting a non-backpressured source with `toFlowable(strategy)`, choose a strategy from the data contract:
 
-**In short:** `map` transforms an item, `flatMap` starts a new reactive source for the item and merges the results.
+- `BUFFER` keeps pending items, but an unbounded buffer can exhaust memory;
+- `DROP` discards items that cannot be delivered in time;
+- `LATEST` keeps only the newest pending item;
+- `ERROR` reports `MissingBackpressureException` when demand is insufficient;
+- `MISSING` adds no strategy at the boundary, so a downstream backpressure operator must handle it.
 
-### `.flatMap()`, `concatMap()`, `switchMap()`
+Do not treat a strategy as a performance switch. Dropping a payment event is incorrect, while dropping intermediate sensor readings may be acceptable.
 
-`flatMap()` does not guarantee emission order from inner streams. After inner `Observable` instances are created, they run independently, and results can arrive in any order.
+### `Single`, `Maybe`, and `Completable`
 
-`concatMap()` preserves processing order according to the order of source items. But inner streams run sequentially, so the whole pipeline can become slower.
-
-`concatMapEager()` starts inner streams in parallel, but emits results in the original order. This can require more memory because results need to be buffered.
-
-`switchMap()` unsubscribes from the previous inner stream when a new one appears. A typical example is a search field: when the user enters a new query, the old query result is no longer needed.
-
-Links:
-
-- [RxJava FlatMap, SwitchMap and ConcatMap](https://medium.com/appunite-edu-collection/rxjava-flatmap-switchmap-and-concatmap-differences-examples-6d1f3ff88ee0)
-- [flatMap vs concatMap vs concatMapEager](https://www.nurkiewicz.com/2017/08/flatmap-vs-concatmap-vs-concatmapeager.html)
-
-**In short:** `flatMap` gives concurrency without order guarantees, `concatMap` preserves order sequentially, and `switchMap` keeps only the latest relevant inner stream.
-
-### Difference between `observeOn()` and `subscribeOn()`
-
-`subscribeOn()` defines the scheduler where subscription and upstream work closer to the source will run. Usually it does not matter where `subscribeOn()` is placed in the chain: if there are several, the one closer to source creation usually takes effect.
-
-`observeOn()` switches the scheduler for downstream operators below it in the chain, until the next `observeOn()`.
-
-```kotlin
-api.loadUser()
-    .subscribeOn(Schedulers.io())
-    .map { it.toUiModel() }
-    .observeOn(AndroidSchedulers.mainThread())
-    .subscribe { uiModel -> render(uiModel) }
-```
-
-In Android, a typical pattern is: network/database work runs on `Schedulers.io()`, and UI update runs on `AndroidSchedulers.mainThread()`.
-
-Link: [RxJava subscribeOn vs observeOn](https://medium.com/upday-devs/rxjava-subscribeon-vs-observeon-9af518ded53a)
-
-**In short:** `subscribeOn()` affects upstream subscription/source work, while `observeOn()` switches the scheduler for further processing below it in the chain.
-
-### ops: `from`, `just` - purpose and differences
-
-`just()` creates a source that emits the passed argument as is. If several arguments are passed, they are emitted one by one, but the number of arguments is limited by overloads.
-
-```kotlin
-Observable.just("A", "B", "C")
-```
-
-`from...()` creates a source from another data type: `Iterable`, array, `Callable`, `Future`, `Publisher` and so on. For example, `fromIterable()` emits collection items one by one.
-
-```kotlin
-Observable.fromIterable(listOf("A", "B", "C"))
-```
-
-If a list is passed to `just(list)`, downstream receives one item: the list itself. If `fromIterable(list)` is used, downstream receives each list item separately.
-
-Links:
-
-- [Just](http://reactivex.io/documentation/operators/just.html)
-- [From](http://reactivex.io/documentation/operators/from.html)
-
-**In short:** `just()` emits arguments as values, while `fromIterable()` / `from...()` expands a container/source into emissions.
-
-### ops: `doOn...Next`, `...Error`
-
-`doOn...` operators allow running a side effect on different lifecycle events of a reactive chain without changing the emissions themselves.
-
-Common options:
-
-- `doOnNext()` - run an action before passing `onNext` downstream;
-- `doAfterNext()` - run an action after passing `onNext`;
-- `doOnComplete()` - run an action on successful completion;
-- `doOnError()` - run an action on error;
-- `doOnTerminate()` - run an action before termination, regardless of success/error;
-- `doAfterTerminate()` - run an action after termination.
-
-```kotlin
-repository.observeItems()
-    .doOnNext { items -> logger.log("items=${items.size}") }
-    .doOnError { error -> logger.log(error) }
-    .subscribe()
-```
-
-**Important:** `doOn...` is well suited for logging, metrics, debugging and lightweight side effects. Business logic should not be hidden in side-effect operators.
-
-Link: [Do operator documentation](http://reactivex.io/documentation/operators/do.html)
-
-**In short:** `doOn...` operators add side effects to stream lifecycle events without transforming data.
-
-## Types and Backpressure
-
-### `Observable` vs `Flowable`
-
-`Observable` has no built-in backpressure strategy. If the producer emits items faster than the consumer can process them, memory problems or `MissingBackpressureException` are possible in places where backpressure is expected.
-
-`Flowable` is designed for streams where backpressure matters: fast event sources, large data volumes, sensors, streams from a producer that can be faster than the consumer.
-
-Backpressure is a situation where items are produced faster than downstream can process them.
-
-Link: [RxJava 2 Flowable](https://www.baeldung.com/rxjava-2-flowable)
-
-**In short:** `Observable` fits regular streams without backpressure, while `Flowable` is needed where a producer can overwhelm a consumer.
-
-### `Flowable` - backpressure strategies
-
-`Flowable` supports different backpressure strategies.
-
-`Buffer` - events that cannot be processed in time go into a buffer. This fits cases where every event must be processed, but it is dangerous for infinite or too-fast streams.
-
-`Drop` - events that cannot be processed in time are discarded. Example: sensor data where too high frequency is unnecessary.
-
-`Latest` - only the latest relevant event is kept among those downstream cannot process in time.
-
-`Error` - when backpressure appears, `MissingBackpressureException` is thrown. This fits cases where backpressure is unexpected and should be treated as an error.
-
-`Missing` - no strategy is set at source level, and backpressure should be handled later in the chain.
-
-Link: [RxJava 2 Flowable](https://www.baeldung.com/rxjava-2-flowable)
-
-**In short:** backpressure strategy is chosen by stream semantics: process everything, drop extra items, keep the latest or fail explicitly.
-
-### `Single`, `Completable`, `Maybe`
-
-`Single<T>` emits exactly one item or an error. A good example is loading an object by id.
-
-`Maybe<T>` emits one item, an error, or completes without a value. It fits search where the result may be absent.
-
-`Completable` does not emit a value: it either completes successfully or with an error. It fits operations such as update/delete/save, where only completion matters.
+- `Single<T>` emits exactly one value or an error.
+- `Maybe<T>` emits one value, completes empty, or reports an error.
+- `Completable` emits no value and only completes or reports an error.
 
 ```kotlin
 fun loadUser(id: String): Single<User>
@@ -158,43 +40,91 @@ fun findCachedUser(id: String): Maybe<User>
 fun updateUser(user: User): Completable
 ```
 
-Link: [RxJava Single, Maybe and Completable](https://android.jlelse.eu/rxjava-single-maybe-and-completable-8686db42bac8)
+Choose the narrowest type that expresses the contract. A possibly missing database row is usually a `Maybe`, while a save whose result is only success or failure is a `Completable`.
 
-**In short:** `Single` - one value, `Maybe` - value or empty, `Completable` - only success/error without value.
+## Transforming inner sources
 
-## More Operators
+### `map` and `flatMap`
 
-### ops: `defer`, `debounce`
-
-`defer()` creates the source only at subscription time. Each subscriber gets a new "fresh" source.
+`map` performs a one-to-one synchronous transformation. It does not introduce another reactive source.
 
 ```kotlin
-val source = Observable.defer {
-    Observable.just(System.currentTimeMillis())
-}
+usersObservable.map { user -> user.name }
 ```
 
-`debounce()` waits for a specified interval after an emission. If a new value arrives during that time, the previous one is discarded and the timer starts again. When the pause is long enough, the latest value passes downstream.
+`flatMap` maps each item to an inner source and merges its emissions into the outer stream. It is suitable for dependent asynchronous work.
 
-A typical scenario is a search field:
+```kotlin
+userIdsObservable
+    .flatMap { id -> api.getUser(id).toObservable() }
+```
+
+### `flatMap`, `concatMap`, and `switchMap`
+
+These operators differ in concurrency, ordering, and cancellation:
+
+- `flatMap` may subscribe to several inner sources concurrently and does not preserve their emission order;
+- `concatMap` waits for each inner source to complete before subscribing to the next, preserving source order;
+- `concatMapEager` subscribes eagerly but buffers results to emit them in source order;
+- `switchMap` disposes the previous inner subscription when a new source item arrives and keeps only the latest inner source active.
+
+`switchMap` is useful for search queries, but disposal is not a transaction rollback. A disposed network request may still reach the server, so writes must not rely on `switchMap` for correctness.
 
 ```kotlin
 queryChanges
     .debounce(300, TimeUnit.MILLISECONDS)
+    .distinctUntilChanged()
     .switchMap { query -> api.search(query).toObservable() }
 ```
 
-**In short:** `defer` delays source creation until subscription, while `debounce` passes only the value after a pause in emissions.
+## Scheduling
 
-### ops: `groupBy`, `combineLatest`, `withLatestFrom`, `switchOnNext`
+### `subscribeOn` and `observeOn`
 
-`groupBy()` turns a stream of items into a stream of grouped streams. Each inner stream contains a subset of source items by key.
+`subscribeOn(scheduler)` schedules subscription to the upstream source. Its position in a simple chain does not change which upstream source it affects. With multiple `subscribeOn` calls, the one closest to the source normally controls where the source subscription begins; extra switches make behavior harder to reason about.
 
-`combineLatest()` emits a result when any source stream emits a new value, using the latest values from the other sources. It starts working after each source has emitted at least one value.
+`observeOn(scheduler)` moves downstream notifications to that scheduler from that point until another `observeOn` changes it. It also introduces an asynchronous boundary and buffering, so unnecessary switches have a cost.
 
-`withLatestFrom()` is similar to `combineLatest`, but only the main source initiates emission. The second source value is taken as the latest context.
+```kotlin
+api.loadUser()
+    .subscribeOn(Schedulers.io())
+    .map { it.toUiModel() }
+    .observeOn(AndroidSchedulers.mainThread())
+    .subscribe(
+        { uiModel -> render(uiModel) },
+        { error -> showError(error) },
+    )
+```
 
-`switchOnNext()` works with a stream of streams: it subscribes to the latest inner `Observable` and unsubscribes from the previous one. As a result, downstream receives emissions only from the current inner stream.
+`Schedulers.io()` is intended for blocking I/O and may grow its thread pool. CPU-intensive work belongs on `Schedulers.computation()`. UI access belongs on `AndroidSchedulers.mainThread()`.
+
+## Creating sources
+
+### `just`, `fromIterable`, and `defer`
+
+`just(value)` captures and emits the supplied value. `Observable.just(list)` emits one item - the list itself. `fromIterable(list)` emits every list element separately.
+
+```kotlin
+Observable.just(listOf("A", "B"))          // Observable<List<String>>
+Observable.fromIterable(listOf("A", "B")) // Observable<String>
+```
+
+`defer` creates a new source for each subscriber at subscription time. Use it when a value or decision must be evaluated lazily rather than captured while the chain is assembled.
+
+```kotlin
+val currentTime = Observable.defer {
+    Observable.just(System.currentTimeMillis())
+}
+```
+
+## Combining streams
+
+- `merge` forwards emissions from all sources as they arrive; cross-source order is not guaranteed.
+- `concat` subscribes to sources sequentially and waits for each one to complete.
+- `zip` combines the first item from each source, then the second item from each, and so on.
+- `combineLatest` emits after every source has emitted once, then reacts whenever any source changes.
+- `withLatestFrom` emits only when the primary source emits and adds the latest values from the other sources.
+- `switchOnNext` consumes a stream of streams and forwards only the latest inner stream.
 
 ```kotlin
 Observable.combineLatest(user, settings) { userValue, settingsValue ->
@@ -202,30 +132,37 @@ Observable.combineLatest(user, settings) { userValue, settingsValue ->
 }
 ```
 
-**In short:** `groupBy` groups a stream, `combineLatest` reacts to any source, `withLatestFrom` adds latest context, and `switchOnNext` switches to the latest inner stream.
+Be careful with sources that never complete: a `concat` chain may never reach its next source, and `zip` may wait forever for the next matching item.
 
-### ops: `merge`, `concat`, `zip`
+## Side effects, errors, and disposal
 
-`merge()` combines emissions from several streams into one downstream stream without preserving order between sources.
-
-`concat()` also combines streams, but runs them sequentially: first all emissions from the first source until completion, then the second, and so on.
-
-`zip()` combines emissions pairwise: the first item of the first stream with the first item of the second, the second with the second, and so on.
+`doOnNext`, `doOnError`, `doOnComplete`, `doOnSubscribe`, `doOnDispose`, and `doFinally` observe lifecycle events without changing the normal emissions. They are useful for logging, metrics, tracing, and cleanup. Keep business state transitions in explicit operators or subscribers instead of hiding them in `doOn...` callbacks.
 
 ```kotlin
-Observable.zip(userSingle.toObservable(), settingsSingle.toObservable()) { user, settings ->
-    UiModel(user, settings)
-}
+repository.observeItems()
+    .doOnNext { items -> logger.log("items=${items.size}") }
+    .doOnError(logger::log)
+    .doFinally { progress.hide() }
 ```
 
-Links:
+Always define an error path. A one-argument `subscribe` has no application error handler, and unhandled errors may reach `RxJavaPlugins.onError`. Use `onErrorReturn`, `onErrorResumeNext`, or `retry` only when their semantics match the operation. Unbounded retry loops can amplify outages or repeat non-idempotent writes.
 
-- [defer](http://reactivex.io/documentation/operators/defer.html)
-- [groupBy](http://reactivex.io/documentation/operators/groupby.html)
-- [debounce](http://reactivex.io/documentation/operators/debounce.html)
-- [combineLatest](http://reactivex.io/documentation/operators/combinelatest.html)
-- [merge](http://reactivex.io/documentation/operators/merge.html)
-- [concat](http://reactivex.io/documentation/operators/concat.html)
-- [zip](http://reactivex.io/documentation/operators/zip.html)
+On Android, bind subscriptions to an explicit owner. A `CompositeDisposable` is commonly cleared when the corresponding screen, presenter, or component is destroyed. A retained subscription that captures an `Activity`, `Fragment`, or View can leak it or deliver a late UI update.
 
-**In short:** `merge` mixes emissions, `concat` preserves sequential source execution, and `zip` combines emissions pairwise.
+## Migrating to Coroutines and Flow
+
+Migrate at boundaries rather than rewriting every chain at once. First preserve behavior with tests, including ordering, cancellation, retry, and empty-result semantics. Then replace one API or feature and keep adapters at the boundary while both models coexist.
+
+Typical conceptual mappings include:
+
+- `Single<T>` -> `suspend () -> T`;
+- `Maybe<T>` -> `suspend () -> T?` when absence is the only empty outcome;
+- `Completable` -> `suspend () -> Unit`;
+- `Observable<T>` / `Flowable<T>` -> `Flow<T>` with an explicitly chosen buffering policy;
+- `switchMap` -> `flatMapLatest`, `concatMap` -> `flatMapConcat`.
+
+The types are not mechanically equivalent. Rx disposal and coroutine cancellation propagate differently, Flow is cold by default, and backpressure strategies do not map one-to-one to Flow buffering. Review ownership and cancellation at every bridge.
+
+Related topics: [Flow Basics](../coroutines-flow/flow-basics.md), [Flow Operators](../coroutines-flow/flow-operators.md), and [Coroutine Scopes & Cancellation](../coroutines-flow/scopes-cancellation.md).
+
+References: [RxJava project and documentation](https://github.com/ReactiveX/RxJava), [ReactiveX operator reference](https://reactivex.io/documentation/operators.html).

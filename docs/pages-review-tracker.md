@@ -91,8 +91,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/reliability.md`, Reliability & Failure Handling, Уточнены повторные попытки, идемпотентность и проверки состояния сервиса.
 1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/diagrams.md`, System Design Diagrams, Добавлен сценарий потерянного ответа и прояснён смысл связей на схемах.
 1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/offline-first-mobile.md`, Offline-First Mobile Application, Уточнены сохранение операций, безопасные повторы, удаления и смена аккаунта.
-1. P1, **TODO**, , `di/legacy-di.md`, Legacy DI
-1. P1, **TODO**, , `legacy/rxjava.md`, RxJava
+1. P1, **UPDATED**, 2026-10-11, `di/legacy-di.md`, Legacy DI, Clarified Dagger and Toothpick validation and scope lifetimes, separated Moxy presentation concerns from DI, added lifecycle and migration checks, removed repetitive summaries, and synchronized EN/RU.
+1. P1, **UPDATED**, 2026-10-12, `legacy/rxjava.md`, RxJava, Clarified reactive types, backpressure, operator ordering, scheduling, error handling and subscription ownership; added Android lifecycle guidance and a behavior-preserving migration strategy for Coroutines and Flow; synchronized EN/RU and removed repetitive summaries.
 1. P2, **TODO**, , `android/index.md`, Android Overview
 1. P2, **TODO**, , `kotlin/index.md`, Kotlin Overview
 1. P2, **TODO**, , `compose/index.md`, Compose Overview

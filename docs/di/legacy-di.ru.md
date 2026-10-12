@@ -1,33 +1,25 @@
 # Legacy DI
 
-Legacy DI-подходы всё ещё встречаются в Android-проектах, особенно рядом с MVP, Moxy, RxJava и старой multi-module архитектурой.
+В старых Android-проектах Dagger или Toothpick часто соседствуют с MVP, Moxy и RxJava. Dependency injection (DI, внедрение зависимостей) отвечает за создание и связывание объектов; Moxy - фреймворк для слоя представления, а не DI-контейнер. Перед изменениями нужно проследить и граф зависимостей, и жизненный цикл экрана.
 
-## Legacy frameworks
+## Dagger и Toothpick
 
-### Dagger vs Toothpick
+Dagger генерирует код привязок и проверяет граф зависимостей при компиляции. Отсутствующие привязки и многие ошибки графа приводят к ошибке сборки. Toothpick разрешает зависимости через runtime scopes, поэтому часть ошибок конфигурации проявляется только при выполнении соответствующего сценария. Ни один из подходов сам по себе не гарантирует правильное время жизни scope и отсутствие утечек.
 
-Dagger и Toothpick - оба DI frameworks, но отличаются моментом проверки graph-а и моделью работы.
+В legacy-фиче определите:
 
-Dagger строит dependency graph на этапе компиляции, генерирует код и даёт compile-time validation. Если binding отсутствует, scope несовместим или graph нельзя собрать, ошибка обычно появляется при сборке проекта.
+- где находится composition root и кто открывает и закрывает каждый scope;
+- какие объекты общие для нескольких экранов, переживают смену конфигурации или принадлежат конкретному View;
+- как в граф попадают runtime-параметры и как проверяются отсутствующие привязки.
 
-Toothpick исторически был runtime DI framework: он проще входил в Android legacy-код, давал scopes и меньше compile-time boilerplate, но часть ошибок обнаруживается только во время выполнения.
+Не заменяйте Toothpick на Hilt механически. Сначала зафиксируйте владельцев объектов и границы scope, затем переносите по одной фиче. Проверьте создание экрана, его пересоздание, уход с экрана и выход из аккаунта, если он есть. Scope, живущий дольше своего владельца, может удерживать presenter, View или пользовательские данные, даже если зависимости успешно разрешаются.
 
-Практический trade-off: Dagger/Hilt обычно быстрее и безопаснее для больших production проектов, потому что graph проверяется заранее и нет reflection-heavy runtime lookup. Toothpick мог быть удобен в legacy-проектах с MVP/Moxy и кастомными scope-ами, но требует дисциплины и хороших тестов, чтобы не ловить DI ошибки поздно.
+О современном подходе на базе Dagger см. [Dagger / Hilt](dagger-hilt.md) и [основы DI](basics.md).
 
-В modern Android чаще выбирают Hilt поверх Dagger. Если в проекте уже есть Toothpick, его обычно не заменяют механически: сначала изолируют composition root, interfaces и scopes, а затем постепенно переносят feature за feature.
+## Moxy и жизненный цикл представления
 
-**Коротко:** Dagger gives generated code and compile-time graph validation, while Toothpick is more runtime-oriented and simpler for some legacy setups, but with later error detection.
+Moxy реализует MVP с помощью сгенерированного кода для состояния View и делегатов. Presenter может пережить смену конфигурации и подключиться к новому View, но это не означает сохранения состояния после смерти процесса. Проверьте настройку делегатов и восстановление состояния в конкретном проекте.
 
-### Moxy dependencies / legacy patterns
+Если DI создаёт presenter, выясните, кто им владеет, когда View подключается и отключается и кто освобождает подписки RxJava или отменяет асинхронную работу. Поздний callback или ошибочно удерживаемая ссылка на View могут обновить уничтоженный экран или вызвать утечку `Activity` / `Fragment`. Проверьте также, не получает ли сохранённый presenter короткоживущую зависимость от View через более долгоживущий scope.
 
-Moxy - legacy Android MVP framework, который помогал отделять Presenter от `Activity` / `Fragment` и переживать configuration changes через generated delegate/proxy-код.
-
-В старых Android-проектах Moxy часто встречается вместе с MVP, Cicerone/RxJava и Dagger/Toothpick. View обычно описывалась интерфейсом, Presenter держал presentation logic, а `Activity` / `Fragment` реализовывали View interface и вызывали attach/detach через lifecycle.
-
-Главный риск Moxy/MVP legacy - lifecycle coupling: Presenter может держать reference на View, callbacks могут прийти после уничтожения экрана, а зависимости часто оказываются спрятаны в base classes, custom scopes или service locator-like helpers.
-
-При поддержке такого кода важно не ломать lifecycle contract: сначала понять, кто создаёт Presenter, где происходит injection, как View attach/detach связан с `Fragment` / `Activity` lifecycle и где хранятся subscriptions/disposables.
-
-При миграции на modern Android обычно не переписывают всё сразу. Практичный путь - выделить repository/use case слой, стабилизировать UI contract, заменить Presenter на `ViewModel` там, где feature уже готова к migration, и постепенно перейти к `StateFlow` / `UiState`.
-
-**Коротко:** Moxy is a legacy MVP framework; when refactoring it, first protect lifecycle behavior and then migrate presentation logic toward `ViewModel` and state-driven UI gradually.
+При миграции сначала закрепите текущее поведение UI точечными тестами, выделите переиспользуемый код данных и домена, затем переводите по одному экрану на `ViewModel` и явный `UiState`, если это подходит фиче. Отдельно решите, какое состояние должно переживать смену конфигурации, а какое - смерть процесса: один `ViewModel` не даёт долговременного сохранения. См. [Legacy & Refactoring](../architecture/legacy-refactoring.md) и [RxJava](../legacy/rxjava.md).
