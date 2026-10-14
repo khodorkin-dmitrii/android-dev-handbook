@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-10
+1. Last tracker update: 2026-10-14
 1. Total articles tracked: 107
-1. Updated: 66
-1. TODO: 41
+1. Updated: 70
+1. TODO: 37
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
-| P1 | 40 | 38      | 2    |
-| P2 | 40 | 1       | 39   |
+| P1 | 40 | 40      | 0    |
+| P2 | 40 | 3       | 37   |
 
 ## Tracker
 
@@ -93,8 +93,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-10, `engineering/system-design/offline-first-mobile.md`, Offline-First Mobile Application, Уточнены сохранение операций, безопасные повторы, удаления и смена аккаунта.
 1. P1, **UPDATED**, 2026-10-11, `di/legacy-di.md`, Legacy DI, Clarified Dagger and Toothpick validation and scope lifetimes, separated Moxy presentation concerns from DI, added lifecycle and migration checks, removed repetitive summaries, and synchronized EN/RU.
 1. P1, **UPDATED**, 2026-10-12, `legacy/rxjava.md`, RxJava, Clarified reactive types, backpressure, operator ordering, scheduling, error handling and subscription ownership; added Android lifecycle guidance and a behavior-preserving migration strategy for Coroutines and Flow; synchronized EN/RU and removed repetitive summaries.
-1. P2, **TODO**, , `android/index.md`, Android Overview
-1. P2, **TODO**, , `kotlin/index.md`, Kotlin Overview
+1. P2, **UPDATED**, 2026-10-13, `android/index.md`, Android Overview, Reorganized the section into platform, execution, build/performance, and graphics topics; added a learning path and missing links for Gradle, Binder/AIDL, system services, and AGSL; synchronized EN/RU.
+1. P2, **UPDATED**, 2026-10-14, `kotlin/index.md`, Kotlin Overview, Added a practical learning path, grouped language foundations, collections and reusable APIs, initialization and interoperability topics, expanded article descriptions, and synchronized EN/RU navigation.
 1. P2, **TODO**, , `compose/index.md`, Compose Overview
 1. P2, **TODO**, , `coroutines-flow/index.md`, Coroutines & Flow Overview
 1. P2, **TODO**, , `architecture/index.md`, Architecture Overview
