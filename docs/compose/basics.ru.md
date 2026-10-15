@@ -112,6 +112,7 @@ Drawing - фаза отрисовки. Здесь Compose рисует уже и
 
 ## Related topics
 
+- [Layouts и контейнеры Compose](layouts.md)
 - [State & Recomposition](state-recomposition.md)
 - [Side Effects](side-effects.md)
 - [Compose Performance](performance.md)

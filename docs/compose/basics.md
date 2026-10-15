@@ -112,6 +112,7 @@ For example, if color is read inside `Modifier.drawBehind { drawCircle(color) }`
 
 ## Related topics
 
+- [Compose Layouts & Containers](layouts.md)
 - [State & Recomposition](state-recomposition.md)
 - [Side Effects](side-effects.md)
 - [Compose Performance](performance.md)

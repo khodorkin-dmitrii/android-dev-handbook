@@ -251,7 +251,7 @@ Jetpack Compose - декларативный UI toolkit для Android. UI оп�
 
 ### Какие базовые Compose-контейнеры используются для расположения элементов?
 
-`Row` располагает элементы горизонтально, `Column` - вертикально, а `Box` позволяет накладывать их друг на друга. Для больших прокручиваемых наборов используются `LazyColumn`, `LazyRow` и lazy grids.
+`Row` располагает элементы горизонтально, `Column` - вертикально, а `Box` позволяет накладывать их друг на друга. Для больших одномерных коллекций используют `LazyColumn` и `LazyRow`, а для lazy grids - `LazyVerticalGrid` и `LazyHorizontalGrid`. `FlowRow` и `FlowColumn` переносят небольшие наборы, но не являются lazy; `BoxWithConstraints` адаптируется к constraints родителя, а `Scaffold` организует стандартные slots Material-экрана. Подробнее: [Layouts и контейнеры Compose](compose/layouts.md).
 
 ### Какие аннотации стабильности есть в Compose?
 

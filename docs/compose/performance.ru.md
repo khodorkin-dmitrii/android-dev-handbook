@@ -151,6 +151,7 @@ State должен меняться из user events, effects, ViewModel или 
 
 ## Связанные темы
 
+- [Layouts и контейнеры Compose](layouts.md)
 - [State & Recomposition](state-recomposition.md)
 - [Side Effects](side-effects.md)
 - [Performance Profiling and Benchmarking](../tools/performance-profiling.md)

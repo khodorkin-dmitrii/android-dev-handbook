@@ -5,6 +5,7 @@ This section covers Jetpack Compose: declarative UI, composable functions, state
 ## Section structure
 
 - [Compose Basics](basics.md)
+- [Compose Layouts & Containers](layouts.md)
 - [State & Recomposition](state-recomposition.md)
 - [Side Effects](side-effects.md)
 - [Compose Performance](performance.md)

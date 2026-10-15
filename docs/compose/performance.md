@@ -151,6 +151,7 @@ State should change from user events, effects, ViewModel, or another explicit st
 
 ## Related topics
 
+- [Compose Layouts & Containers](layouts.md)
 - [State & Recomposition](state-recomposition.md)
 - [Side Effects](side-effects.md)
 - [Performance Profiling and Benchmarking](../tools/performance-profiling.md)

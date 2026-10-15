@@ -80,6 +80,7 @@ plugins:
             Architecture and UI Strategies: Архитектура и стратегии UI
             KMP Adoption and Trade-offs: Внедрение KMP и компромиссы
             Compose Basics: Основы Compose
+            Compose Layouts & Containers: Layouts и контейнеры Compose
             State & Recomposition: State & Recomposition
             Side Effects: Side Effects
             Compose Navigation: Compose Navigation
@@ -214,6 +215,7 @@ nav:
   - Compose:
       - Overview: compose/index.md
       - Compose Basics: compose/basics.md
+      - Compose Layouts & Containers: compose/layouts.md
       - State & Recomposition: compose/state-recomposition.md
       - Side Effects: compose/side-effects.md
       - Compose Navigation: compose/navigation.md
