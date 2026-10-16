@@ -48,6 +48,18 @@ class RoleAudioTest(unittest.TestCase):
         self.assertEqual("<i>Что такое SOLID?</i>", role_audio.styled_subtitle_text("question", "Что такое SOLID?"))
         self.assertEqual("Обычный ответ.", role_audio.styled_subtitle_text("answer", "Обычный ответ."))
 
+    def test_audio_answer_omits_compose_navigation_suffixes(self):
+        english = (
+            "### Question\n\nAnswer text. "
+            "See [Compose Layouts & Containers](compose/layouts.md).\n"
+        )
+        russian = (
+            "### Вопрос\n\nТекст ответа. "
+            "Подробнее: [Layouts и контейнеры Compose](compose/layouts.md).\n"
+        )
+        self.assertEqual("Answer text.", role_audio.answer_text(english))
+        self.assertEqual("Текст ответа.", role_audio.answer_text(russian))
+
     def test_preparation_artifacts_can_be_written_offline(self):
         with TemporaryDirectory(dir=role_audio.ROOT / "build") as temporary:
             previous_work_dir = role_audio.WORK_DIR

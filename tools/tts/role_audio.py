@@ -39,6 +39,14 @@ VOLUME = "+0%"
 PITCH = "+0Hz"
 GAP_SECONDS = 0.8
 
+# Navigation-only suffixes remain useful in the handbook, but should not be
+# spoken or included in audio subtitles. Keep this list deliberately narrow so
+# ordinary answer sentences that start with "See" or "Подробнее" are preserved.
+AUDIO_EXCLUDED_SUFFIXES = (
+    "See Compose Layouts & Containers.",
+    "Подробнее: Layouts и контейнеры Compose.",
+)
+
 CHAPTER_CONFIG = {
     "Computer Science": (1, "computer-science"),
     "Kotlin": (2, "kotlin"),
@@ -120,6 +128,13 @@ def mapped_sections(markdown: str, level: int) -> list[tuple[str, str]]:
     ]
 
 
+def strip_audio_excluded_suffixes(text: str) -> str:
+    for suffix in AUDIO_EXCLUDED_SUFFIXES:
+        if text.endswith(suffix):
+            return text.removesuffix(suffix).rstrip()
+    return text
+
+
 def answer_text(question_markdown: str) -> str:
     values: list[str] = []
     heading: str | None = None
@@ -134,7 +149,7 @@ def answer_text(question_markdown: str) -> str:
                 values.append(value)
     if not values:
         raise ValueError("Question has no visible answer")
-    return "\n\n".join(values)
+    return strip_audio_excluded_suffixes("\n\n".join(values))
 
 
 def read_pronunciation(path: Path = PRONUNCIATION) -> dict[str, str]:

@@ -23,6 +23,11 @@ If the environment already exists, only install the requirements. On macOS/Linux
 replace `build/tts-venv/Scripts/python` with `build/tts-venv/bin/python`.
 Dependencies and generated files stay separate from the handbook build.
 
+The requirements pin `edge-tts` 7.3.0 because it implements the paired v2
+`Sec-MS-GEC` token and protocol version required by the current service. An
+environment that still contains 7.2.8 uses the rejected v1 handshake and fails
+with HTTP 403. Reinstall the requirements after pulling a dependency update.
+
 ## Generate chapter texts
 
 Each level-2 (`##`) section in `docs/shorts.ru.md` becomes one independent

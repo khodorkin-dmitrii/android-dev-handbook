@@ -251,7 +251,7 @@ Jetpack Compose is a declarative UI toolkit for Android. UI is described as a fu
 
 ### Which basic Compose containers are used to arrange elements?
 
-`Row` arranges elements horizontally, `Column` vertically, and `Box` supports overlap. `LazyColumn` and `LazyRow` handle large one-dimensional collections, while `LazyVerticalGrid` and `LazyHorizontalGrid` provide lazy grids. `FlowRow` and `FlowColumn` wrap small sets but are not lazy; `BoxWithConstraints` adapts to parent constraints, and `Scaffold` organizes standard Material screen slots. See [Compose Layouts & Containers](compose/layouts.md).
+`Row` arranges elements horizontally, `Column` vertically, and `Box` supports overlap. `LazyColumn` and `LazyRow` handle large one-dimensional collections, while `LazyVerticalGrid` and `LazyHorizontalGrid` provide lazy grids. `FlowRow` and `FlowColumn` wrap small sets but are not lazy; `BoxWithConstraints` adapts to parent constraints, and `Scaffold` organizes standard Material screen slots.
 
 ### Which stability annotations exist in Compose?
 

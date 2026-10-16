@@ -111,7 +111,7 @@ def cue_parts(item: preparation.Segment) -> list[str]:
     return result
 
 
-def validate_cue_plan(items: list[preparation.Segment]) -> None:
+def validate_cue_plan(items: list[preparation.Segment], chapters: set[int] | None = None) -> None:
     ru_items = {
         (item.chapter, item.ordinal): item
         for item in role_audio.build_segments() if item.kind == "answer"
@@ -120,6 +120,8 @@ def validate_cue_plan(items: list[preparation.Segment]) -> None:
     if not set(CUE_ENDINGS).issubset(answer_keys):
         raise ValueError("Cue override refers to an absent answer")
     for item in items:
+        if chapters is not None and item.chapter not in chapters:
+            continue
         if item.kind != "answer":
             continue
         actual = len(cue_parts(item))
@@ -129,17 +131,26 @@ def validate_cue_plan(items: list[preparation.Segment]) -> None:
     for chapter, slug in preparation.CHAPTER_CONFIG.values():
         if chapter == preparation.PROTECTED_CHAPTER:
             continue
+        if chapters is not None and chapter not in chapters:
+            continue
         expected = sum(len(cue_parts(item)) for item in ordered_items(items, chapter))
-        ru_srt = ROOT / f"docs/assets/audio/shorts/ru/{chapter:02d}-ru-shorts-{slug}.srt"
+        draft = ROOT / f"build/audio/shorts-ru/{chapter:02d}-ru-{slug}/{chapter:02d}-ru-shorts-{slug}.srt"
+        ru_srt = draft if draft.is_file() else ROOT / f"docs/assets/audio/shorts/ru/{chapter:02d}-ru-shorts-{slug}.srt"
         actual = len(ru_srt.read_text(encoding="utf-8").strip().split("\n\n"))
         if actual != expected:
             raise ValueError(f"Chapter {chapter:02d}: {expected} English cues vs {actual} Russian cues")
 
 
-def validate_synthesis(manifest: dict[str, Any], items: list[preparation.Segment]) -> None:
+def validate_synthesis(
+    manifest: dict[str, Any],
+    items: list[preparation.Segment],
+    chapters: set[int] | None = None,
+) -> None:
     lookup = {item.id: item for item in items}
     assigned: list[str] = []
     for batch in manifest["batches"]:
+        if chapters is not None and not any(lookup[id_].chapter in chapters for id_ in batch["segment_ids"]):
+            continue
         stem = batch["id"]
         media = preparation.SYNTHESIS_DIR / f"{stem}.mp3"
         metadata_path = preparation.SYNTHESIS_DIR / f"{stem}.boundaries.json"
@@ -161,14 +172,25 @@ def validate_synthesis(manifest: dict[str, Any], items: list[preparation.Segment
         batch_items = [lookup[id_] for id_ in batch["segment_ids"]]
         role_audio.align_boundaries([role_audio.Segment(**{**asdict(item), "batch": stem}) for item in batch_items], boundaries)
         assigned.extend(batch["segment_ids"])
-    if len(assigned) != len(items) or set(assigned) != set(lookup):
+    expected_ids = {
+        item.id for item in items if chapters is None or item.chapter in chapters
+    }
+    if chapters is None and (len(assigned) != len(items) or set(assigned) != set(lookup)):
         raise ValueError("Batch segment coverage differs from manifest")
+    if chapters is not None and not expected_ids.issubset(assigned):
+        raise ValueError("Selected chapter segments are not covered by validated batches")
 
 
-def split_requests(manifest: dict[str, Any], items: list[preparation.Segment]) -> None:
+def split_requests(
+    manifest: dict[str, Any],
+    items: list[preparation.Segment],
+    chapters: set[int] | None = None,
+) -> None:
     lookup = {item.id: item for item in items}
     chapter_entries: dict[int, list[dict[str, Any]]] = {}
     for batch in manifest["batches"]:
+        if chapters is not None and not any(lookup[id_].chapter in chapters for id_ in batch["segment_ids"]):
+            continue
         stem = batch["id"]
         media = preparation.SYNTHESIS_DIR / f"{stem}.mp3"
         metadata = json.loads((preparation.SYNTHESIS_DIR / f"{stem}.boundaries.json").read_text(encoding="utf-8"))
@@ -180,7 +202,10 @@ def split_requests(manifest: dict[str, Any], items: list[preparation.Segment]) -
         ends = [role_audio.seconds_from_ticks(boundaries[last]["offset"] + boundaries[last]["duration"]) for _, last in positions]
         cuts = [0.0] + [(end + start) / 2 if start >= end else start for end, start in zip(ends, starts[1:])]
         cut_ends = cuts[1:] + [role_audio.media_duration(media)]
+        written = 0
         for item, (first, last), cut_start, cut_end in zip(batch_items, positions, cuts, cut_ends):
+            if chapters is not None and item.chapter not in chapters:
+                continue
             directory = chapter_dir(item)
             directory.mkdir(parents=True, exist_ok=True)
             output = directory / f"{item.output_stem}.mp3"
@@ -205,13 +230,24 @@ def split_requests(manifest: dict[str, Any], items: list[preparation.Segment]) -
                 item.canonical_text, "", "## TTS text", "", item.tts_text, "",
             ]), encoding="utf-8")
             chapter_entries.setdefault(item.chapter, []).append(entry)
-        print(f"SPLIT {stem}: {len(batch_items)} segments", flush=True)
+            written += 1
+        print(f"SPLIT {stem}: {written} selected segments", flush=True)
     for chapter, entries in chapter_entries.items():
         order = {item.id: index for index, item in enumerate(ordered_items(items, chapter))}
         entries.sort(key=lambda entry: order[entry["id"]])
         directory = chapter_dir(ordered_items(items, chapter)[0])
+        path = directory / "segments.json"
+        existing = {"schema": 1, "segments": []}
+        if path.is_file():
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        replacement_ids = {entry["id"] for entry in entries}
+        merged = [
+            entry for entry in existing["segments"] if entry["id"] not in replacement_ids
+        ]
+        merged.extend(entries)
+        merged.sort(key=lambda entry: order[entry["id"]])
         (directory / "segments.json").write_text(
-            json.dumps({"schema": 1, "segments": entries}, ensure_ascii=False, indent=2) + "\n",
+            json.dumps({"schema": 1, "segments": merged}, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
 
@@ -300,23 +336,29 @@ def make_subtitles(items: list[preparation.Segment]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check-only", action="store_true", help="validate input artifacts and cue plan without writing outputs")
+    parser.add_argument("--chapter", action="append", type=int, help="limit work to a chapter; repeatable")
     args = parser.parse_args()
     manifest, items = read_manifest()
-    validate_cue_plan(items)
-    validate_synthesis(manifest, items)
-    print("Validated 31 TTS packages, 271 segments, and Russian-matched cue plan", flush=True)
+    available = {
+        chapter for chapter, _ in preparation.CHAPTER_CONFIG.values()
+        if chapter != preparation.PROTECTED_CHAPTER
+    }
+    chapters = set(args.chapter) if args.chapter else available
+    if not chapters or not chapters.issubset(available):
+        parser.error(f"--chapter must select active chapters: {sorted(available)}")
+    validate_cue_plan(items, chapters)
+    validate_synthesis(manifest, items, chapters)
+    print(f"Validated selected TTS packages and cue plan for chapters {sorted(chapters)}", flush=True)
     if args.check_only:
         return
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
         parser.error("ffmpeg and ffprobe are required")
-    split_requests(manifest, items)
-    for chapter, _ in preparation.CHAPTER_CONFIG.values():
-        if chapter == preparation.PROTECTED_CHAPTER:
-            continue
+    split_requests(manifest, items, chapters)
+    for chapter in sorted(chapters):
         chapter_items = ordered_items(items, chapter)
         assemble_chapter(chapter_items)
         make_subtitles(chapter_items)
-    print("Complete: nine new English role tracks and subtitles", flush=True)
+    print(f"Complete: {len(chapters)} English role track(s) and subtitles", flush=True)
 
 
 if __name__ == "__main__":

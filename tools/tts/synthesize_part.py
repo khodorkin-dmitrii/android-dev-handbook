@@ -7,11 +7,28 @@ import asyncio
 import hashlib
 import json
 from pathlib import Path
+import re
+
+
+def validate_edge_tts_protocol() -> None:
+    """Fail clearly when the environment still uses the rejected v1 handshake."""
+    from edge_tts.constants import SEC_MS_GEC_VERSION
+    from edge_tts.drm import DRM
+
+    token = DRM.generate_sec_ms_gec()
+    if not SEC_MS_GEC_VERSION.startswith("2-") or not re.fullmatch(
+        r"[0-9A-F]{16}-[0-9A-F]{64}", token
+    ):
+        raise RuntimeError(
+            "edge-tts with the v2 Sec-MS-GEC handshake is required; "
+            "reinstall tools/tts/requirements.txt into build/tts-venv"
+        )
 
 
 async def synthesize_once(args: argparse.Namespace, text: str, media_part: Path) -> list[dict[str, object]]:
     import edge_tts
 
+    validate_edge_tts_protocol()
     boundaries: list[dict[str, object]] = []
     communicate = edge_tts.Communicate(
         text,

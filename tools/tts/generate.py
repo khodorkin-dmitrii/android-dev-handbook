@@ -8,6 +8,8 @@ import re
 
 from markdown_it import MarkdownIt
 
+import role_audio
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "docs/shorts.ru.md"
 OUTPUT = ROOT / "build/audio/shorts-ru-preview-dmitry.mp3"
@@ -95,7 +97,9 @@ def speech_text(markdown: str) -> str:
         elif token.type == "inline" and current is not None:
             text = clean_inline(token)
             if text:
-                current.append(text)
+                spoken_text = role_audio.strip_audio_excluded_suffixes(text)
+                if spoken_text:
+                    current.append(spoken_text)
     if len(items) != ITEM_COUNT or any(len(item) < 2 for item in items):
         raise ValueError("Each selected question must have a nonempty spoken answer")
     return "\n\n\n".join("\n\n".join(item) for item in items) + "\n"
@@ -166,7 +170,9 @@ def chapter_speech_text(markdown: str) -> tuple[str, int]:
             if heading == "h2":
                 title = text
             elif current is not None:
-                current.append(text)
+                spoken_text = role_audio.strip_audio_excluded_suffixes(text)
+                if spoken_text:
+                    current.append(spoken_text)
     if not title or not questions or any(len(item) < 2 for item in questions):
         raise ValueError(f"Chapter {title!r} needs a title and complete Q&A items")
     spoken = title + "\n\n" + "\n\n\n".join(
