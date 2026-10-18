@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-14
+1. Last tracker update: 2026-10-18
 1. Total articles tracked: 107
-1. Updated: 70
-1. TODO: 37
+1. Updated: 74
+1. TODO: 33
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 3       | 37   |
+| P2 | 40 | 7       | 33   |
 
 ## Tracker
 
@@ -95,10 +95,10 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P1, **UPDATED**, 2026-10-12, `legacy/rxjava.md`, RxJava, Clarified reactive types, backpressure, operator ordering, scheduling, error handling and subscription ownership; added Android lifecycle guidance and a behavior-preserving migration strategy for Coroutines and Flow; synchronized EN/RU and removed repetitive summaries.
 1. P2, **UPDATED**, 2026-10-13, `android/index.md`, Android Overview, Reorganized the section into platform, execution, build/performance, and graphics topics; added a learning path and missing links for Gradle, Binder/AIDL, system services, and AGSL; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-14, `kotlin/index.md`, Kotlin Overview, Added a practical learning path, grouped language foundations, collections and reusable APIs, initialization and interoperability topics, expanded article descriptions, and synchronized EN/RU navigation.
-1. P2, **TODO**, , `compose/index.md`, Compose Overview
-1. P2, **TODO**, , `coroutines-flow/index.md`, Coroutines & Flow Overview
-1. P2, **TODO**, , `architecture/index.md`, Architecture Overview
-1. P2, **TODO**, , `java/index.md`, Java Overview
+1. P2, **UPDATED**, 2026-10-15, `compose/index.md`, Compose Overview, Added a practical learning path, grouped UI foundations, state and behavior, and production-quality topics; added the missing Compose Navigation link, expanded article descriptions, and synchronized EN/RU navigation.
+1. P2, **UPDATED**, 2026-10-16, `coroutines-flow/index.md`, Coroutines & Flow Overview, Added a practical learning path, grouped coroutine foundations, streams and communication, and Android lifecycle integration; clarified Flow, Channels, StateFlow and SharedFlow coverage, expanded article descriptions, and synchronized EN/RU navigation.
+1. P2, **UPDATED**, 2026-10-17, `architecture/index.md`, Architecture Overview, Added a practical learning path, grouped design and state, scaling and change topics; clarified state ownership, unidirectional data flow, MV* patterns, modularization and legacy refactoring coverage; expanded article descriptions and synchronized EN/RU navigation.
+1. P2, **UPDATED**, 2026-10-18, `java/index.md`, Java Overview, Added a practical learning path, grouped language, concurrency and runtime topics, expanded article descriptions, and synchronized EN/RU navigation.
 1. P2, **TODO**, , `di/index.md`, DI Overview
 1. P2, **TODO**, , `networking/index.md`, Networking Overview
 1. P2, **TODO**, , `testing/index.md`, Testing Overview
