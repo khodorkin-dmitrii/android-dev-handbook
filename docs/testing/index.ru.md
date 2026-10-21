@@ -1,10 +1,14 @@
-# Testing
+# Тестирование
 
-Раздел про тестирование Android-приложений: testing strategy, unit tests, UI tests, `ViewModel` tests, Coroutines/Flow testing и инструменты Android UI testing.
+Раздел посвящён стратегии тестирования Android-приложений и проверке ViewModel, асинхронного кода и UI. Уровень теста выбирают по поведению и риску, сохраняя обратную связь быстрой и предсказуемой.
 
-## Структура раздела
+## Порядок изучения
 
-- [Testing Strategy](strategy.md)
-- [ViewModel Testing](viewmodel-testing.md)
-- [Coroutines & Flow Testing](coroutines-flow-testing.md)
-- [Android UI Testing](android-ui-testing.md)
+Начните со стратегии: что проверять и на какой границе. Затем переходите к состоянию и событиям ViewModel, управлению виртуальным временем в тестах корутин и UI-тестам для взаимодействий, требующих Android или Compose runtime. Статья [Code Review](../engineering/code-review.ru.md) связывает объём проверок с риском изменений.
+
+## Статьи
+
+- [Стратегия тестирования](strategy.ru.md) - уровни тестов, полезные границы, fakes и сопровождаемость.
+- [Тестирование ViewModel](viewmodel-testing.ru.md) - переходы состояния, одноразовые эффекты и контроль зависимостей.
+- [Тестирование корутин и Flow](coroutines-flow-testing.ru.md) - test dispatchers, виртуальное время и проверки потоков.
+- [Тестирование Android UI](android-ui-testing.ru.md) - взаимодействия в Compose и Views, semantics и проверки на устройстве.

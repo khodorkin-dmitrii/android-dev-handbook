@@ -1,10 +1,14 @@
-# Networking
+# Сетевое взаимодействие
 
-Раздел про Networking & API в Android: HTTP, REST, Retrofit, OkHttp, GraphQL, gRPC, Protocol Buffers, error handling и mapping сетевых моделей.
+Раздел посвящён работе Android-клиента с API: семантике HTTP, сетевым библиотекам, альтернативным протоколам и границе между ответом сервера и моделью приложения.
 
-## Структура раздела
+## Порядок изучения
 
-- [HTTP / REST](http-rest.md)
-- [Retrofit / OkHttp](retrofit-okhttp.md)
-- [GraphQL](graphql.md)
-- [gRPC / Protobuf](grpc-protobuf.md)
+Начните с HTTP и REST, затем разберите, как Retrofit и OkHttp выполняют запросы на Android. GraphQL и gRPC полезно изучить, если их использует ваш backend. Для любого подхода важны тайм-ауты, отмена, преобразование ошибок, аутентификация и нестабильная сеть. TLS и токены рассмотрены в разделе [Безопасность](../security/index.ru.md), локальные данные и синхронизация - в [примере offline-first приложения](../engineering/system-design/offline-first-mobile.ru.md).
+
+## Статьи
+
+- [HTTP / REST](http-rest.ru.md) - методы, коды ответов, кеширование, повторы и API-контракты.
+- [Retrofit / OkHttp](retrofit-okhttp.ru.md) - построение запросов, interceptors, сериализация и обработка ошибок.
+- [GraphQL](graphql.ru.md) - запросы, мутации, клиенты на основе схемы и компромиссы кеширования.
+- [gRPC / Protobuf](grpc-protobuf.ru.md) - типизированные контракты, сериализация, streaming и ограничения мобильного клиента.

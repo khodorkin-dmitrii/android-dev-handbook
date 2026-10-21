@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-18
+1. Last tracker update: 2026-10-21
 1. Total articles tracked: 107
-1. Updated: 74
-1. TODO: 33
+1. Updated: 80
+1. TODO: 27
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 7       | 33   |
+| P2 | 40 | 13      | 27   |
 
 ## Tracker
 
@@ -99,14 +99,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-16, `coroutines-flow/index.md`, Coroutines & Flow Overview, Added a practical learning path, grouped coroutine foundations, streams and communication, and Android lifecycle integration; clarified Flow, Channels, StateFlow and SharedFlow coverage, expanded article descriptions, and synchronized EN/RU navigation.
 1. P2, **UPDATED**, 2026-10-17, `architecture/index.md`, Architecture Overview, Added a practical learning path, grouped design and state, scaling and change topics; clarified state ownership, unidirectional data flow, MV* patterns, modularization and legacy refactoring coverage; expanded article descriptions and synchronized EN/RU navigation.
 1. P2, **UPDATED**, 2026-10-18, `java/index.md`, Java Overview, Added a practical learning path, grouped language, concurrency and runtime topics, expanded article descriptions, and synchronized EN/RU navigation.
-1. P2, **TODO**, , `di/index.md`, DI Overview
-1. P2, **TODO**, , `networking/index.md`, Networking Overview
-1. P2, **TODO**, , `testing/index.md`, Testing Overview
-1. P2, **TODO**, , `engineering/index.md`, Engineering Overview
-1. P2, **TODO**, , `legacy/index.md`, Legacy Overview
+1. P2, **UPDATED**, 2026-10-19, `di/index.md`, DI Overview, Added a practical learning path, grouped foundations, Android DI frameworks and legacy migration topics; clarified composition roots, graph validation, framework trade-offs and lifecycle-aware scopes; expanded article descriptions and synchronized EN/RU navigation.
+1. P2, **UPDATED**, 2026-09-11, `android/agsl-runtime-shader.md`, AGSL and RuntimeShader, Added AGSL fundamentals, RuntimeShader uniforms, Compose ShaderBrush and RenderEffect integration, API 33 fallback, color and coordinate handling, performance guidance, and comparison with OpenGL ES and Filament.
+1. P2, **UPDATED**, 2026-10-21, `security/index.md`, Security Overview, Preserved the security overview and added a learning path through TLS, OAuth, secure storage, and certificate pinning; synchronized EN/RU links.
+1. P2, **UPDATED**, 2026-10-21, `networking/index.md`, Networking Overview, Added a learning path, article descriptions, and cross-references to security and offline-first design; synchronized EN/RU.
+1. P2, **UPDATED**, 2026-10-21, `testing/index.md`, Testing Overview, Added a testing learning path, article descriptions, and a code-review cross-reference; synchronized EN/RU.
+1. P2, **UPDATED**, 2026-10-21, `engineering/index.md`, Engineering Overview, Grouped code, runtime, and system-design topics; added a learning path and concise article descriptions; synchronized EN/RU.
+1. P2, **UPDATED**, 2026-10-21, `legacy/index.md`, Legacy Overview, Aligned the overview with its current RxJava article and linked related legacy and migration topics in other sections; synchronized EN/RU.
 1. P2, **TODO**, , `compose/testing.md`, Compose Testing
 1. P2, **TODO**, , `android/canvas.md`, Android Canvas
-1. P2, **UPDATED**, 2026-09-11, `android/agsl-runtime-shader.md`, AGSL and RuntimeShader, Added AGSL fundamentals, RuntimeShader uniforms, Compose ShaderBrush and RenderEffect integration, API 33 fallback, color and coordinate handling, performance guidance, and comparison with OpenGL ES and Filament.
 1. P2, **TODO**, , `android/opengl-es.md`, OpenGL ES
 1. P2, **TODO**, , `android/vulkan.md`, Vulkan
 1. P2, **TODO**, , `android/google-filament.md`, Google Filament
@@ -120,7 +121,6 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **TODO**, , `kotlin-multiplatform/shared-platform-code.md`, Shared and Platform-specific Code
 1. P2, **TODO**, , `kotlin-multiplatform/architecture-ui.md`, Architecture and UI Integration
 1. P2, **TODO**, , `kotlin-multiplatform/adoption-tradeoffs.md`, Adoption Strategy and Trade-offs
-1. P2, **TODO**, , `security/index.md`, Security Overview
 1. P2, **TODO**, , `security/https-tls-certificates.md`, HTTPS, TLS, and Certificates
 1. P2, **TODO**, , `security/certificate-pinning.md`, Certificate Pinning
 1. P2, **TODO**, , `security/keystore-secure-storage.md`, Android Keystore and Secure Storage

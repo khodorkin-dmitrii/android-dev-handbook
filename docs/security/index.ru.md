@@ -2,6 +2,8 @@
 
 Безопасность Android-приложения - это защита пользовательских данных, сессий и привилегированных операций с учетом того, что клиент работает на устройстве вне контроля приложения. Цель не в том, чтобы полностью исключить reverse engineering. Важно определить реалистичные границы доверия, сократить поверхность атаки, повысить стоимость взлома и оставить критичные решения системам, которые действительно могут их контролировать.
 
+Для изучения отдельных механизмов начните с [HTTPS, TLS и сертификатов](https-tls-certificates.ru.md), затем перейдите к [OAuth 2.0, PKCE и управлению токенами](oauth-pkce-token-management.ru.md) и [Android Keystore и безопасному хранению](keystore-secure-storage.ru.md). [Certificate Pinning](certificate-pinning.ru.md) рассматривайте после стандартной проверки TLS: у него есть операционные издержки, и он нужен не каждому приложению.
+
 ## Модель безопасности и границы угроз
 
 **Защищаемый ресурс (asset)** - это всё, чья утечка, подмена или недоступность может причинить ущерб. В Android-приложении к таким ресурсам относятся пользовательские сессии, персональные и финансовые данные, локальные файлы, бизнес-данные, API-операции и целостность транзакций, инициированных с устройства.
@@ -117,9 +119,9 @@ Defense in depth объединяет независимые слои, чтоб�
 
 ## Связанные темы
 
-- [HTTPS, TLS и сертификаты](https-tls-certificates.md)
-- [Certificate Pinning](certificate-pinning.md)
-- [Android Keystore и безопасное хранение](keystore-secure-storage.md)
-- [OAuth 2.0, PKCE и управление токенами](oauth-pkce-token-management.md)
-- [Networking](../networking/index.md)
-- [Logging and Diagnostic Data](../tools/logging-diagnostics.md)
+- [HTTPS, TLS и сертификаты](https-tls-certificates.ru.md)
+- [Certificate Pinning](certificate-pinning.ru.md)
+- [Android Keystore и безопасное хранение](keystore-secure-storage.ru.md)
+- [OAuth 2.0, PKCE и управление токенами](oauth-pkce-token-management.ru.md)
+- [Сетевое взаимодействие](../networking/index.ru.md)
+- [Логи и диагностика](../tools/logging-diagnostics.ru.md)

@@ -2,6 +2,8 @@
 
 Android application security is the practice of protecting user data, sessions, and privileged operations while accepting that the client runs on a device outside the application's control. The goal is not to make reverse engineering impossible. It is to define realistic trust boundaries, reduce exposure, raise attacker cost, and keep authoritative decisions in systems that can enforce them.
 
+To explore the mechanisms, start with [HTTPS, TLS and Certificates](https-tls-certificates.md) for transport security, then [OAuth 2.0, PKCE and Token Management](oauth-pkce-token-management.md) for sessions. Continue with [Android Keystore and Secure Storage](keystore-secure-storage.md) for local data. Read [Certificate Pinning](certificate-pinning.md) for its specific trade-offs after understanding standard TLS validation; pinning is not a default requirement.
+
 ## Security model and threat boundaries
 
 An **asset** is anything whose disclosure, modification, or unavailability would cause harm. In an Android application, typical assets include user sessions, personal or financial data, local files, business records, API operations, and the integrity of transactions initiated from the device.
