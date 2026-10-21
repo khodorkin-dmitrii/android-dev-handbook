@@ -107,14 +107,14 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-21, `engineering/index.md`, Engineering Overview, Grouped code, runtime, and system-design topics; added a learning path and concise article descriptions; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-21, `legacy/index.md`, Legacy Overview, Aligned the overview with its current RxJava article and linked related legacy and migration topics in other sections; synchronized EN/RU.
 1. P2, **TODO**, , `compose/testing.md`, Compose Testing
+1. P2, **TODO**, , `compose/navigation.md`, Compose Navigation
+1. P2, **TODO**, , `coroutines-flow/channels.md`, Channels
 1. P2, **TODO**, , `android/canvas.md`, Android Canvas
 1. P2, **TODO**, , `android/opengl-es.md`, OpenGL ES
 1. P2, **TODO**, , `android/vulkan.md`, Vulkan
 1. P2, **TODO**, , `android/google-filament.md`, Google Filament
 1. P2, **TODO**, , `android/2d-3d-rendering.md`, 2D and 3D Rendering
 1. P2, **TODO**, , `android/android-system-services.md`, Android System Services
-1. P2, **TODO**, , `compose/navigation.md`, Compose Navigation
-1. P2, **TODO**, , `coroutines-flow/channels.md`, Channels
 1. P2, **TODO**, , `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview
 1. P2, **TODO**, , `kotlin-multiplatform/kmp-kmm-compose.md`, KMP, KMM, and Compose Multiplatform
 1. P2, **TODO**, , `kotlin-multiplatform/project-structure.md`, Project Structure
