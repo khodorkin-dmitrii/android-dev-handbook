@@ -262,6 +262,7 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
 .handbook-retrowave-canvas {
     height: 100%;
     inset: 0;
+    opacity: 0.5;
     pointer-events: none;
     position: fixed;
     width: 100%;
@@ -271,15 +272,15 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
 .handbook-retrowave-home .md-container,
 .handbook-retrowave-home .md-main {
     background: transparent;
-    position: relative;
 }
 
-.handbook-retrowave-home .md-container {
+.handbook-retrowave-home .md-main {
+    position: relative;
     z-index: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .handbook-retrowave-canvas {
-        opacity: 0.82;
+        opacity: 0.5;
     }
 }

@@ -16,6 +16,8 @@
     document.body.prepend(canvas);
 
     const context = canvas.getContext("2d", { alpha: true });
+    const staticCanvas = document.createElement("canvas");
+    const staticContext = staticCanvas.getContext("2d", { alpha: true });
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let width = 0;
     let height = 0;
@@ -29,17 +31,17 @@
         near: 1.35,
         far: 54,
         speed: 4.25,
-        depthLines: 20,
-        lanes: 21,
-        targetFrameTime: 1000 / 45
+        depthLines: 16,
+        lanes: 19,
+        targetFrameTime: 1000 / 60
     };
 
     function updateGeometry() {
         const compact = width < 768;
-        geometry.depthLines = compact ? 13 : 20;
-        geometry.lanes = compact ? 13 : 21;
+        geometry.depthLines = compact ? 11 : 16;
+        geometry.lanes = compact ? 11 : 19;
         geometry.speed = compact ? 3.2 : 4.25;
-        geometry.targetFrameTime = 1000 / (compact ? 30 : 45);
+        geometry.targetFrameTime = 1000 / (compact ? 40 : 60);
 
         const depthRange = geometry.far - geometry.near;
         depths = Array.from(
@@ -51,13 +53,17 @@
     function resizeCanvas() {
         width = window.innerWidth;
         height = window.innerHeight;
-        pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+        pixelRatio = Math.min(window.devicePixelRatio || 1, width < 768 ? 1 : 1.25);
         canvas.width = Math.round(width * pixelRatio);
         canvas.height = Math.round(height * pixelRatio);
+        staticCanvas.width = canvas.width;
+        staticCanvas.height = canvas.height;
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
         context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        staticContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
         updateGeometry();
+        rebuildStaticLayer();
         drawGrid();
     }
 
@@ -87,59 +93,94 @@
         );
     }
 
-    function drawGridPass(palette, glow) {
+    function gridMetrics() {
         const horizon = height * 0.5;
         const gap = Math.max(44, Math.min(92, height * 0.095));
-        const topHorizon = horizon - gap * 0.5;
-        const bottomHorizon = horizon + gap * 0.5;
-        const vanishingX = width * 0.5;
-        const topHeight = topHorizon;
-        const bottomHeight = height - bottomHorizon;
-        const outerMargin = width * 0.035;
+        const virtualWidth = Math.max(width, height * (16 / 9));
+        return {
+            centerX: width * 0.5,
+            horizon,
+            gap,
+            topHorizon: horizon - gap * 0.5,
+            bottomHorizon: horizon + gap * 0.5,
+            horizonSpan: width,
+            edgeSpan: virtualWidth * 1.28
+        };
+    }
 
-        context.save();
-        context.strokeStyle = `rgba(${palette.line}, ${glow ? palette.glowAlpha : palette.sharpAlpha})`;
-        context.lineWidth = glow ? 3.4 : 0.72;
-        context.shadowColor = glow ? `rgba(${palette.line}, .8)` : "transparent";
-        context.shadowBlur = glow ? 13 : 0;
+    function configureGridStroke(target, palette, glow) {
+        target.strokeStyle = `rgba(${palette.line}, ${glow ? palette.glowAlpha : palette.sharpAlpha})`;
+        target.lineWidth = glow ? 3.2 : 0.72;
+        target.shadowColor = glow ? `rgba(${palette.line}, .72)` : "transparent";
+        target.shadowBlur = glow ? 10 : 0;
+    }
+
+    function drawPerspectivePass(target, palette, glow) {
+        const metrics = gridMetrics();
+        target.save();
+        configureGridStroke(target, palette, glow);
+        target.beginPath();
 
         for (let index = 0; index < geometry.lanes; index += 1) {
             const lane = geometry.lanes === 1 ? 0 : index / (geometry.lanes - 1);
-            const edgeX = outerMargin + lane * (width - outerMargin * 2);
+            const edgeX = metrics.centerX + (lane - 0.5) * metrics.edgeSpan;
+            const horizonX = metrics.centerX + (lane - 0.5) * metrics.horizonSpan;
 
-            context.beginPath();
-            context.moveTo(vanishingX, topHorizon);
-            context.lineTo(edgeX, 0);
-            context.stroke();
-
-            context.beginPath();
-            context.moveTo(vanishingX, bottomHorizon);
-            context.lineTo(edgeX, height);
-            context.stroke();
+            target.moveTo(horizonX, metrics.topHorizon);
+            target.lineTo(edgeX, 0);
+            target.moveTo(horizonX, metrics.bottomHorizon);
+            target.lineTo(edgeX, height);
         }
 
-        depths.forEach((depth) => {
+        target.stroke();
+        target.restore();
+    }
+
+    function drawDepthPass(palette, glow) {
+        const metrics = gridMetrics();
+        const topHeight = metrics.topHorizon;
+        const bottomHeight = height - metrics.bottomHorizon;
+        const horizonHalfWidth = metrics.horizonSpan * 0.5;
+        const edgeHalfWidth = metrics.edgeSpan * 0.5;
+
+        context.save();
+        configureGridStroke(context, palette, glow);
+        context.beginPath();
+
+        for (const depth of depths) {
             const progress = projectDepth(depth);
-            const halfWidth = width * (0.025 + progress * 0.56);
+            const halfWidth = horizonHalfWidth + (edgeHalfWidth - horizonHalfWidth) * progress;
 
-            context.beginPath();
-            context.moveTo(vanishingX - halfWidth, bottomHorizon + bottomHeight * progress);
-            context.lineTo(vanishingX + halfWidth, bottomHorizon + bottomHeight * progress);
-            context.stroke();
+            context.moveTo(
+                metrics.centerX - halfWidth,
+                metrics.bottomHorizon + bottomHeight * progress
+            );
+            context.lineTo(
+                metrics.centerX + halfWidth,
+                metrics.bottomHorizon + bottomHeight * progress
+            );
+            context.moveTo(
+                metrics.centerX - halfWidth,
+                metrics.topHorizon - topHeight * progress
+            );
+            context.lineTo(
+                metrics.centerX + halfWidth,
+                metrics.topHorizon - topHeight * progress
+            );
+        }
 
-            context.beginPath();
-            context.moveTo(vanishingX - halfWidth, topHorizon - topHeight * progress);
-            context.lineTo(vanishingX + halfWidth, topHorizon - topHeight * progress);
-            context.stroke();
-        });
-
+        context.stroke();
         context.restore();
     }
 
-    function drawHorizon(palette) {
-        const horizon = height * 0.5;
-        const gap = Math.max(44, Math.min(92, height * 0.095));
-        const gradient = context.createLinearGradient(0, horizon - gap, 0, horizon + gap);
+    function drawHorizon(target, palette) {
+        const metrics = gridMetrics();
+        const gradient = target.createLinearGradient(
+            0,
+            metrics.horizon - metrics.gap,
+            0,
+            metrics.horizon + metrics.gap
+        );
 
         gradient.addColorStop(0, `rgba(${palette.horizon}, 0)`);
         gradient.addColorStop(0.25, `rgba(${palette.horizon}, .14)`);
@@ -147,52 +188,74 @@
         gradient.addColorStop(0.52, `rgba(${palette.horizon}, .05)`);
         gradient.addColorStop(0.75, `rgba(${palette.horizon}, .14)`);
         gradient.addColorStop(1, `rgba(${palette.horizon}, 0)`);
-        context.fillStyle = gradient;
-        context.fillRect(0, horizon - gap, width, gap * 2);
+        target.fillStyle = gradient;
+        target.fillRect(0, metrics.horizon - metrics.gap, width, metrics.gap * 2);
 
-        context.save();
-        context.strokeStyle = `rgba(${palette.horizon}, .58)`;
-        context.lineWidth = 1;
-        context.shadowColor = `rgba(${palette.horizon}, .9)`;
-        context.shadowBlur = 18;
+        target.save();
+        target.strokeStyle = `rgba(${palette.horizon}, .58)`;
+        target.lineWidth = 1;
+        target.shadowColor = `rgba(${palette.horizon}, .8)`;
+        target.shadowBlur = 14;
+        target.beginPath();
+        target.moveTo(0, metrics.topHorizon);
+        target.lineTo(width, metrics.topHorizon);
+        target.moveTo(0, metrics.bottomHorizon);
+        target.lineTo(width, metrics.bottomHorizon);
+        target.stroke();
+        target.restore();
+    }
 
-        context.beginPath();
-        context.moveTo(0, horizon - gap * 0.5);
-        context.lineTo(width, horizon - gap * 0.5);
-        context.stroke();
-
-        context.beginPath();
-        context.moveTo(0, horizon + gap * 0.5);
-        context.lineTo(width, horizon + gap * 0.5);
-        context.stroke();
-        context.restore();
+    function rebuildStaticLayer() {
+        staticContext.clearRect(0, 0, width, height);
+        const palette = currentPalette();
+        drawHorizon(staticContext, palette);
+        drawPerspectivePass(staticContext, palette, true);
+        drawPerspectivePass(staticContext, palette, false);
     }
 
     function drawGrid() {
         context.clearRect(0, 0, width, height);
+        context.drawImage(staticCanvas, 0, 0, width, height);
         const palette = currentPalette();
-        drawHorizon(palette);
-        drawGridPass(palette, true);
-        drawGridPass(palette, false);
+        drawDepthPass(palette, true);
+        drawDepthPass(palette, false);
     }
 
     function animate(timestamp) {
-        frameId = window.requestAnimationFrame(animate);
+        frameId = 0;
 
-        if (document.hidden || timestamp - lastFrameTime < geometry.targetFrameTime) {
+        if (document.hidden || reducedMotion.matches) {
             return;
         }
 
-        const deltaSeconds = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
-        lastFrameTime = timestamp;
-        const depthRange = geometry.far - geometry.near;
+        if (timestamp - lastFrameTime >= geometry.targetFrameTime) {
+            const deltaSeconds = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
+            lastFrameTime = timestamp;
+            const depthRange = geometry.far - geometry.near;
 
-        depths = depths.map((depth) => {
-            const nextDepth = depth - geometry.speed * deltaSeconds;
-            return nextDepth <= geometry.near ? nextDepth + depthRange : nextDepth;
-        });
+            for (let index = 0; index < depths.length; index += 1) {
+                const nextDepth = depths[index] - geometry.speed * deltaSeconds;
+                depths[index] = nextDepth <= geometry.near ? nextDepth + depthRange : nextDepth;
+            }
 
-        drawGrid();
+            drawGrid();
+        }
+
+        frameId = window.requestAnimationFrame(animate);
+    }
+
+    function stopAnimation() {
+        window.cancelAnimationFrame(frameId);
+        frameId = 0;
+    }
+
+    function startAnimation() {
+        if (frameId || document.hidden || reducedMotion.matches) {
+            return;
+        }
+
+        lastFrameTime = performance.now();
+        frameId = window.requestAnimationFrame(animate);
     }
 
     function handleResize() {
@@ -201,20 +264,30 @@
     }
 
     function handleMotionPreference() {
-        window.cancelAnimationFrame(frameId);
-        frameId = 0;
-        lastFrameTime = 0;
+        stopAnimation();
         drawGrid();
+        startAnimation();
+    }
 
-        if (!reducedMotion.matches) {
-            frameId = window.requestAnimationFrame(animate);
+    function handleVisibilityChange() {
+        if (document.hidden) {
+            stopAnimation();
+            return;
         }
+
+        startAnimation();
+    }
+
+    function handlePaletteChange() {
+        rebuildStaticLayer();
+        drawGrid();
     }
 
     window.addEventListener("resize", handleResize, { passive: true });
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     reducedMotion.addEventListener("change", handleMotionPreference);
 
-    const paletteObserver = new MutationObserver(drawGrid);
+    const paletteObserver = new MutationObserver(handlePaletteChange);
     paletteObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ["data-md-color-scheme"]
