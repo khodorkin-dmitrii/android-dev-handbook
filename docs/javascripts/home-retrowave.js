@@ -104,7 +104,7 @@
             topHorizon: horizon - gap * 0.5,
             bottomHorizon: horizon + gap * 0.5,
             horizonSpan: width,
-            edgeSpan: virtualWidth * 1.28
+            edgeSpan: virtualWidth * 1.85
         };
     }
 
