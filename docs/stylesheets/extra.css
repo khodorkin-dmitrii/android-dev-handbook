@@ -245,3 +245,41 @@
         gap: 1.25rem 0;
     }
 }
+
+body.handbook-retrowave-home {
+    background:
+        radial-gradient(circle at 50% 50%, rgba(190, 18, 235, 0.16), transparent 42%),
+        linear-gradient(180deg, #15031f 0%, #05010d 48%, #19031f 100%);
+    background-attachment: fixed;
+}
+
+body[data-md-color-scheme="default"].handbook-retrowave-home {
+    background:
+        radial-gradient(circle at 50% 50%, rgba(171, 52, 204, 0.1), transparent 44%),
+        linear-gradient(180deg, #f7f0fb 0%, #fffaff 48%, #f6eef9 100%);
+}
+
+.handbook-retrowave-canvas {
+    height: 100%;
+    inset: 0;
+    pointer-events: none;
+    position: fixed;
+    width: 100%;
+    z-index: 0;
+}
+
+.handbook-retrowave-home .md-container,
+.handbook-retrowave-home .md-main {
+    background: transparent;
+    position: relative;
+}
+
+.handbook-retrowave-home .md-container {
+    z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .handbook-retrowave-canvas {
+        opacity: 0.82;
+    }
+}

@@ -162,6 +162,9 @@ hooks:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/home-retrowave.js
+
 not_in_nav: |
   pages-review-tracker.md
   shorts.md
