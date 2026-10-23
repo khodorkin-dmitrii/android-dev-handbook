@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-21
+1. Last tracker update: 2026-10-23
 1. Total articles tracked: 107
-1. Updated: 80
-1. TODO: 27
+1. Updated: 82
+1. TODO: 25
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 13      | 27   |
+| P2 | 40 | 15      | 25   |
 
 ## Tracker
 
@@ -106,8 +106,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-21, `testing/index.md`, Testing Overview, Added a testing learning path, article descriptions, and a code-review cross-reference; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-21, `engineering/index.md`, Engineering Overview, Grouped code, runtime, and system-design topics; added a learning path and concise article descriptions; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-21, `legacy/index.md`, Legacy Overview, Aligned the overview with its current RxJava article and linked related legacy and migration topics in other sections; synchronized EN/RU.
-1. P2, **TODO**, , `compose/testing.md`, Compose Testing
-1. P2, **TODO**, , `compose/navigation.md`, Compose Navigation
+1. P2, **UPDATED**, 2026-10-23, `compose/testing.md`, Compose Testing, Clarified test rules, observable assertions, synchronization and merged semantics; removed repetitive summaries and synchronized EN/RU.
+1. P2, **UPDATED**, 2026-10-23, `compose/navigation.md`, Compose Navigation, Corrected the observable back-stack example; clarified restoration, deep-link parent stacks and Navigation 3 migration constraints; removed repetitive guidance and synchronized EN/RU.
 1. P2, **TODO**, , `coroutines-flow/channels.md`, Channels
 1. P2, **TODO**, , `android/canvas.md`, Android Canvas
 1. P2, **TODO**, , `android/opengl-es.md`, OpenGL ES

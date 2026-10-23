@@ -1,21 +1,19 @@
 # Compose Testing
 
-Compose UI tests verify user behavior through the Compose testing framework and semantics tree, not through direct access to composable functions.
+Compose UI tests verify observable behavior through the semantics tree. They do not inspect composable functions directly. For the broader test strategy and View-based UI tests, see [Android UI Testing](../testing/android-ui-testing.md).
 
-## UI tests and Semantics
+## Compose UI tests
 
-### Compose UI tests
-
-A test is usually built around `createComposeRule()` or `createAndroidComposeRule<Activity>()`, then content is set, a node is found and an assertion/action is performed.
+A test uses `createComposeRule()` when it supplies its own content, or `createAndroidComposeRule<Activity>()` when the scenario needs an Activity. After `setContent`, find a semantics node, act on it, and assert the resulting UI state:
 
 ```kotlin
-composeTestRule
-    .onNodeWithText("Save")
-    .assertIsDisplayed()
-    .performClick()
+var saved = false
+composeTestRule.setContent { EditorScreen(onSave = { saved = true }) }
+composeTestRule.onNodeWithText("Save").performClick()
+assertThat(saved).isTrue()
 ```
 
-For more stable tests, `testTag` is often used:
+Prefer user-facing semantics such as text, role, selected state, or content description. Use a `testTag` for a stable selector when those properties are ambiguous or localized:
 
 ```kotlin
 Modifier.testTag("save_button")
@@ -27,24 +25,18 @@ composeTestRule
     .performClick()
 ```
 
-Compose tests synchronize with Compose runtime: a test usually waits for idle state, but animations, coroutines, clock control and external async sources sometimes require explicit control of `mainClock`, test dispatcher or idling.
+Actions and assertions normally wait for Compose to become idle. `mainClock` controls Compose recomposition and animations, but not every Android draw pass or external asynchronous operation. Use controllable fakes for external work; if necessary, wait for an observable condition with a bounded `waitUntil` or register an idling resource. Control the clock explicitly when testing animation progress.
 
-**Important:** do not test implementation details. A good UI test verifies observable behavior: text, accessibility role/state, enabled/disabled, navigation result, loading/error/content display.
+Test the behavior a user can observe: enabled state, selection, loading/error/content, and callbacks or navigation outcomes. Avoid assertions about private state or a particular composable tree shape.
 
-**In short:** Compose UI tests interact with the semantics tree; they should verify user-visible behavior, not internal composable implementation.
+## Semantics
 
-### Semantics
+Semantics describe the meaning of UI nodes for accessibility, testing, and tooling. Compose tests query semantics properties, not View IDs. Many built-in components provide useful properties automatically.
 
-Semantics - a metadata layer that describes the meaning of a UI node for accessibility, testing and tooling.
+`Modifier.semantics { ... }` adds properties. `Modifier.clearAndSetSemantics { ... }` replaces the semantics exposed by a subtree: use it only when the combined control still has the label, role, state, and actions users need. A `testTag` alone is not an accessibility label.
 
-Compose testing API searches elements not by View id, but by semantics properties: text, `contentDescription`, role, `stateDescription`, `testTag`, enabled/clickable and other signals.
+Tests use the **merged tree** by default. If a child cannot be found, inspect the tree with `onRoot().printToLog("ComposeTest")`; use `useUnmergedTree = true` only when the child is intentionally tested separately. Prefer to interact with the parent control when it represents one user action.
 
-Semantics matter not only for tests, but also for accessibility: screen readers use this information so the user understands what is on screen and how to interact with it.
+Related: [Android UI Testing](../testing/android-ui-testing.md), [Testing Strategy](../testing/strategy.md).
 
-`Modifier.semantics { ... }` allows adding or overriding semantics properties. `Modifier.clearAndSetSemantics { ... }` fully replaces semantics descendants and is useful when a complex visual component should be perceived as one accessibility element.
-
-`Modifier.testTag("...")` is convenient for tests when text is unstable because of localization or UI contains repeated strings. But `testTag` should not be the only way to describe UI for accessibility.
-
-**Important:** merged and unmerged semantics trees can differ. Sometimes a test cannot find a node because semantics are merged by the parent; then you need to decide whether to search in the merged tree or use `useUnmergedTree = true`.
-
-**In short:** semantics describe UI meaning for accessibility and tests; Compose UI tests query semantics instead of view hierarchy.
+Sources: [Compose testing](https://developer.android.com/develop/ui/compose/testing), [Testing APIs](https://developer.android.com/develop/ui/compose/testing/apis), [Test synchronization](https://developer.android.com/develop/ui/compose/testing/synchronization).

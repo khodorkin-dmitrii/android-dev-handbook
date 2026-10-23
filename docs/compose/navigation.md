@@ -7,7 +7,7 @@ Compose applications currently have two relevant Jetpack approaches:
 * **Navigation Compose**, often called **Navigation 2**, uses `NavController`, `NavHost`, and a navigation graph;
 * **Navigation 3** is Compose-first: the application owns the back stack and `NavDisplay` renders it.
 
-Navigation 2 remains a valid production choice, especially in established or mixed View/Compose applications. For new Compose-first projects, Navigation 3 is the recommended direction because navigation state and its ownership are explicit.
+Navigation 2 remains a valid production choice, especially in established or mixed View/Compose applications. For new Compose-first projects, consider Navigation 3 when explicit stack ownership fits the app. Check the library's current SDK and dependency requirements before adoption.
 
 > Who owns navigation state and Back at this moment?
 
@@ -156,7 +156,7 @@ data class Checkout(
 ) : AppKey
 ```
 
-`rememberNavBackStack()` creates a snapshot-aware `NavBackStack` and restores serializable keys after configuration change and process recreation:
+`rememberNavBackStack()` creates a snapshot-aware `NavBackStack` that can restore keys after configuration changes and process recreation, provided each key implements `NavKey` and is `@Serializable`:
 
 ```kotlin
 @Composable
@@ -379,13 +379,13 @@ A deep link should become the same typed navigation state as an internal action:
 4. Build or update a meaningful back stack.
 5. Open the destination with predictable Back behavior.
 
-For a product link, prefer:
+If the product list is the meaningful parent for a product link, build:
 
 ```text
 ProductList -> ProductDetail(productId)
 ```
 
-over an isolated details screen with no meaningful parent. Navigation 2 can declare deep links in its graph. With Navigation 3, whether URI matching comes from application code or a library API, the result should still be validated application-owned keys rather than a separate navigation model.
+The parent stack depends on the entry point and product behavior; a notification or search result might need a different path. Navigation 2 can declare deep links in its graph. With Navigation 3, whether URI matching comes from application code or a library API, the result should still be validated application-owned keys rather than a separate navigation model.
 
 ## Testing navigation
 
@@ -410,7 +410,7 @@ For Navigation 3, put non-trivial mutations in a small state holder and unit-tes
 
 ```kotlin
 class AppNavigator(
-    val backStack: MutableList<AppKey>,
+    val backStack: SnapshotStateList<AppKey>,
 ) {
     fun openProduct(productId: String) {
         backStack.add(ProductDetail(productId))
@@ -440,7 +440,7 @@ A Navigation 2 to Navigation 3 migration typically includes:
 6. Verify restoration, deep links, and every Back owner.
 7. Remove Navigation 2 only after equivalent behavior is covered by tests.
 
-Navigation 3 is Compose-only. A Fragment-heavy or mixed UI application should migrate only when the ownership model provides enough value to justify the change.
+Navigation 3 is Compose-only. Its migration guide currently requires `compileSdk` 36 or later and covers a defined subset of navigation patterns; check the guide and recipes for your existing flows. A Fragment-heavy or mixed UI application should migrate only when the ownership model provides enough value to justify the change.
 
 ### Which approach should you choose?
 
@@ -459,20 +459,7 @@ Choose **Navigation 3** when:
 * navigation-as-state fits the architecture;
 * the team is ready to own restoration and Back policies.
 
-For a new Compose-first application, start with Navigation 3. Do not migrate a stable Navigation 2 application only because the newer library exists.
-
-## Practical rules
-
-* Use type-safe routes or keys.
-* Pass identifiers, not full models.
-* Keep navigation framework types out of screen-level `ViewModel`s.
-* Save navigation state and model multiple stacks explicitly.
-* Let the closest valid owner consume Back.
-* Separate transient surface dismissal from destination navigation.
-* Make deep links produce valid application navigation state.
-* Test stack transitions, restoration, and Back behavior.
-
-**Key idea:** the library matters, but predictable navigation comes from a clear answer to: "Who owns navigation state and Back at this moment?"
+For a new Compose-first application, evaluate Navigation 3 first if its supported patterns match your requirements. A stable Navigation 2 application does not need to migrate merely because the newer library exists.
 
 ## See also
 
