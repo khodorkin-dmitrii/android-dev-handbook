@@ -248,7 +248,7 @@
 
 body.handbook-retrowave-home {
     background:
-        radial-gradient(circle at 50% 50%, rgba(190, 18, 235, 0.16), transparent 42%),
+        radial-gradient(circle at 50% 50%, rgba(190, 18, 235, 0.2), transparent 42%),
         linear-gradient(180deg, #15031f 0%, #05010d 48%, #19031f 100%);
     background-attachment: fixed;
 }
@@ -274,7 +274,8 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
     background: transparent;
 }
 
-.handbook-retrowave-home .md-main {
+.handbook-retrowave-home .md-content,
+.handbook-retrowave-home .md-sidebar--secondary {
     position: relative;
     z-index: 1;
 }

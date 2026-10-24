@@ -31,14 +31,14 @@
         near: 1.35,
         far: 54,
         speed: 4.25,
-        depthLines: 16,
+        depthLines: 24,
         lanes: 19,
         targetFrameTime: 1000 / 60
     };
 
     function updateGeometry() {
         const compact = width < 768;
-        geometry.depthLines = compact ? 11 : 16;
+        geometry.depthLines = compact ? 16 : 24;
         geometry.lanes = compact ? 11 : 19;
         geometry.speed = compact ? 3.2 : 4.25;
         geometry.targetFrameTime = 1000 / (compact ? 40 : 60);
@@ -104,7 +104,7 @@
             topHorizon: horizon - gap * 0.5,
             bottomHorizon: horizon + gap * 0.5,
             horizonSpan: width,
-            edgeSpan: virtualWidth * 1.85
+            edgeSpan: virtualWidth * 2
         };
     }
 
