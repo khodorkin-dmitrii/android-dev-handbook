@@ -31,6 +31,8 @@
     let pixelRatio = 1;
     let depths = [];
     let frameId = 0;
+    let frameAccumulator = 0;
+    let lastAnimationTime = 0;
     let lastFrameTime = 0;
     let resizeFrame = 0;
     let previousScrollY = 0;
@@ -42,18 +44,18 @@
     const geometry = {
         near: 1.35,
         far: 54,
-        speed: 4.25,
+        speed: 2.55,
         depthLines: 24,
         lanes: 19,
-        targetFrameTime: 1000 / 60
+        targetFrameTime: 1000 / 90
     };
 
     function updateGeometry() {
         const compact = width < 768;
         geometry.depthLines = compact ? 16 : 24;
         geometry.lanes = compact ? 11 : 19;
-        geometry.speed = compact ? 3.2 : 4.25;
-        geometry.targetFrameTime = 1000 / (compact ? 40 : 60);
+        geometry.speed = compact ? 1.92 : 2.55;
+        geometry.targetFrameTime = 1000 / (compact ? 60 : 90);
 
         const depthRange = geometry.far - geometry.near;
         depths = Array.from(
@@ -263,8 +265,12 @@
             return;
         }
 
-        if (timestamp - lastFrameTime >= geometry.targetFrameTime) {
+        frameAccumulator += Math.min(timestamp - lastAnimationTime, 50);
+        lastAnimationTime = timestamp;
+
+        if (frameAccumulator >= geometry.targetFrameTime) {
             const deltaSeconds = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
+            frameAccumulator %= geometry.targetFrameTime;
             lastFrameTime = timestamp;
             const depthRange = geometry.far - geometry.near;
             const scrollY = readScrollPosition();
@@ -301,7 +307,10 @@
             return;
         }
 
-        lastFrameTime = performance.now();
+        const startTime = performance.now();
+        frameAccumulator = 0;
+        lastAnimationTime = startTime;
+        lastFrameTime = startTime;
         previousScrollY = readScrollPosition();
         smoothedScrollVelocity = 0;
         frameId = window.requestAnimationFrame(animate);
