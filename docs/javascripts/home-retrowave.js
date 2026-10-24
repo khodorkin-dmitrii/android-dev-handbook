@@ -26,6 +26,7 @@
     let frameId = 0;
     let lastFrameTime = 0;
     let resizeFrame = 0;
+    const depthMotionBias = 0.2;
 
     const geometry = {
         near: 1.35,
@@ -51,15 +52,29 @@
     }
 
     function resizeCanvas() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        pixelRatio = Math.min(window.devicePixelRatio || 1, width < 768 ? 1 : 1.25);
+        const bounds = canvas.getBoundingClientRect();
+        const nextWidth = Math.round(bounds.width);
+        const nextHeight = Math.round(bounds.height);
+        const nextPixelRatio = Math.min(
+            window.devicePixelRatio || 1,
+            nextWidth < 768 ? 1 : 1.25
+        );
+
+        if (
+            nextWidth === width
+            && nextHeight === height
+            && nextPixelRatio === pixelRatio
+        ) {
+            return;
+        }
+
+        width = nextWidth;
+        height = nextHeight;
+        pixelRatio = nextPixelRatio;
         canvas.width = Math.round(width * pixelRatio);
         canvas.height = Math.round(height * pixelRatio);
         staticCanvas.width = canvas.width;
         staticCanvas.height = canvas.height;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
         context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
         staticContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
         updateGeometry();
@@ -87,10 +102,13 @@
     function projectDepth(depth) {
         const nearInverse = 1 / geometry.near;
         const farInverse = 1 / geometry.far;
-        return Math.max(
+        const perspectiveProgress = Math.max(
             0,
             Math.min(1, (1 / depth - farInverse) / (nearInverse - farInverse))
         );
+
+        return perspectiveProgress
+            + perspectiveProgress * (1 - perspectiveProgress) * depthMotionBias;
     }
 
     function gridMetrics() {
