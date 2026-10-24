@@ -263,7 +263,7 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
         linear-gradient(180deg, #f7f0fb 0%, #fffaff 48%, #f6eef9 100%);
 }
 
-.handbook-retrowave-canvas {
+.handbook-retrowave-layer {
     height: 100vh;
     height: 100lvh;
     left: 0;
@@ -273,6 +273,13 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
     top: 0;
     width: 100vw;
     z-index: 0;
+}
+
+.handbook-retrowave-canvas {
+    height: 100%;
+    inset: 0;
+    position: absolute;
+    width: 100%;
 }
 
 .handbook-retrowave-home .md-container,

@@ -4,19 +4,26 @@
     const normalizedPath = pageUrl.pathname.replace(/\/index\.html$/, "/");
     const isHomePage = /^\/(?:android-dev-handbook\/)?(?:(?:en|ru)\/)?$/.test(normalizedPath);
 
-    if (!isHomePage || document.querySelector(".handbook-retrowave-canvas")) {
+    if (!isHomePage || document.querySelector(".handbook-retrowave-layer")) {
         return;
     }
 
     document.body.classList.add("handbook-retrowave-home");
 
+    const layer = document.createElement("div");
+    layer.className = "handbook-retrowave-layer";
+    layer.setAttribute("aria-hidden", "true");
+
+    const staticCanvas = document.createElement("canvas");
+    staticCanvas.className = "handbook-retrowave-canvas handbook-retrowave-canvas--static";
+
     const canvas = document.createElement("canvas");
-    canvas.className = "handbook-retrowave-canvas";
-    canvas.setAttribute("aria-hidden", "true");
-    document.body.prepend(canvas);
+    canvas.className = "handbook-retrowave-canvas handbook-retrowave-canvas--dynamic";
+
+    layer.append(staticCanvas, canvas);
+    document.body.prepend(layer);
 
     const context = canvas.getContext("2d", { alpha: true });
-    const staticCanvas = document.createElement("canvas");
     const staticContext = staticCanvas.getContext("2d", { alpha: true });
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let width = 0;
@@ -26,7 +33,11 @@
     let frameId = 0;
     let lastFrameTime = 0;
     let resizeFrame = 0;
+    let previousScrollY = 0;
+    let smoothedScrollVelocity = 0;
     const depthMotionBias = 0.2;
+    const scrollVelocityScale = 1200;
+    const maximumScrollBoost = 1.2;
 
     const geometry = {
         near: 1.35,
@@ -233,10 +244,16 @@
 
     function drawGrid() {
         context.clearRect(0, 0, width, height);
-        context.drawImage(staticCanvas, 0, 0, width, height);
         const palette = currentPalette();
         drawDepthPass(palette, true);
         drawDepthPass(palette, false);
+    }
+
+    function readScrollPosition() {
+        return Math.max(
+            0,
+            document.scrollingElement?.scrollTop ?? window.scrollY ?? 0
+        );
     }
 
     function animate(timestamp) {
@@ -250,9 +267,21 @@
             const deltaSeconds = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
             lastFrameTime = timestamp;
             const depthRange = geometry.far - geometry.near;
+            const scrollY = readScrollPosition();
+            const scrollVelocity = Math.abs(scrollY - previousScrollY) / deltaSeconds;
+            const scrollResponse = Math.min(1, deltaSeconds * 9);
+            previousScrollY = scrollY;
+            smoothedScrollVelocity += (
+                scrollVelocity - smoothedScrollVelocity
+            ) * scrollResponse;
+            const scrollBoost = Math.min(
+                smoothedScrollVelocity / scrollVelocityScale,
+                maximumScrollBoost
+            );
+            const effectiveSpeed = geometry.speed * (1 + scrollBoost);
 
             for (let index = 0; index < depths.length; index += 1) {
-                const nextDepth = depths[index] - geometry.speed * deltaSeconds;
+                const nextDepth = depths[index] - effectiveSpeed * deltaSeconds;
                 depths[index] = nextDepth <= geometry.near ? nextDepth + depthRange : nextDepth;
             }
 
@@ -273,6 +302,8 @@
         }
 
         lastFrameTime = performance.now();
+        previousScrollY = readScrollPosition();
+        smoothedScrollVelocity = 0;
         frameId = window.requestAnimationFrame(animate);
     }
 
