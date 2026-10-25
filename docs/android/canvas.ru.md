@@ -1,36 +1,20 @@
 # Android Canvas
 
-Android Canvas - низкоуровневый 2D drawing API для рисования текста, линий, фигур, bitmap и custom graphics внутри `View` или bitmap-backed surfaces.
+Android `Canvas` - API для двумерной отрисовки текста, линий, фигур и изображений. Он подходит для собственной графики во `View` или рисования в изменяемый `Bitmap`: например, графиков, звуковых волн, подписей и нестандартных элементов управления.
 
-## Canvas basics
+## Основы Canvas
 
-### Что это такое
+### `Canvas` и цикл отрисовки
 
-`Canvas` - объект, через который Android даёт API для drawing commands: `drawLine()`, `drawRect()`, `drawCircle()`, `drawText()`, `drawBitmap()` и другие операции.
+`Canvas` предоставляет команды вроде `drawLine()`, `drawCircle()` и `drawBitmap()`. `Paint` задаёт цвет, стиль, толщину линии и другие параметры. Canvas не хранит объекты сцены: при каждом вызове `onDraw(canvas)` собственная `View` описывает своё текущее изображение заново.
 
-Обычно `Canvas` используют внутри custom `View`, переопределяя `onDraw(canvas: Canvas)`. Код описывает, что нужно нарисовать в текущем frame, а Android выполняет drawing в рамках rendering pipeline.
+Когда меняется состояние, влияющее на рисунок видимой `View`, вызови `invalidate()` в UI-потоке. Он запланирует отрисовку, но не гарантирует конкретный кадр. Если изменение влияет на измеряемый размер или размещение `View`, вызови `requestLayout()`. Для изменения только цвета или другого параметра рисунка повторное измерение не нужно.
 
-Canvas хорошо подходит для custom 2D UI: charts, progress indicators, simple games, signatures, waveform, badges, декоративные элементы, custom controls.
+Фазы measure и layout определяют границы `View` до отрисовки. Операции Canvas внутри `View` часто аппаратно ускоряются, но `Canvas(bitmap)` для рисования вне экрана работает программно. Сам API не гарантирует использование GPU.
 
-**Важно:** `Canvas` - это immediate-style API: ты вызываешь команды рисования каждый раз, когда `View` нужно перерисовать. Он не хранит "объекты сцены" сам по себе.
+### `onDraw()` и `Paint`
 
-**Коротко:** Android Canvas - это 2D drawing API для custom rendering, когда стандартных `View` или composable недостаточно.
-
-### Как работает rendering pipeline
-
-Для обычной `View` pipeline начинается с invalidation. Когда `View` нужно обновить визуально, вызывают `invalidate()`, и Android планирует redraw в ближайшем frame.
-
-Дальше UI проходит основные фазы: measure, layout и draw. Measure определяет размеры, layout размещает элементы, draw вызывает отрисовку. Для custom drawing ключевая точка - `onDraw()`.
-
-На современных Android-устройствах многие drawing operations аппаратно ускоряются через GPU, но Canvas API всё равно остаётся 2D abstraction. Некоторые операции могут быть дороже других: сложные paths, shadows, clipping, text layout, large bitmaps и частые allocations.
-
-Если изменился только внешний вид, обычно достаточно `invalidate()`. Если изменился размер или layout-affecting state, нужен `requestLayout()`.
-
-**Коротко:** Canvas drawing выполняется в draw phase; `invalidate()` просит перерисовать `View`, а `requestLayout()` нужен только при изменении размеров или размещения.
-
-### `onDraw()`
-
-`onDraw()` - callback custom `View`, в котором выполняются drawing commands.
+Создавай переиспользуемые объекты вне `onDraw()`, а внутри оставляй отрисовку текущего состояния:
 
 ```kotlin
 class CircleView @JvmOverloads constructor(
@@ -38,7 +22,7 @@ class CircleView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLUE
         style = Paint.Style.FILL
     }
@@ -46,66 +30,40 @@ class CircleView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        val radius = min(width, height) / 2f
-        canvas.drawCircle(width / 2f, height / 2f, radius, paint)
+        val centerX = (paddingLeft + width - paddingRight) / 2f
+        val centerY = (paddingTop + height - paddingBottom) / 2f
+        val radius = minOf(
+            width - paddingLeft - paddingRight,
+            height - paddingTop - paddingBottom
+        ).coerceAtLeast(0) / 2f
+        canvas.drawCircle(centerX, centerY, radius, circlePaint)
     }
 }
 ```
 
-`onDraw()` может вызываться часто, поэтому он должен быть быстрым. Не стоит создавать `Paint`, `Path`, `Rect`, formatter, bitmap или другие объекты внутри `onDraw()` на каждый frame.
+Задай этой `View` размер в разметке. Если нужен собственный размер при `wrap_content`, дополнительно реализуй `onMeasure()`. Для сложной геометрии удобно вычислять параметры, зависящие от размера, в `onSizeChanged()` и использовать их в `onDraw()`.
 
-Если drawing зависит от размера `View`, часто удобно подготовить размеры в `onSizeChanged()`, а в `onDraw()` только рисовать.
+`Paint` также настраивает обводку, текст, прозрачность, шейдеры и сглаживание. Переиспользуй объект и меняй его свойства вместе с состоянием рисунка либо храни несколько заранее настроенных экземпляров.
 
-**Коротко:** `onDraw()` должен описывать отрисовку текущего состояния и не выполнять тяжёлую подготовку данных.
+### Bitmap и память
 
-### `Paint`
+`Bitmap` хранит пиксели. Формат `ARGB_8888` использует четыре байта на пиксель, поэтому изображению 2 000 × 2 000 нужно примерно 16 МБ только для пиксельных данных. Декодируй изображение близко к размеру отображения и не удерживай большие bitmap без необходимости. Для списков с изображениями используй библиотеку загрузки, а не декодирование каждого элемента во время отрисовки.
 
-`Paint` описывает, как рисовать: цвет, стиль, stroke width, text size, alpha, shader, typeface, anti-aliasing и другие параметры.
-
-Один и тот же `Canvas` command может выглядеть по-разному в зависимости от `Paint`. Например, `drawCircle()` может нарисовать заполненный круг, stroke outline или полупрозрачную фигуру.
-
-```kotlin
-private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-    color = Color.RED
-    style = Paint.Style.STROKE
-    strokeWidth = 6f
-}
-```
-
-`Paint` лучше создавать один раз и переиспользовать. Если нужно менять параметры по state, меняй существующий объект или держи несколько заранее подготовленных instances.
-
-**Коротко:** `Paint` - это набор настроек drawing operation: цвет, стиль, stroke, text, alpha и сглаживание.
-
-### `Bitmap`
-
-`Bitmap` - raster image в памяти. В Canvas его можно рисовать через `drawBitmap()`, использовать как offscreen buffer или результат генерации изображения.
-
-Bitmap может занимать много памяти: размер зависит от width, height и pixel format. Например, `ARGB_8888` обычно занимает 4 байта на pixel.
-
-Для Android важно декодировать изображения под нужный размер, не держать большие bitmap дольше необходимого и учитывать lifecycle. В списках лучше использовать image loading libraries вроде Coil/Glide, а не ручную загрузку bitmap в каждом item.
-
-Canvas также может рисовать в bitmap:
+Можно также рисовать вне экрана в изменяемый bitmap:
 
 ```kotlin
 val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
 val canvas = Canvas(bitmap)
+val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLUE }
 canvas.drawColor(Color.WHITE)
 canvas.drawCircle(100f, 100f, 80f, paint)
 ```
 
-**Коротко:** `Bitmap` - это пиксельные данные в памяти; с ним нужно аккуратно обращаться из-за memory cost.
+### Производительность и смежные темы
 
-### Производительность
+- Не выполняй ввод-вывод, декодирование bitmap, тяжёлые вычисления и лишние выделения памяти внутри `onDraw()`.
+- Переиспользуй `Paint`, контуры, разметку текста и геометрию, пока их входные данные не изменились.
+- Избегай лишних перерисовок, повторных проходов layout, наложения слоёв и дорогих операций обрезки или теней; оптимизируй по результатам профилирования.
+- Подготавливай тяжёлые данные вне пути отрисовки, а готовый результат рисуй в UI-потоке.
 
-Главные правила Canvas performance:
-
-- не создавать объекты в `onDraw()`;
-- не выполнять I/O, decode bitmap или сложные вычисления в drawing path;
-- кэшировать `Paint`, `Path`, `Rect`, text layout и precomputed geometry;
-- не вызывать `requestLayout()`, если достаточно `invalidate()`;
-- минимизировать overdraw и сложные clipping/shadow operations;
-- подготавливать heavy data вне main thread, а рисовать уже готовый результат.
-
-Если custom drawing требует программируемого per-fragment контроля внутри Android UI, стоит рассмотреть [AGSL и `RuntimeShader`](agsl-runtime-shader.md). Для большого числа объектов, собственного rendering pipeline или 3D лучше выбрать OpenGL ES или Filament в зависимости от задачи.
-
-**Коротко:** Canvas быстрый для умеренного 2D drawing, но его легко замедлить allocations, heavy calculations и большими bitmap на main thread.
+Для программируемых пиксельных эффектов внутри Android UI смотри [AGSL и `RuntimeShader`](agsl-runtime-shader.md). Для собственного 3D-рендеринга смотри [OpenGL ES](opengl-es.md) и [Google Filament](google-filament.md).

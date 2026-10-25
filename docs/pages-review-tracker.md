@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-23
+1. Last tracker update: 2026-10-25
 1. Total articles tracked: 107
-1. Updated: 82
-1. TODO: 25
+1. Updated: 84
+1. TODO: 23
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 15      | 25   |
+| P2 | 40 | 17      | 23   |
 
 ## Tracker
 
@@ -108,8 +108,8 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-21, `legacy/index.md`, Legacy Overview, Aligned the overview with its current RxJava article and linked related legacy and migration topics in other sections; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-23, `compose/testing.md`, Compose Testing, Clarified test rules, observable assertions, synchronization and merged semantics; removed repetitive summaries and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-23, `compose/navigation.md`, Compose Navigation, Corrected the observable back-stack example; clarified restoration, deep-link parent stacks and Navigation 3 migration constraints; removed repetitive guidance and synchronized EN/RU.
-1. P2, **TODO**, , `coroutines-flow/channels.md`, Channels
-1. P2, **TODO**, , `android/canvas.md`, Android Canvas
+1. P2, **UPDATED**, 2026-10-24, `coroutines-flow/channels.md`, Channels, Clarified channel cancellation, receiveAsFlow versus consumeAsFlow, trySend failure handling and in-memory delivery limits; removed repetitive summaries and synchronized EN/RU.
+1. P2, **UPDATED**, 2026-10-25, `android/canvas.md`, Android Canvas, Clarified invalidation and layout, hardware versus bitmap-backed drawing, bitmap memory and custom View sizing; improved Kotlin examples, removed repetitive summaries and synchronized EN/RU.
 1. P2, **TODO**, , `android/opengl-es.md`, OpenGL ES
 1. P2, **TODO**, , `android/vulkan.md`, Vulkan
 1. P2, **TODO**, , `android/google-filament.md`, Google Filament

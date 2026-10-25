@@ -12,8 +12,6 @@ It is a hot primitive. A channel exists independently of collectors or receivers
 
 Delivery is point-to-point: one sent element is received by one receiver. If several receivers wait on the same channel, they compete for elements. This differs from `SharedFlow`, which broadcasts each emission to all active subscribers.
 
-**In short:** use `Channel` to coordinate coroutines and transfer ownership of individual elements, not as another kind of `Flow`.
-
 ### `send` and `receive`
 
 `send()` suspends when the channel cannot accept another element. `receive()` suspends while no element is available. This coordination lets a consumer slow a producer instead of requiring blocking threads or manual polling.
@@ -42,6 +40,8 @@ suspend fun syncPendingItems(repository: ItemRepository) = coroutineScope {
 
 Here the buffer absorbs a limited difference in speed. When it fills, `send()` suspends and applies backpressure. When it is empty, the consumer waits without blocking a thread.
 
+This in-memory queue does not persist work. If syncing must survive process death, store pending items and schedule the work using an appropriate durable mechanism.
+
 ### Capacity and buffering
 
 The capacity determines how far producers can run ahead of receivers:
@@ -59,7 +59,7 @@ A small or rendezvous buffer gives stronger backpressure but can reduce throughp
 
 `close()` means that no new elements can be sent. Elements already in the buffer remain available, and receivers can drain them before iteration completes.
 
-Channel cancellation is an abort: it closes the channel and removes buffered elements. Suspended senders and receivers resume with cancellation. Use it when remaining work is no longer needed, not as a synonym for normal completion.
+Channel cancellation is an abort: it closes the channel and removes buffered elements. Suspended operations fail rather than completing normally. Use it when remaining work is no longer needed, not as a synonym for normal completion.
 
 A channel should belong to a clear `CoroutineScope`. When the owner is cancelled, its producer and consumer coroutines should be cancelled with it. Closing a channel does not replace cancellation of the jobs that use it, and closing a channel is not a general way to cancel its producer.
 
@@ -74,7 +74,7 @@ See [Coroutine Scopes & Cancellation](scopes-cancellation.md) for owner-based sc
 | `SharedFlow` | Hot broadcast to active subscribers, with configurable replay and buffering | Shared emissions observed by multiple subscribers |
 | `StateFlow` | Hot state holder with a current value | Observable state |
 
-`receiveAsFlow()` adapts a `ReceiveChannel` to the Flow API, but it does not add broadcast delivery. With multiple collectors, each channel element is emitted to only one collector.
+`receiveAsFlow()` adapts a `ReceiveChannel` to the Flow API, but it does not add broadcast delivery. With multiple collectors, each channel element is emitted to only one collector; cancelling one collector does not cancel the channel itself. By contrast, `consumeAsFlow()` can be collected only once and consumes the channel.
 
 Use the adapter when Flow operators or a Flow-shaped boundary are useful, while preserving the channel's fan-out semantics. If every active subscriber must see the same emission, use `SharedFlow` instead.
 
@@ -90,6 +90,7 @@ Use the adapter when Flow operators or a Flow-shaped boundary are useful, while 
 fun LocationClient.locations(): Flow<Location> = callbackFlow {
     val listener = object : LocationListener {
         override fun onLocation(location: Location) {
+            // Check failure if dropping a location is not acceptable.
             trySend(location)
         }
 
@@ -103,7 +104,7 @@ fun LocationClient.locations(): Flow<Location> = callbackFlow {
 }
 ```
 
-`awaitClose` keeps the callback active until the flow completes or is cancelled and performs cleanup in either case. Buffering can be configured on the resulting flow with `buffer(...)` when the callback can outpace collection.
+`awaitClose` keeps the callback registered until the channel closes or collection is cancelled, and runs cleanup in either case. `trySend` can fail if the buffer is full or closed: decide whether to drop, retry or persist values according to the API contract. Buffering can be configured on the resulting flow with `buffer(...)` when the callback can outpace collection.
 
 ## Channels in Android UI
 
@@ -114,8 +115,6 @@ A `Channel` is not a universal event bus or a guaranteed delivery mechanism for 
 This matters when a `ViewModel` outlives its UI consumer. During a lifecycle gap, an effect may remain buffered, be handled later in an obsolete context, or be lost through cancellation. No in-memory stream provides exactly-once processing across lifecycle changes or process death without an explicit protocol, acknowledgement and persistence.
 
 Critical results and information that must not be lost should usually be reduced to recoverable `UiState`. Non-critical transient effects may use a separate `Channel`- or `SharedFlow`-based stream when the owner, buffering, lifecycle and delivery semantics are defined explicitly.
-
-**Key idea:** choose `Channel` for point-to-point coordination. For Android UI effects, first decide whether the information is actually durable state and what should happen while no UI consumer is active.
 
 ## See also
 

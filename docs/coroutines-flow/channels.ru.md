@@ -12,8 +12,6 @@
 
 Delivery имеет point-to-point семантику: один отправленный элемент получает один receiver. Если один канал ожидают несколько receivers, они конкурируют за элементы. Этим `Channel` отличается от `SharedFlow`, который передаёт каждую emission всем активным subscribers.
 
-**Коротко:** `Channel` используют для координации coroutines и передачи отдельных элементов, а не как ещё одну разновидность `Flow`.
-
 ### `send` и `receive`
 
 `send()` приостанавливается, когда канал не может принять следующий элемент. `receive()` приостанавливается, пока доступных элементов нет. Такая координация позволяет consumer-у замедлять producer без блокировки threads и ручного polling.
@@ -40,7 +38,9 @@ suspend fun syncPendingItems(repository: ItemRepository) = coroutineScope {
 }
 ```
 
-Здесь buffer сглаживает ограниченную разницу в скорости. Когда он заполнен, `send()` приостанавливается и создаёт backpressure. Когда buffer пуст, consumer ожидает, не блокируя thread.
+Здесь буфер сглаживает временную разницу в скорости. Когда он заполнен, `send()` приостанавливается и ограничивает producer. Когда буфер пуст, consumer ждёт, не блокируя поток.
+
+Это очередь в памяти: после смерти процесса работа пропадёт. Если синхронизация должна переживать перезапуск, храните ожидающие элементы и планируйте работу через подходящий устойчивый механизм.
 
 ### Capacity и buffering
 
@@ -59,7 +59,7 @@ Capacity определяет, насколько producer может опере
 
 `close()` означает, что новые элементы больше нельзя отправлять. Уже находящиеся в buffer элементы остаются доступными, и receivers могут обработать их до завершения iteration.
 
-Cancellation канала означает аварийное прекращение работы: канал закрывается, а buffered элементы удаляются. Приостановленные senders и receivers возобновляются с cancellation. Используйте cancellation, когда оставшаяся работа больше не нужна, а не как синоним нормального завершения.
+Отмена канала означает аварийное прекращение работы: канал закрывается, а элементы в буфере удаляются. Приостановленные операции завершаются ошибкой, а не обычным образом. Используйте отмену, когда оставшаяся работа больше не нужна, а не как синоним нормального завершения.
 
 У канала должен быть понятный владелец `CoroutineScope`. При cancellation владельца его producer и consumer coroutines должны отменяться вместе с ним. Закрытие канала не заменяет cancellation использующих его jobs и не является общим способом отменить producer.
 
@@ -74,7 +74,7 @@ Cancellation канала означает аварийное прекращен
 | `SharedFlow` | Hot broadcast активным subscribers с настраиваемыми replay и buffering | Shared emissions для нескольких subscribers |
 | `StateFlow` | Hot state holder с текущим значением | Observable state |
 
-`receiveAsFlow()` адаптирует `ReceiveChannel` к Flow API, но не добавляет broadcast delivery. При нескольких collectors каждый элемент канала emit-ится только одному collector-у.
+`receiveAsFlow()` адаптирует `ReceiveChannel` к API Flow, но не добавляет широковещательную доставку. При нескольких коллекторах каждый элемент получает только один из них; отмена одного коллектора не отменяет сам канал. В отличие от него, `consumeAsFlow()` допускает лишь один сбор и потребляет канал.
 
 Используйте adapter, когда нужны Flow operators или API в форме `Flow`, сохраняя fan-out семантику канала. Если одну emission должны получить все активные subscribers, используйте `SharedFlow`.
 
@@ -90,6 +90,7 @@ Cancellation канала означает аварийное прекращен
 fun LocationClient.locations(): Flow<Location> = callbackFlow {
     val listener = object : LocationListener {
         override fun onLocation(location: Location) {
+            // Проверяйте неудачу, если потеря координаты недопустима.
             trySend(location)
         }
 
@@ -103,7 +104,7 @@ fun LocationClient.locations(): Flow<Location> = callbackFlow {
 }
 ```
 
-`awaitClose` сохраняет callback активным до завершения или cancellation flow и в обоих случаях выполняет cleanup. Если callback может опережать collection, buffering настраивают у полученного flow через `buffer(...)`.
+`awaitClose` сохраняет регистрацию callback до закрытия канала или отмены сбора и в обоих случаях выполняет очистку. `trySend` может вернуть неудачу при заполненном или закрытом буфере: решите, допустима ли потеря, нужен ли повтор или сохранение значения. Если callback может опережать сбор, буфер настраивают у полученного Flow через `buffer(...)`.
 
 ## Channels в Android UI
 
@@ -114,8 +115,6 @@ fun LocationClient.locations(): Flow<Location> = callbackFlow {
 Это важно, когда `ViewModel` живёт дольше UI consumer-а. Во время lifecycle gap effect может остаться в buffer, быть обработан позже в уже неактуальном context или потеряться при cancellation. Ни один in-memory stream не обеспечивает exactly-once processing через lifecycle changes или process death без explicit protocol, acknowledgement и persistence.
 
 Критичные результаты и данные, которые нельзя потерять, обычно следует сводить к восстанавливаемому `UiState`. Для некритичных transient effects можно использовать отдельный stream на основе `Channel` или `SharedFlow`, если его owner, buffering, lifecycle и delivery semantics определены явно.
-
-**Главная мысль:** выбирайте `Channel` для point-to-point координации. Для Android UI effects сначала определите, не является ли информация durable state и что должно произойти, пока активного UI consumer-а нет.
 
 ## См. также
 
