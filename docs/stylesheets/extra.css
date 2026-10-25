@@ -263,6 +263,18 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
         linear-gradient(180deg, #f7f0fb 0%, #fffaff 48%, #f6eef9 100%);
 }
 
+body.handbook-retrowave-home.handbook-retrowave-portrait {
+    background-image:
+        radial-gradient(circle at 50% 50%, rgba(190, 18, 235, 0.3), transparent 42%),
+        linear-gradient(90deg, #15031f 0%, #05010d 48%, #19031f 100%);
+}
+
+body[data-md-color-scheme="default"].handbook-retrowave-home.handbook-retrowave-portrait {
+    background-image:
+        radial-gradient(circle at 50% 50%, rgba(171, 52, 204, 0.1), transparent 44%),
+        linear-gradient(90deg, #f7f0fb 0%, #fffaff 48%, #f6eef9 100%);
+}
+
 .handbook-retrowave-layer {
     height: 100vh;
     height: 100lvh;
@@ -273,6 +285,15 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
     top: 0;
     width: 100vw;
     z-index: 0;
+}
+
+.handbook-retrowave-layer--portrait {
+    height: 100vw;
+    left: 100vw;
+    transform: rotate(90deg);
+    transform-origin: left top;
+    width: 100vh;
+    width: 100lvh;
 }
 
 .handbook-retrowave-canvas {
@@ -291,6 +312,25 @@ body[data-md-color-scheme="default"].handbook-retrowave-home {
 .handbook-retrowave-home .md-sidebar--secondary {
     position: relative;
     z-index: 1;
+}
+
+.handbook-retrowave-home .md-sidebar--secondary .md-nav__title {
+    background: transparent;
+    background: color-mix(in srgb, var(--md-default-bg-color) 45%, transparent);
+    box-shadow: 0 0 0.25rem 0.25rem color-mix(
+        in srgb,
+        var(--md-default-bg-color) 28%,
+        transparent
+    );
+}
+
+.handbook-retrowave-home .md-typeset table:not([class]) {
+    background-color: transparent;
+    background-color: color-mix(
+        in srgb,
+        var(--md-default-bg-color) 45%,
+        transparent
+    );
 }
 
 @media (prefers-reduced-motion: reduce) {

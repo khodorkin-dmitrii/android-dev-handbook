@@ -29,6 +29,8 @@
     let width = 0;
     let height = 0;
     let pixelRatio = 1;
+    let compactViewport = false;
+    let portraitScene = false;
     let depths = [];
     let frameId = 0;
     let frameAccumulator = 0;
@@ -51,11 +53,10 @@
     };
 
     function updateGeometry() {
-        const compact = width < 768;
-        geometry.depthLines = compact ? 16 : 24;
-        geometry.lanes = compact ? 11 : 19;
-        geometry.speed = compact ? 1.92 : 2.55;
-        geometry.targetFrameTime = 1000 / (compact ? 60 : 90);
+        geometry.depthLines = compactViewport ? 16 : 24;
+        geometry.lanes = compactViewport ? 11 : 19;
+        geometry.speed = compactViewport ? 1.92 : 2.55;
+        geometry.targetFrameTime = 1000 / (compactViewport ? 60 : 90);
 
         const depthRange = geometry.far - geometry.near;
         depths = Array.from(
@@ -65,18 +66,27 @@
     }
 
     function resizeCanvas() {
-        const bounds = canvas.getBoundingClientRect();
-        const nextWidth = Math.round(bounds.width);
-        const nextHeight = Math.round(bounds.height);
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const nextPortraitScene = viewportHeight / viewportWidth > 1.1;
+
+        layer.classList.toggle("handbook-retrowave-layer--portrait", nextPortraitScene);
+        document.body.classList.toggle("handbook-retrowave-portrait", nextPortraitScene);
+
+        const nextWidth = Math.round(canvas.clientWidth);
+        const nextHeight = Math.round(canvas.clientHeight);
+        const nextCompactViewport = Math.min(nextWidth, nextHeight) < 768;
         const nextPixelRatio = Math.min(
             window.devicePixelRatio || 1,
-            nextWidth < 768 ? 1 : 1.25
+            nextCompactViewport ? 1 : 1.25
         );
 
         if (
             nextWidth === width
             && nextHeight === height
             && nextPixelRatio === pixelRatio
+            && nextCompactViewport === compactViewport
+            && nextPortraitScene === portraitScene
         ) {
             return;
         }
@@ -84,6 +94,8 @@
         width = nextWidth;
         height = nextHeight;
         pixelRatio = nextPixelRatio;
+        compactViewport = nextCompactViewport;
+        portraitScene = nextPortraitScene;
         canvas.width = Math.round(width * pixelRatio);
         canvas.height = Math.round(height * pixelRatio);
         staticCanvas.width = canvas.width;
