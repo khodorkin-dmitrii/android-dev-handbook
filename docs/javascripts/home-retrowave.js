@@ -117,8 +117,8 @@
                 glowAlpha: 0.16
             }
             : {
-                line: "147, 43, 196",
-                horizon: "211, 52, 170",
+                line: "84, 140, 115",
+                horizon: "104, 173, 133",
                 sharpAlpha: 0.32,
                 glowAlpha: 0.09
             };

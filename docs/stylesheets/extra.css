@@ -3,6 +3,18 @@
     line-height: 1.5;
 }
 
+body[data-md-color-scheme="default"] .md-header,
+body[data-md-color-scheme="default"] .md-tabs,
+body[data-md-color-scheme="default"] .md-nav--primary > .md-nav__title[for="__drawer"] {
+    background-color: #426b50;
+}
+
+body[data-md-color-scheme="slate"] .md-header,
+body[data-md-color-scheme="slate"] .md-tabs,
+body[data-md-color-scheme="slate"] .md-nav--primary > .md-nav__title[for="__drawer"] {
+    background-color: #241532;
+}
+
 /* Paragraph spacing.
  *
  * margin: top right bottom left
@@ -259,8 +271,8 @@ body.handbook-retrowave-home {
 
 body[data-md-color-scheme="default"].handbook-retrowave-home {
     background-image:
-        radial-gradient(circle at 50% 50%, rgba(171, 52, 204, 0.1), transparent 44%),
-        linear-gradient(180deg, #f7f0fb 0%, #fffaff 48%, #f6eef9 100%);
+        radial-gradient(circle at 50% 50%, rgba(104, 173, 133, 0.06), transparent 44%),
+        linear-gradient(180deg, #fafcfa 0%, #f1f7f3 48%, #fafcfa 100%);
 }
 
 body.handbook-retrowave-home.handbook-retrowave-portrait {
@@ -271,8 +283,8 @@ body.handbook-retrowave-home.handbook-retrowave-portrait {
 
 body[data-md-color-scheme="default"].handbook-retrowave-home.handbook-retrowave-portrait {
     background-image:
-        radial-gradient(circle at 50% 50%, rgba(171, 52, 204, 0.1), transparent 44%),
-        linear-gradient(90deg, #f7f0fb 0%, #fffaff 48%, #f6eef9 100%);
+        radial-gradient(circle at 50% 50%, rgba(104, 173, 133, 0.06), transparent 44%),
+        linear-gradient(90deg, #fafcfa 0%, #f1f7f3 48%, #fafcfa 100%);
 }
 
 .handbook-retrowave-layer {
