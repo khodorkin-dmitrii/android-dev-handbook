@@ -23,6 +23,11 @@
     layer.append(staticCanvas, canvas);
     document.body.prepend(layer);
 
+    const cursorGlow = document.createElement("div");
+    cursorGlow.className = "handbook-cursor-glow";
+    cursorGlow.setAttribute("aria-hidden", "true");
+    layer.after(cursorGlow);
+
     const context = canvas.getContext("2d", { alpha: true });
     const staticContext = staticCanvas.getContext("2d", { alpha: true });
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -37,8 +42,12 @@
     let lastAnimationTime = 0;
     let lastFrameTime = 0;
     let resizeFrame = 0;
+    let cursorFrame = 0;
+    let cursorX = 0;
+    let cursorY = 0;
     let previousScrollY = 0;
     let smoothedScrollVelocity = 0;
+    const cursorGlowRadius = 280;
     const depthMotionBias = 0.2;
     const scrollVelocityScale = 1200;
     const maximumScrollBoost = 1.2;
@@ -333,6 +342,34 @@
         resizeFrame = window.requestAnimationFrame(resizeCanvas);
     }
 
+    function updateCursorGlow() {
+        cursorFrame = 0;
+        cursorGlow.style.transform = `translate3d(${cursorX - cursorGlowRadius}px, ${cursorY - cursorGlowRadius}px, 0)`;
+        cursorGlow.classList.add("handbook-cursor-glow--visible");
+    }
+
+    function handlePointerMove(event) {
+        if (
+            (event.pointerType !== "mouse" && event.pointerType !== "pen")
+            || reducedMotion.matches
+        ) {
+            return;
+        }
+
+        cursorX = event.clientX;
+        cursorY = event.clientY;
+
+        if (!cursorFrame) {
+            cursorFrame = window.requestAnimationFrame(updateCursorGlow);
+        }
+    }
+
+    function handlePointerLeave() {
+        window.cancelAnimationFrame(cursorFrame);
+        cursorFrame = 0;
+        cursorGlow.classList.remove("handbook-cursor-glow--visible");
+    }
+
     function handleMotionPreference() {
         stopAnimation();
         drawGrid();
@@ -354,6 +391,8 @@
     }
 
     window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.documentElement.addEventListener("mouseleave", handlePointerLeave);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     reducedMotion.addEventListener("change", handleMotionPreference);
 

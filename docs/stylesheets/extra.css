@@ -299,6 +299,47 @@ body[data-md-color-scheme="default"].handbook-retrowave-home.handbook-retrowave-
     z-index: 0;
 }
 
+.handbook-cursor-glow {
+    background: radial-gradient(
+        circle,
+        rgba(190, 18, 235, 0.3) 0%,
+        rgba(190, 18, 235, 0.12) 38%,
+        transparent 72%
+    );
+    border-radius: 50%;
+    contain: strict;
+    height: 560px;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    transform: translate3d(-560px, -560px, 0);
+    transition: opacity 180ms ease;
+    width: 560px;
+    will-change: transform, opacity;
+    z-index: 0;
+}
+
+body[data-md-color-scheme="default"] .handbook-cursor-glow {
+    background: radial-gradient(
+        circle,
+        rgba(104, 173, 133, 0.12) 0%,
+        rgba(104, 173, 133, 0.05) 38%,
+        transparent 72%
+    );
+}
+
+.handbook-cursor-glow--visible {
+    opacity: 1;
+}
+
+@media (any-hover: none) {
+    .handbook-cursor-glow {
+        display: none;
+    }
+}
+
 .handbook-retrowave-layer--portrait {
     height: 100vw;
     left: 100vw;
@@ -348,5 +389,9 @@ body[data-md-color-scheme="default"].handbook-retrowave-home.handbook-retrowave-
 @media (prefers-reduced-motion: reduce) {
     .handbook-retrowave-canvas {
         opacity: 0.5;
+    }
+
+    .handbook-cursor-glow {
+        display: none;
     }
 }
