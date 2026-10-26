@@ -1,53 +1,36 @@
 # OpenGL ES
 
-OpenGL ES - a low-level graphics API for GPU rendering on embedded/mobile devices. On Android, it is used for 2D/3D rendering, games, visual effects, camera filters and custom graphics engines.
+OpenGL ES is a graphics API for 2D and 3D rendering on mobile devices. Android apps use it for games, camera effects and custom rendering when they need control over geometry, shaders and textures.
 
 ## OpenGL ES basics
 
 ### Basic architecture
 
-OpenGL ES works as a state machine: the app on the CPU configures graphics state, buffers, shaders, textures and draw calls, while the GPU performs rendering.
+OpenGL ES is a stateful API: CPU code configures buffers, shaders, textures and draw calls; the graphics driver and GPU process the commands. EGL connects an OpenGL ES context to a rendering surface.
 
-On Android, OpenGL ES is usually used through `GLSurfaceView`, `TextureView`, `SurfaceView` or custom EGL handling. `GLSurfaceView.Renderer` provides callbacks such as `onSurfaceCreated()`, `onSurfaceChanged()` and `onDrawFrame()`.
+`GLSurfaceView` manages a rendering thread and EGL setup for common cases. Its `Renderer` receives `onSurfaceCreated()`, `onSurfaceChanged()` and `onDrawFrame()` callbacks. Use `setEGLContextClientVersion(2)` for the OpenGL ES 2.0 shader syntax shown below. `SurfaceView`, `TextureView` or direct EGL handling offer different integration options but require more lifecycle work.
 
-A minimal rendering loop usually does three things: creates GPU resources, updates scene state and calls draw calls every frame.
+Create GL resources when the context is available, update scene state, then issue draw calls. A lost EGL context invalidates resources such as textures and buffers; recreate them in `onSurfaceCreated()`. Handle view pause/resume and avoid touching GL state from an arbitrary UI thread.
 
-**Important:** OpenGL ES gives a lot of control, but requires manual management of buffers, shaders, textures, matrices, surface lifecycle and GPU state errors.
+### Vertex buffer
 
-**In short:** OpenGL ES is an API for direct work with the GPU pipeline, where the app describes geometry, shaders, textures and draw calls itself.
+A vertex buffer object (VBO) stores vertex attributes such as positions, texture coordinates, normals and colors in GL-managed storage. It avoids resending unchanged arrays with every draw call; the API does not guarantee a particular physical memory location.
 
-### Vertex Buffer
-
-Vertex Buffer - an area of GPU memory where vertex data is stored: positions, texture coordinates, normals, colors and other attributes.
-
-Instead of sending vertices to the GPU from CPU memory every frame, data is uploaded to a buffer and reused in draw calls.
-
-Example data for a simple triangle:
+Triangle positions before upload:
 
 ```kotlin
 val vertices = floatArrayOf(
-    0.0f,  0.5f, 0.0f,
-   -0.5f, -0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f
+     0.0f,  0.5f, 0.0f,
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f
 )
 ```
 
-In real OpenGL ES code, this data is placed into a `FloatBuffer`, a buffer object is created with `glGenBuffers()`, data is uploaded through `glBufferData()`, and layout attributes are described with `glVertexAttribPointer()`.
+With a VBO, create it with `glGenBuffers()`, bind it, upload data with `glBufferData()`, and set attribute layout with `glVertexAttribPointer()`. Passing a direct `FloatBuffer` to the Android GLES API is another path; a VBO is not mandatory for every draw.
 
-**In short:** Vertex Buffer stores geometry data on the GPU and allows vertices to be reused efficiently during rendering.
+### Vertex shader
 
-### Vertex Shader
-
-Vertex Shader - a program that runs for each vertex. Usually, it transforms coordinates from model space to clip space and passes data further through the pipeline.
-
-Typical vertex shader tasks:
-
-- apply model/view/projection matrices;
-- pass texture coordinates to the fragment shader;
-- prepare normals or colors;
-- perform simple vertex transformations.
-
-Example of a simplified shader:
+The vertex shader runs for each vertex. It transforms positions, commonly from model space to clip space, and passes attributes to later stages. This OpenGL ES 2.0 example uses a model-view-projection (MVP) matrix:
 
 ```glsl
 attribute vec4 aPosition;
@@ -58,15 +41,9 @@ void main() {
 }
 ```
 
-**In short:** Vertex Shader is responsible for processing vertices and their position in the graphics pipeline.
+### Fragment shader
 
-### Fragment Shader
-
-Fragment Shader - a program that calculates the color of each fragment that may become a pixel on the screen.
-
-It can use constant color, texture sampling, lighting calculations, alpha, fog, post-processing and other effects.
-
-Example:
+The fragment shader computes color for generated fragments. A fragment may still be discarded by depth or stencil testing before it contributes to the framebuffer.
 
 ```glsl
 precision mediump float;
@@ -77,61 +54,24 @@ void main() {
 }
 ```
 
-Fragment shader is often an expensive part of the pipeline because it runs for a large number of fragments. Complex lighting/effects, texture lookups and overdraw can significantly affect performance.
-
-**In short:** Fragment Shader calculates the final color of fragments and often defines the visual style of an object.
+Complex shading, texture sampling and overdraw can make fragment work expensive. Measure on target devices before optimizing.
 
 ### Texture
 
-Texture - an image or data set loaded into GPU memory and available to shaders for sampling.
+A texture is GL-managed image or data storage sampled by shaders. Typical uses include sprites, material maps, fonts, camera frames and post-processing. Choose dimensions and formats with memory and upload costs in mind. Minification and magnification filters control sampling; mipmaps can improve minified textures but require additional storage and suitable filtering.
 
-Textures are used for images on surfaces, material maps, sprites, fonts, UI atlases, camera frames, normal maps and post-processing.
+### Coordinate systems
 
-On Android, texture size, format, mipmaps, filtering and lifecycle matter. Textures that are too large consume GPU memory, and frequent texture uploads can cause stutter.
-
-Typical settings:
-
-- min/mag filtering: nearest or linear;
-- wrap mode: clamp or repeat;
-- mipmaps to reduce aliasing on distant objects.
-
-**In short:** Texture is a GPU resource with an image or data that a shader can read during rendering.
-
-### Coordinate Systems
-
-The graphics pipeline usually has several coordinate systems:
-
-- model/local space - coordinates inside the object;
-- world space - object coordinates in the scene;
-- view/camera space - coordinates relative to the camera;
-- clip space - the result of the projection transform;
-- normalized device coordinates - coordinates after perspective divide;
-- screen/window space - pixel coordinates on the screen.
-
-Transitions between them are usually defined by matrices: model, view and projection. Together they are often called the MVP matrix.
+Rendering commonly moves positions through model/local, world, view/camera and clip space. After the perspective divide, normalized device coordinates map through the viewport to window coordinates:
 
 ```text
-model coordinates -> world -> view -> clip -> screen
+model -> world -> view -> clip -> normalized device -> window
 ```
 
-On Android, additionally remember different coordinate systems for touch input, bitmap, texture coordinates and screen orientation.
+Model, view and projection matrices describe the main transforms. Touch, bitmap and texture coordinates may use different origins, so convert between them explicitly.
 
-**In short:** coordinate systems help separate object geometry, world position, camera and final screen position.
+### Rendering pipeline
 
-### Rendering Pipeline
+In a simplified OpenGL ES draw: the CPU prepares state and submits a draw call; vertex shading and primitive assembly process geometry; rasterization produces fragments; fragment shading computes values; per-fragment tests and blending determine framebuffer updates; the rendered surface is presented. The exact ordering of some fragment operations can vary.
 
-Simplified OpenGL ES pipeline:
-
-1. CPU prepares data, state and draw call.
-2. Vertex Shader processes vertices.
-3. Primitive assembly builds triangles/lines/points.
-4. Rasterization turns primitives into fragments.
-5. Fragment Shader calculates fragment color.
-6. Depth/stencil/blending tests decide whether the fragment reaches the framebuffer.
-7. Framebuffer is presented on the screen.
-
-Performance depends on draw call count, vertices, fragment cost, overdraw, texture bandwidth, state changes and CPU/GPU synchronization.
-
-**In short:** OpenGL ES pipeline turns vertex data and shader programs into pixels on the screen through a sequence of GPU stages.
-
-For UI-local shader effects that do not require geometry or a complete graphics pipeline, see [AGSL and `RuntimeShader`](agsl-runtime-shader.md).
+Look at draw calls, vertices, fragment cost, overdraw, texture bandwidth and CPU/GPU synchronization when investigating performance. For UI-local shader effects that do not need custom geometry, see [AGSL and `RuntimeShader`](agsl-runtime-shader.md).

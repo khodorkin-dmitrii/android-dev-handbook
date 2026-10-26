@@ -1,53 +1,36 @@
 # OpenGL ES
 
-OpenGL ES - низкоуровневый graphics API для GPU rendering на embedded/mobile устройствах. В Android он используется для 2D/3D rendering, игр, visual effects, camera filters и custom graphics engines.
+OpenGL ES - графический API для 2D- и 3D-рендеринга на мобильных устройствах. В Android его используют для игр, эффектов камеры и собственной отрисовки, когда нужен контроль над геометрией, шейдерами и текстурами.
 
 ## Основы OpenGL ES
 
 ### Базовая архитектура
 
-OpenGL ES работает как state machine: приложение на CPU настраивает graphics state, buffers, shaders, textures и draw calls, а GPU выполняет rendering.
+OpenGL ES - API с состоянием: код на CPU настраивает буферы, шейдеры, текстуры и вызовы отрисовки, а графический драйвер и GPU обрабатывают команды. EGL связывает контекст OpenGL ES с поверхностью для отрисовки.
 
-В Android OpenGL ES обычно используют через `GLSurfaceView`, `TextureView`, `SurfaceView` или собственную работу с EGL. `GLSurfaceView.Renderer` даёт callbacks вроде `onSurfaceCreated()`, `onSurfaceChanged()` и `onDrawFrame()`.
+`GLSurfaceView` управляет потоком рендеринга и настройкой EGL в типичных сценариях. Его `Renderer` получает вызовы `onSurfaceCreated()`, `onSurfaceChanged()` и `onDrawFrame()`. Для приведённого ниже синтаксиса шейдеров OpenGL ES 2.0 вызови `setEGLContextClientVersion(2)`. `SurfaceView`, `TextureView` и прямая работа с EGL дают другие способы интеграции, но требуют больше внимания к жизненному циклу.
 
-Минимальный rendering loop обычно делает три вещи: создаёт GPU resources, обновляет state сцены и вызывает draw calls каждый frame.
+Создавай GL-ресурсы после появления контекста, обновляй состояние сцены и отправляй команды отрисовки. При потере EGL-контекста ресурсы, например текстуры и буферы, становятся недействительными; пересоздавай их в `onSurfaceCreated()`. Обрабатывай паузу и возобновление View и не меняй состояние GL напрямую из произвольного UI-потока.
 
-**Важно:** OpenGL ES даёт много контроля, но требует вручную управлять buffers, shaders, textures, matrices, lifecycle surface и ошибками GPU state.
+### Вершинный буфер
 
-**Коротко:** OpenGL ES - API для прямой работы с GPU pipeline, где приложение само описывает geometry, shaders, textures и draw calls.
+Объект вершинного буфера (VBO) хранит атрибуты вершин: позиции, текстурные координаты, нормали и цвета - в памяти под управлением GL. Он позволяет не отправлять неизменные массивы заново при каждой отрисовке; API не гарантирует конкретного физического размещения данных.
 
-### Vertex Buffer
-
-Vertex Buffer - область GPU memory, где хранятся vertex data: позиции, texture coordinates, normals, colors и другие attributes.
-
-Вместо того чтобы отправлять vertices на GPU каждый frame из CPU memory, данные загружают в buffer и переиспользуют в draw calls.
-
-Пример данных для простого треугольника:
+Позиции вершин треугольника до загрузки:
 
 ```kotlin
 val vertices = floatArrayOf(
-    0.0f,  0.5f, 0.0f,
-   -0.5f, -0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f
+     0.0f,  0.5f, 0.0f,
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f
 )
 ```
 
-В реальном OpenGL ES коде эти данные кладут в `FloatBuffer`, создают buffer object через `glGenBuffers()`, загружают через `glBufferData()` и описывают layout attributes через `glVertexAttribPointer()`.
+Для VBO создай объект через `glGenBuffers()`, привяжи его, загрузи данные через `glBufferData()` и задай формат атрибутов через `glVertexAttribPointer()`. Передача прямого `FloatBuffer` в Android GLES API - ещё один вариант; VBO не обязателен для каждой команды отрисовки.
 
-**Коротко:** Vertex Buffer хранит geometry data на GPU и позволяет эффективно переиспользовать vertices при rendering.
+### Вершинный шейдер
 
-### Vertex Shader
-
-Vertex Shader - программа, которая выполняется для каждого vertex. Обычно она преобразует координаты из model space в clip space и передаёт данные дальше в pipeline.
-
-Типичные задачи vertex shader:
-
-- применить model/view/projection matrices;
-- передать texture coordinates во fragment shader;
-- подготовить normals или colors;
-- выполнить простые vertex transformations.
-
-Пример упрощённого shader:
+Вершинный шейдер выполняется для каждой вершины. Он преобразует позицию, обычно из локальных координат в пространство отсечения, и передаёт атрибуты следующим стадиям. В этом примере для OpenGL ES 2.0 используется матрица модели, вида и проекции (MVP):
 
 ```glsl
 attribute vec4 aPosition;
@@ -58,15 +41,9 @@ void main() {
 }
 ```
 
-**Коротко:** Vertex Shader отвечает за обработку vertices и их позицию в graphics pipeline.
+### Фрагментный шейдер
 
-### Fragment Shader
-
-Fragment Shader - программа, которая вычисляет цвет каждого fragment, который потенциально станет pixel на экране.
-
-Он может использовать constant color, texture sampling, lighting calculations, alpha, fog, post-processing и другие effects.
-
-Пример:
+Фрагментный шейдер вычисляет цвет образованных фрагментов. После него фрагмент ещё может быть отброшен проверкой глубины или трафарета и не попасть в буфер кадра.
 
 ```glsl
 precision mediump float;
@@ -77,61 +54,24 @@ void main() {
 }
 ```
 
-Fragment shader часто является дорогой частью pipeline, потому что выполняется для большого количества fragments. Сложные lighting/effects, texture lookups и overdraw могут заметно влиять на performance.
+Сложные вычисления, выборка текстур и избыточная отрисовка могут сделать обработку фрагментов дорогой. Перед оптимизацией измеряй производительность на целевых устройствах.
 
-**Коротко:** Fragment Shader вычисляет итоговый цвет fragments и часто определяет визуальный стиль объекта.
+### Текстура
 
-### Texture
+Текстура - изображение или данные под управлением GL, которые считывают шейдеры. Её используют для спрайтов, материалов, шрифтов, кадров камеры и постобработки. Размеры и формат влияют на расход памяти и стоимость загрузки. Фильтры уменьшения и увеличения управляют выборкой; mipmap-уровни могут улучшить качество уменьшенной текстуры, но требуют дополнительной памяти и подходящей фильтрации.
 
-Texture - изображение или набор данных, загруженный в GPU memory и доступный shader-ам для sampling.
+### Системы координат
 
-Textures используют для изображений на поверхностях, material maps, sprites, fonts, UI atlases, camera frames, normal maps и post-processing.
-
-В Android важно учитывать размеры texture, format, mipmaps, filtering и lifecycle. Слишком большие textures расходуют GPU memory, а частая загрузка textures может вызывать stutter.
-
-Типичные настройки:
-
-- min/mag filtering: nearest или linear;
-- wrap mode: clamp или repeat;
-- mipmaps для уменьшения aliasing на удалённых объектах.
-
-**Коротко:** Texture - GPU resource с изображением или данными, которые shader может читать при rendering.
-
-### Coordinate Systems
-
-В graphics pipeline обычно есть несколько coordinate systems:
-
-- model/local space - координаты внутри объекта;
-- world space - координаты объекта в сцене;
-- view/camera space - координаты относительно камеры;
-- clip space - результат projection transform;
-- normalized device coordinates - координаты после perspective divide;
-- screen/window space - координаты пикселей на экране.
-
-Переходы между ними обычно задаются matrices: model, view и projection. Вместе их часто называют MVP matrix.
+При отрисовке позиция обычно проходит через локальное пространство объекта, мировое пространство, пространство камеры и пространство отсечения. После деления на перспективную компоненту нормализованные координаты преобразуются через viewport в координаты окна:
 
 ```text
-model coordinates -> world -> view -> clip -> screen
+модель -> мир -> камера -> отсечение -> нормализованные координаты -> окно
 ```
 
-На Android дополнительно нужно помнить про разные системы координат для touch input, bitmap, texture coordinates и screen orientation.
+Основные преобразования задают матрицы модели, вида и проекции. Координаты касаний, bitmap и текстур могут иметь разные начала отсчёта; преобразуй их явно.
 
-**Коротко:** coordinate systems помогают отделить geometry объекта, положение в мире, камеру и финальное положение на экране.
+### Конвейер рендеринга
 
-### Rendering Pipeline
+В упрощённом вызове OpenGL ES CPU подготавливает состояние и отправляет команду отрисовки; вершинный шейдер и сборка примитивов обрабатывают геометрию; растеризация создаёт фрагменты; фрагментный шейдер вычисляет значения; проверки фрагментов и смешивание определяют обновление буфера кадра; затем поверхность выводится на экран. Точный порядок некоторых операций с фрагментами может отличаться.
 
-Упрощённый OpenGL ES pipeline:
-
-1. CPU подготавливает data, state и draw call.
-2. Vertex Shader обрабатывает vertices.
-3. Primitive assembly собирает triangles/lines/points.
-4. Rasterization превращает primitives во fragments.
-5. Fragment Shader вычисляет цвет fragments.
-6. Depth/stencil/blending tests решают, попадёт ли fragment в framebuffer.
-7. Framebuffer выводится на экран.
-
-Performance зависит от количества draw calls, vertices, fragment cost, overdraw, texture bandwidth, state changes и синхронизации CPU/GPU.
-
-**Коротко:** OpenGL ES pipeline превращает vertex data и shader programs в pixels на экране через последовательность GPU stages.
-
-Для локальных shader effects внутри UI, которым не нужны geometry и полноценный graphics pipeline, смотри [AGSL и `RuntimeShader`](agsl-runtime-shader.md).
+При поиске проблем производительности оценивай количество вызовов отрисовки и вершин, стоимость фрагментов, избыточную отрисовку, пропускную способность текстур и синхронизацию CPU/GPU. Для локальных эффектов интерфейса без собственной геометрии смотри [AGSL и `RuntimeShader`](agsl-runtime-shader.md).
