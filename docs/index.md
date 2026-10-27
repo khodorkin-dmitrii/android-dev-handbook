@@ -60,5 +60,5 @@ _Last updated: {{LAST_UPDATED}}_
 | Pages | 110 | 110 |
 | Sections | 543 | 543 |
 | Topics | 430 | 430 |
-| Words | 87874 | 81474 |
+| Words | 87856 | 81481 |
 <!-- END GENERATED HANDBOOK STATS -->

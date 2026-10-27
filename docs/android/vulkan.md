@@ -1,73 +1,36 @@
 # Vulkan
 
-Vulkan - a low-level graphics and compute API created as a more explicit and modern alternative to OpenGL ES for direct GPU control.
+Vulkan is an explicit, low-level API for graphics and compute. On Android, it is mainly relevant to games, rendering engines and demanding visualization rather than ordinary app screens.
 
 ## Vulkan basics
 
 ### Why it appeared
 
-Vulkan appeared to give apps more control over GPU work, memory management, synchronization and multi-threaded command recording.
+Vulkan gives an application more control over GPU resources, command submission and synchronization. Compared with OpenGL ES, it moves more work from the driver to the application. This can reduce CPU driver overhead and make complex rendering easier to scale across CPU threads, but also increases implementation and maintenance cost.
 
-OpenGL ES is historically easier to use, but much of the work is hidden inside the driver: validation, state tracking, resource management and implicit synchronization. This is convenient, but can create unpredictable overhead.
-
-Vulkan moves more responsibility to the app: the developer explicitly creates resources, command buffers, pipelines, synchronization primitives and manages memory.
-
-**In short:** Vulkan appeared for more explicit, predictable and efficient GPU management, especially in complex rendering engines.
+Lower overhead is a possibility, not an automatic frame-rate improvement: GPU workload, memory bandwidth and frame pacing still matter. Measure on target devices.
 
 ### Differences from OpenGL ES
 
-OpenGL ES is a state-machine API with a lot of implicit behavior. Vulkan is an explicit API where almost everything is defined upfront and explicitly.
+[OpenGL ES](opengl-es.md) uses a stateful API with more work handled implicitly by the driver. Vulkan requires the application to define much of that work explicitly:
 
-Key differences:
+- allocate and bind memory for buffers and images, then manage resource lifetimes;
+- create pipelines describing shader and fixed-function state;
+- record commands into command buffers and submit them to queues;
+- synchronize resource access and presentation with barriers, semaphores and fences where needed.
 
-- Vulkan requires explicit memory management;
-- synchronization is defined manually through fences, semaphores and barriers;
-- pipelines describe rendering state upfront;
-- command buffers can be recorded ahead of time and from different threads;
-- the driver does less hidden work during draw.
+Different CPU threads can record separate command buffers, subject to Vulkan's threading rules. This does not mean one command buffer can be recorded concurrently by several threads. Shader modules are typically supplied as SPIR-V rather than GLSL source strings compiled by the driver at runtime.
 
-OpenGL ES is easier to start with and is often enough for custom effects, camera filters and moderate rendering. Vulkan is more complex, but scales better for large engines, complex scenes and multi-threaded rendering.
+OpenGL ES remains useful for smaller custom renderers. Vulkan is a better candidate when the engine needs its explicit control or a feature unavailable in OpenGL ES. Migration should be justified by profiling and device coverage, not by API choice alone.
 
-**In short:** OpenGL ES is simpler and more implicit; Vulkan is more complex and explicit, but gives more control over performance.
+### Trade-offs
 
-### Pros and cons
+Vulkan can reduce driver overhead, support parallel command preparation and expose modern graphics features. In return, setup is longer and mistakes in synchronization, memory lifetime or presentation can be difficult to debug. It is especially important to test across actual Android GPU drivers.
 
-Vulkan advantages:
+Android exposes Vulkan through the NDK starting at API level 24, but the OS version alone does not prove that a device supports the required Vulkan version or features. Check device capabilities at runtime and provide a supported rendering path for devices outside your target set. Declare a required Vulkan feature in the manifest only if the app cannot work without it.
 
-- lower driver overhead in complex scenes;
-- more predictable performance model;
-- better multi-threading for preparing command buffers;
-- explicit control over memory and synchronization;
-- unified modern API model for graphics and compute.
+### Where Android apps use it
 
-Disadvantages:
+Vulkan is common behind game and rendering engines and can serve custom 3D, AR/VR or compute-heavy visualization. A regular Compose or View screen generally does not need direct Vulkan code. An app may also use an engine or SDK with a Vulkan backend without calling Vulkan itself.
 
-- high entry barrier;
-- much more boilerplate;
-- harder debugging;
-- easy to introduce bugs in synchronization or memory lifetime;
-- does not always provide benefits for simple UI/2D tasks.
-
-Most regular Android apps do not need Vulkan directly. It is often used through a game engine or rendering engine rather than written as raw Vulkan by hand.
-
-**In short:** Vulkan is powerful, but expensive in complexity; it is justified where engine-level GPU control is needed.
-
-### How often it is used in Android apps
-
-In regular Android apps, Vulkan is rarely used directly. Most screens are built through View System, Compose, Canvas or media/camera APIs.
-
-Vulkan is more common in:
-
-- games;
-- 3D engines;
-- AR/VR;
-- heavy visualization;
-- CAD/product viewers;
-- custom rendering engines;
-- some camera/video/image processing pipelines.
-
-In many production apps, Vulkan may be present indirectly: through Unity, Unreal, Filament, Sceneform-like wrappers, maps/visualization engines or vendor SDKs.
-
-If the task is a regular business UI, chart or custom 2D component, Vulkan is almost always excessive.
-
-**In short:** raw Vulkan in Android app code is rare; it is more often used by engines and SDKs that need complex GPU rendering.
+For choosing a higher-level 3D renderer, see [Google Filament](google-filament.md). For the wider Android rendering landscape, see [2D and 3D Rendering](2d-3d-rendering.md).
