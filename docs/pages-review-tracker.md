@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-27
+1. Last tracker update: 2026-10-28
 1. Total articles tracked: 107
-1. Updated: 86
-1. TODO: 21
+1. Updated: 87
+1. TODO: 20
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 19      | 21   |
+| P2 | 40 | 20      | 20   |
 
 ## Tracker
 
@@ -112,7 +112,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-25, `android/canvas.md`, Android Canvas, Clarified invalidation and layout, hardware versus bitmap-backed drawing, bitmap memory and custom View sizing; improved Kotlin examples, removed repetitive summaries and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-26, `android/opengl-es.md`, OpenGL ES, Clarified EGL context lifecycle, VBO storage, OpenGL ES 2.0 shader examples and rendering stages; removed repetitive summaries and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-27, `android/vulkan.md`, Vulkan, Clarified OpenGL ES trade-offs, Android device capability checks, command recording and synchronization; removed repetitive summaries and synchronized EN/RU.
-1. P2, **TODO**, , `android/google-filament.md`, Google Filament
+1. P2, **UPDATED**, 2026-10-28, `android/google-filament.md`, Google Filament, Clarified scene components, Android surface lifecycle, frame rendering and glTF assets; removed repetitive summaries and synchronized EN/RU.
 1. P2, **TODO**, , `android/2d-3d-rendering.md`, 2D and 3D Rendering
 1. P2, **TODO**, , `android/android-system-services.md`, Android System Services
 1. P2, **TODO**, , `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview

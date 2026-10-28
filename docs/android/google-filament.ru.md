@@ -1,116 +1,52 @@
 # Google Filament
 
-Google Filament - real-time physically based rendering engine, который упрощает создание качественной 3D-графики на Android и других платформах.
+Filament - движок для физически правдоподобного рендеринга (PBR) в реальном времени на Android и других платформах. Он предоставляет модель сцены, материалы, освещение и инструменты для ассетов поверх низкоуровневых графических API. Он подходит, когда приложению нужна интерактивная 3D-графика без разработки собственного рендерера.
 
-## Filament basics
+## Основы Filament
 
 ### Что это такое
 
-Filament - 3D rendering engine от Google для real-time rendering с поддержкой PBR (physically based rendering), материалов, освещения, камер, сцен и разных graphics backends.
+При работе с [OpenGL ES](opengl-es.md) или [Vulkan](vulkan.md) приложение напрямую управляет графическим состоянием и командами отрисовки. Filament вместо этого предоставляет камеры, сущности, отображаемые объекты, источники света и материалы. Движок берёт на себя значительную часть работы с шейдерами, освещением и графическим бэкендом, но приложение по-прежнему отвечает за содержимое сцены и жизненный цикл ресурсов.
 
-Он находится выше уровня OpenGL ES/Vulkan: разработчик работает не с raw draw calls и shaders для каждого объекта, а с engine abstractions - scene, entity, material, camera, light, renderable.
-
-Filament подходит для случаев, где нужен качественный 3D rendering без написания собственного engine с нуля.
-
-**Коротко:** Filament - это 3D engine поверх graphics APIs, который даёт готовую модель сцен, материалов, камер и освещения.
+Для локального шейдерного эффекта в интерфейсе без 3D-сцены обычно проще использовать [AGSL и `RuntimeShader`](agsl-runtime-shader.md).
 
 ### Как устроен
 
-В Filament есть несколько ключевых сущностей:
+- `Engine` создаёт ресурсы Filament и управляет ими.
+- `Scene` содержит сущности, участвующие в отрисовке, например объекты и источники света.
+- `Camera` - компонент сущности, задающий положение наблюдателя и проекцию.
+- `View` выбирает `Scene` и `Camera`, настраивает область вывода и параметры рендеринга.
+- `Renderer` отправляет `View` на отрисовку кадра.
+- `SwapChain` связывает рендеринг с поверхностью платформы.
 
-- `Engine` - центральный объект, управляющий rendering resources;
-- `Renderer` - выполняет rendering кадра;
-- `Scene` - содержит объекты и lights;
-- `View` - связывает scene, camera и viewport;
-- `Camera` - определяет точку зрения;
-- materials - описывают внешний вид surfaces;
-- renderables - geometry objects, которые можно рисовать.
+В типичном Android-приложении создают `Engine`, `Renderer`, `Scene`, `View`, `Camera` и `SwapChain` для текущей поверхности. Кадр проходит через `beginFrame(swapChain)`, `render(view)` и `endFrame()`; если `beginFrame()` возвращает `false`, отрисовку пропускают. Размер области вывода `View` нужно обновлять при изменении поверхности.
 
-Обычно приложение создаёт `Engine`, `SwapChain`, `Renderer`, `Scene`, `View` и `Camera`, затем добавляет renderable entities и каждый frame вызывает rendering.
+Поверхность Android может быть пересоздана независимо от Activity. При её изменении пересоздай `SwapChain`, при паузе останови планирование кадров, а после завершения владельца освободи ресурсы Filament. Android-класс `UiHelper` помогает интегрироваться с поверхностью. Отсоединённую или уничтоженную поверхность нельзя считать действительной целью рендеринга.
 
-Filament также имеет tooling для материалов и assets, например material compiler и поддержку glTF через companion libraries.
+### Связь с графическими API
 
-**Коротко:** Filament строится вокруг engine, scene, view, camera, renderables, lights и materials.
+На Android Filament может использовать OpenGL ES или Vulkan как бэкенд. При этом приложению не нужно писать вызовы отрисовки для каждого объекта под конкретный API. Но ограничения GPU остаются: расход памяти на текстуры, избыточная отрисовка, сложность ассетов и время кадра требуют измерений на целевых устройствах.
 
-### Связь с OpenGL/Vulkan
-
-Filament использует graphics backend под капотом. В зависимости от платформы и настроек это может быть OpenGL ES, Vulkan, Metal или другой backend.
-
-Для Android это означает, что Filament может использовать GPU через backend, но приложение не обязано напрямую писать OpenGL ES или Vulkan code.
-
-Для локального programmable fragment effect внутри UI без 3D scene лучше подходит более компактный и прямой вариант - [AGSL и `RuntimeShader`](agsl-runtime-shader.md).
-
-Такой слой abstraction полезен: rendering engine берёт на себя shader generation, material model, lighting, resource management и часть platform-specific деталей.
-
-Но abstraction не отменяет базовые ограничения graphics: GPU memory, texture size, frame budget, lighting cost, overdraw, asset complexity и lifecycle всё равно важны.
-
-**Коротко:** Filament работает поверх OpenGL/Vulkan-like backends и скрывает большую часть low-level graphics boilerplate.
-
-## Scene model
+## Модель сцены
 
 ### Камеры
 
-Camera в Filament задаёт projection и view transform: где находится наблюдатель, куда он смотрит и какая projection используется.
-
-Типичные параметры:
-
-- position и orientation;
-- field of view;
-- near/far clipping planes;
-- aspect ratio;
-- perspective или orthographic projection.
-
-Камера не рисует сама по себе. Она определяет, как `View` увидит `Scene` при rendering.
-
-**Коротко:** camera задаёт точку зрения и projection, через которые scene превращается в изображение.
+Камера задаёт положение и ориентацию наблюдателя, а также проекцию. Для перспективной проекции видимую область определяют угол обзора, соотношение сторон и ближняя/дальняя плоскости отсечения. Сама камера ничего не рисует: `View` использует её для отображения `Scene`. При изменении размеров вывода обновляй проекцию и область отрисовки.
 
 ### Сцены
 
-Scene содержит renderable objects и lights, которые участвуют в rendering.
-
-В отличие от простого Canvas drawing, 3D scene обычно хранит набор entities, transforms, materials, geometry и lighting setup. Rendering engine каждый frame рассчитывает, что видно камере, какие materials применить и как освещение влияет на surfaces.
-
-Scene может быть простой - один 3D model viewer - или сложной, с несколькими объектами, lights, skybox, indirect light и animation.
-
-**Коротко:** scene - контейнер 3D-мира, который renderer отображает через выбранную camera и view.
+`Scene` включает сущности с компонентами отображаемого объекта или источника света. Компоненты трансформации задают положение объектов; геометрия и материалы определяют их внешний вид. Сцена может содержать одну модель или множество объектов, источников света и окружение. Анимация обновляет состояние сцены, а рендерер строит кадры для выбранного `View`.
 
 ### Материалы
 
-Material описывает, как поверхность реагирует на свет и как она выглядит: base color, metallic, roughness, normal map, alpha, emissive и другие параметры.
-
-Filament использует PBR-подход, поэтому materials стремятся вести себя физически правдоподобно. Это помогает получать стабильный реалистичный вид при разном lighting setup.
-
-Material может быть параметризован: один compiled material definition используется с разными values/textures для разных объектов.
-
-**Важно:** качество 3D часто зависит не только от geometry, но и от materials, textures, lighting и color management.
-
-**Коротко:** material задаёт внешний вид surface и её взаимодействие с освещением.
+Материалы Filament задают свойства поверхности: базовый цвет, металлический отклик, шероховатость, карту нормалей, прозрачность и свечение. У одного скомпилированного материала могут быть экземпляры с разными параметрами и текстурами. PBR обеспечивает согласованную модель освещения, но качество изображения всё равно зависит от текстур, света и работы с цветом.
 
 ### Освещение
 
-Lighting в Filament включает direct lights и image-based lighting.
+Filament поддерживает прямые источники света и освещение от окружения (IBL). Окружение может давать фоновый свет и отражения, особенно полезные для PBR-материалов. Источники света, тени, отражения и свойства материалов увеличивают стоимость кадра; подбирай их с учётом бюджета времени.
 
-Direct lights - directional, point, spot lights и другие источники, которые явно размещаются в scene. Image-based lighting использует environment/skybox для более реалистичного отражённого света.
+### Ассеты и сценарии применения
 
-Для PBR rendering освещение критично: без корректного light setup даже хорошие models и materials могут выглядеть плоско или неестественно.
+Библиотека `gltfio` загружает ассеты glTF 2.0; инструменты материалов компилируют описания материалов Filament. Поэтому движок подходит для просмотра моделей, демонстрации товаров, конфигураторов и интерактивной 3D-визуализации. Загрузка, декодирование и освобождение ассетов всё равно требуют внимания к памяти и жизненному циклу.
 
-Lighting влияет на performance. Много источников света, большие shadow maps и сложные materials увеличивают GPU cost.
-
-**Коротко:** освещение определяет, как материалы воспринимаются в сцене, и сильно влияет на качество 3D rendering.
-
-### Типичные сценарии использования
-
-Filament подходит для:
-
-- 3D model viewer;
-- product preview;
-- AR-related rendering;
-- interactive 3D objects;
-- educational visualization;
-- configurators;
-- maps/scene visualization;
-- rendering glTF assets.
-
-Он обычно избыточен для обычных business screens, простых charts и flat 2D graphics. Для таких задач чаще достаточно Compose, View System или Canvas.
-
-**Коротко:** Filament выбирают, когда нужен качественный real-time 3D без написания собственного OpenGL/Vulkan engine.
+Для обычных экранов приложения, графиков и простой 2D-отрисовки чаще достаточно Compose, Views или Canvas. Более широкий выбор инструментов описан в статье [2D- и 3D-рендеринг](2d-3d-rendering.md).
