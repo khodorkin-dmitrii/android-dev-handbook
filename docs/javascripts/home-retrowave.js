@@ -77,7 +77,10 @@
 
     function updatePumpkins(deltaSeconds) {
         if (!pumpkinImage.complete || !pumpkinImage.naturalWidth) return;
-        pumpkins.forEach((pumpkin) => { pumpkin.age += deltaSeconds; });
+        pumpkins.forEach((pumpkin) => {
+            pumpkin.age += deltaSeconds;
+            pumpkin.flash = Math.max(0, pumpkin.flash - deltaSeconds);
+        });
         pumpkins = pumpkins.filter((pumpkin) => pumpkin.age < pumpkin.duration);
         pumpkinDelay -= deltaSeconds;
         if (pumpkinDelay <= 0 && pumpkins.length < (compactViewport ? 3 : 5)) {
@@ -86,6 +89,8 @@
                 lane: 0.5 + side * (0.08 + Math.random() * 0.22),
                 top: Math.random() < 0.5,
                 age: 0,
+                flash: 0,
+                glowPhase: Math.random() * Math.PI * 2,
                 duration: 10 + Math.random() * 6,
                 rotationPhase: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.18 + Math.random() * 0.18),
@@ -110,6 +115,9 @@
             const y = horizonY + (edgeY - horizonY) * travel;
             const growth = Math.min(1, progress / 0.12);
             const size = pumpkin.size * growth * (0.45 + travel * 0.9);
+            const angle = pumpkin.rotationPhase + pumpkin.age * pumpkin.rotationSpeed
+                - (portraitScene ? Math.PI / 2 : 0);
+            pumpkin.hit = { x, y, size, angle };
             context.globalAlpha = Math.min(1, (1 - progress) / 0.15);
             context.imageSmoothingEnabled = true;
 
@@ -121,8 +129,11 @@
             context.imageSmoothingEnabled = false;
             context.drawImage(pumpkinImage, -size / 2, -size / 2, size, size);
             context.imageSmoothingEnabled = true;
-            context.globalAlpha *= 0.6;
-            context.drawImage(pumpkinGlow, -size, -size, size * 2, size * 2);
+            const pulse = 1 + 0.12 * Math.sin(pumpkin.age * 2.4 + pumpkin.glowPhase);
+            const flash = pumpkin.flash / 0.55;
+            context.globalAlpha = Math.min(1, context.globalAlpha * (0.6 * pulse + 1.3 * flash));
+            const radius = size * (1 + 0.25 * flash);
+            context.drawImage(pumpkinGlow, -radius, -radius, radius * 2, radius * 2);
             context.restore();
         }
         context.restore();
@@ -459,6 +470,30 @@
         drawGrid();
     }
 
+    function handlePumpkinClick(event) {
+        if (reducedMotion.matches
+            || event.target.closest("a, button, input, textarea, select, video, label")) return;
+        const bounds = canvas.getBoundingClientRect();
+        const x = portraitScene
+            ? (event.clientY - bounds.top) * width / bounds.height
+            : (event.clientX - bounds.left) * width / bounds.width;
+        const y = portraitScene
+            ? (bounds.right - event.clientX) * height / bounds.width
+            : (event.clientY - bounds.top) * height / bounds.height;
+        for (const pumpkin of pumpkins) {
+            const hit = pumpkin.hit;
+            if (!hit) continue;
+            const dx = x - hit.x;
+            const dy = y - hit.y;
+            const localX = dx * Math.cos(hit.angle) + dy * Math.sin(hit.angle);
+            const localY = -dx * Math.sin(hit.angle) + dy * Math.cos(hit.angle);
+            if (Math.abs(localX) <= hit.size / 2 && Math.abs(localY) <= hit.size / 2) {
+                pumpkin.flash = 0.55;
+            }
+        }
+    }
+
+    window.addEventListener("click", handlePumpkinClick);
     window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     document.documentElement.addEventListener("mouseleave", handlePointerLeave);
