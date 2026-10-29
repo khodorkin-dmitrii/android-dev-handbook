@@ -61,6 +61,73 @@
         targetFrameTime: 1000 / 90
     };
 
+    const pumpkinImage = new Image();
+    pumpkinImage.src = new URL("../assets/pumpkin-48x48.png", document.currentScript.src).href;
+    let pumpkins = [];
+    let pumpkinDelay = 0.5;
+    const pumpkinGlow = document.createElement("canvas");
+    pumpkinGlow.width = pumpkinGlow.height = 128;
+    const glowContext = pumpkinGlow.getContext("2d");
+    const gold = glowContext.createRadialGradient(64, 64, 5, 64, 64, 64);
+    gold.addColorStop(0, "rgba(255, 218, 95, .85)");
+    gold.addColorStop(0.35, "rgba(255, 184, 35, .45)");
+    gold.addColorStop(1, "rgba(255, 168, 20, 0)");
+    glowContext.fillStyle = gold;
+    glowContext.fillRect(0, 0, 128, 128);
+
+    function updatePumpkins(deltaSeconds) {
+        if (!pumpkinImage.complete || !pumpkinImage.naturalWidth) return;
+        pumpkins.forEach((pumpkin) => { pumpkin.age += deltaSeconds; });
+        pumpkins = pumpkins.filter((pumpkin) => pumpkin.age < pumpkin.duration);
+        pumpkinDelay -= deltaSeconds;
+        if (pumpkinDelay <= 0 && pumpkins.length < (compactViewport ? 3 : 5)) {
+            const side = Math.random() < 0.5 ? -1 : 1;
+            pumpkins.push({
+                lane: 0.5 + side * (0.08 + Math.random() * 0.22),
+                top: Math.random() < 0.5,
+                age: 0,
+                duration: 10 + Math.random() * 6,
+                rotationPhase: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.18 + Math.random() * 0.18),
+                size: 38 + Math.random() * 26
+            });
+            pumpkinDelay = 2 + Math.random() * 2.5;
+        }
+    }
+
+    function drawPumpkins() {
+        if (reducedMotion.matches || !pumpkinImage.naturalWidth) return;
+        const metrics = gridMetrics();
+        context.save();
+        for (const pumpkin of pumpkins) {
+            const progress = pumpkin.age / pumpkin.duration;
+            const travel = progress * progress;
+            const horizonX = metrics.centerX + (pumpkin.lane - 0.5) * metrics.horizonSpan;
+            const edgeX = metrics.centerX + (pumpkin.lane - 0.5) * metrics.edgeSpan;
+            const horizonY = pumpkin.top ? metrics.topHorizon : metrics.bottomHorizon;
+            const edgeY = pumpkin.top ? 0 : height;
+            const x = horizonX + (edgeX - horizonX) * travel;
+            const y = horizonY + (edgeY - horizonY) * travel;
+            const growth = Math.min(1, progress / 0.12);
+            const size = pumpkin.size * growth * (0.45 + travel * 0.9);
+            context.globalAlpha = Math.min(1, (1 - progress) / 0.15);
+            context.imageSmoothingEnabled = true;
+
+            context.save();
+            context.translate(x, y);
+            // Counter the portrait scene rotation so the sprite stays upright.
+            if (portraitScene) context.rotate(-Math.PI / 2);
+            context.rotate(pumpkin.rotationPhase + pumpkin.age * pumpkin.rotationSpeed);
+            context.imageSmoothingEnabled = false;
+            context.drawImage(pumpkinImage, -size / 2, -size / 2, size, size);
+            context.imageSmoothingEnabled = true;
+            context.globalAlpha *= 0.6;
+            context.drawImage(pumpkinGlow, -size, -size, size * 2, size * 2);
+            context.restore();
+        }
+        context.restore();
+    }
+
     function updateGeometry() {
         geometry.depthLines = compactViewport ? 16 : 24;
         geometry.lanes = compactViewport ? 11 : 19;
@@ -270,6 +337,7 @@
         const palette = currentPalette();
         drawDepthPass(palette, true);
         drawDepthPass(palette, false);
+        drawPumpkins();
     }
 
     function readScrollPosition() {
@@ -312,6 +380,7 @@
                 depths[index] = nextDepth <= geometry.near ? nextDepth + depthRange : nextDepth;
             }
 
+            updatePumpkins(deltaSeconds);
             drawGrid();
         }
 
