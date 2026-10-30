@@ -47,6 +47,7 @@ LinkedIn: [linkedin.com/in/khodorkin-dmitrii](https://www.linkedin.com/in/dmitri
 
 Личный справочник по Android-разработке с практическими инженерными заметками, материалами для быстрого повторения и краткими объяснениями Android, Kotlin, Jetpack Compose, Coroutines, архитектуры, тестирования и связанных тем.
 
+* Portfolio: [khodorkin-dmitrii.github.io](https://khodorkin-dmitrii.github.io/)
 * GitHub: [github.com/khodorkin-dmitrii](https://github.com/khodorkin-dmitrii)
 * Handbook repository: [khodorkin-dmitrii/android-dev-handbook](https://github.com/khodorkin-dmitrii/android-dev-handbook)
 * <span class="handbook-android-icon" aria-hidden="true"><img src="assets/images/library-android-v9.svg" alt=""></span> Android audio app: [репозиторий](https://github.com/khodorkin-dmitrii/android-handbook-audio) · [релизы](https://github.com/khodorkin-dmitrii/android-handbook-audio/releases)
