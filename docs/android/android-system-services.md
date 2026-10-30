@@ -6,7 +6,7 @@ Android system services coordinate platform-wide behavior such as component laun
 
 A framework or system service owns platform-level state and policy shared by many applications. It is different from an application `Service`, which is an Android app component with callbacks such as `onStartCommand()` and `onBind()`. An app `Service` does not automatically get a separate process or background thread.
 
-Many Java framework services are initialized in, or closely associated with, the `SystemServer` process. This is not true for every Android service. Important native platform components can live in separate processes; SurfaceFlinger, which composites graphical surfaces for display, is one example.
+Many Java framework services are initialized in the `system_server` process by the `SystemServer` startup code. This is not true for every Android service. Important native platform components can live in separate processes; SurfaceFlinger, which composites graphical surfaces for display, is one example.
 
 A compact startup context is:
 
@@ -14,13 +14,13 @@ A compact startup context is:
 init -> Zygote -> SystemServer -> framework services
 ```
 
-`init` starts Zygote, and Zygote creates `SystemServer`. `SystemServer` then starts framework services in dependency-aware phases. This is only orientation, not a complete Android boot sequence.
+`init` starts Zygote, which forks the `system_server` process. Its `SystemServer` code then starts framework services in dependency-aware phases. This is only orientation, not a complete Android boot sequence.
 
 ## Core services
 
 ### Activity Manager Service - AMS
 
-Activity Manager Service (AMS) coordinates application processes and tracks how important they are to the user. That process importance influences which cached processes the system can reclaim under memory pressure. AMS also coordinates application `Service` and broadcast execution, participates in crash and ANR handling, and works with package, task, window and other framework services.
+Activity Manager Service (AMS) coordinates application processes and tracks how important they are to the user. That importance informs process priority; under memory pressure, the low-memory killer daemon (`lmkd`) can terminate less essential processes. AMS also coordinates application `Service` and broadcast execution, participates in crash and ANR handling, and works with package, task, window and other framework services.
 
 AMS is not the sole owner of every activity or task concern in modern Android. It coordinates process-level and component-level work with Activity Task Manager Service, and the application process receives lifecycle transactions through framework plumbing before its `Activity` callbacks run. This distinction matters when reading logs: an activity transition can involve ATMS, AMS, the app process and WMS rather than one manager directly invoking every callback.
 
@@ -69,7 +69,7 @@ This is a mental model, not a single strictly linear call chain. Some work overl
 These boundaries turn platform-looking symptoms into more focused debugging questions:
 
 - Unexpected activity reuse, Back behavior or multi-window placement often starts with ATMS task state, launch modes and intent flags.
-- A screen recreated after returning to an app may reflect AMS-managed process reclamation, not an orderly `Activity.onDestroy()` path.
+- A screen recreated after returning to an app may mean its process was killed under memory pressure, often by `lmkd`, without an orderly `Activity.onDestroy()` callback.
 - ANR investigation connects main-thread responsiveness with AMS/ATMS timeout coordination and WMS or IMS waiting for the application.
 - A missing intent target or disabled component points toward PMS resolution, manifest metadata, package visibility or permissions.
 - A dialog, overlay or keyboard that changes focus can explain window and input behavior before application gesture code runs.
@@ -90,4 +90,5 @@ These boundaries turn platform-looking symptoms into more focused debugging ques
 - [SurfaceFlinger and WindowManager - Android Open Source Project](https://source.android.com/docs/core/graphics/surfaceflinger-windowmanager)
 - [About the Zygote processes - Android Open Source Project](https://source.android.com/docs/core/runtime/zygote)
 - [Processes and app lifecycle - Android Developers](https://developer.android.com/guide/components/activities/process-lifecycle)
+- [Low memory killer daemon - Android Open Source Project](https://source.android.com/docs/core/perf/lmkd)
 

@@ -1,81 +1,35 @@
 # 2D and 3D Rendering
 
-Rendering in Android can be done at different levels: regular UI through View/Compose, custom 2D through Canvas, programmable per-fragment UI effects through AGSL, low-level GPU work through OpenGL ES/Vulkan or high-level 3D through Filament.
+Android graphics range from standard Compose or View UI to custom drawing, shaders and 3D engines. Choose the smallest tool that meets the visual and interaction requirements, then profile the result on target devices.
 
 ## Rendering choices
 
-### CPU rendering vs GPU rendering
+### CPU and GPU work
 
-CPU rendering means that the main work of preparing an image is performed on the CPU: layout calculations, geometry, bitmap generation, text shaping, paths and other operations.
+Most frames involve both processors. The CPU handles app logic, layout and drawing-command preparation; the GPU can rasterize and composite the result. `Canvas` is a drawing API, not a synonym for CPU rendering: a hardware-accelerated View or Compose canvas uses the GPU, while drawing into a software `Bitmap` uses a different path.
 
-GPU rendering means that most drawing work is performed by the GPU: rasterization, shaders, textures, blending, 3D transforms, lighting and post-processing.
-
-In real Android UI, both are almost always involved: CPU prepares commands/data, GPU draws pixels. The question is where the bottleneck is.
-
-CPU bottleneck often looks like long layout/calculation/bind operations on the main thread. GPU bottleneck is often related to overdraw, complex shaders, large textures, a large number of fragments or heavy 3D effects.
-
-**In short:** CPU prepares data and commands, GPU draws pixels efficiently; performance depends on which part of the pipeline is overloaded.
+Slow main-thread layout, computation or drawing-code work suggests a CPU-side bottleneck. Expensive shaders, overdraw, large textures and complex 3D scenes may pressure the GPU. Uploads and synchronization can also stall frames. Use traces and frame profiling to locate the actual cost before changing APIs.
 
 ### When to use Canvas
 
-Canvas is worth using when custom 2D graphics are needed inside Android UI:
+Use [Android Canvas](canvas.md) for custom 2D drawing that belongs inside regular UI: charts, progress indicators, paths, signatures, waveforms or decorative shapes. In Compose, `Canvas` and drawing modifiers expose `DrawScope`; in the View system, custom drawing usually happens in `onDraw()`.
 
-- charts and simple graphs;
-- custom progress indicators;
-- drawing/signature view;
-- waveform/audio visualization;
-- simple game-like 2D;
-- custom badges, shapes, paths;
-- lightweight decorative elements.
-
-Canvas integrates well with View System and is simpler than OpenGL ES. It fits when the scene is small, rendering is 2D and per-pixel control does not require a complex GPU pipeline.
-
-If drawing happens often, watch `onDraw()` performance: do not allocate, do not decode bitmap, do not run heavy calculations and do not call unnecessary `requestLayout()`.
-
-**In short:** Canvas is a good choice for custom 2D drawing when integration with regular Android UI is needed and a full 3D engine is not.
+Keep drawing work small and avoid repeated allocations, bitmap decoding or heavy calculations on every frame. `invalidate()` requests redraw; call `requestLayout()` when size or layout requirements change. Canvas does not require a custom OpenGL ES renderer to benefit from hardware acceleration.
 
 ### When to use AGSL
 
-[AGSL and `RuntimeShader`](agsl-runtime-shader.md) fit between Canvas and a full graphics API when Android UI needs programmable per-fragment effects such as custom gradients, distortion, transitions or local post-processing. AGSL integrates with Canvas, Compose and `RenderEffect`, but does not provide geometry, a vertex pipeline or a 3D scene.
+[AGSL and `RuntimeShader`](agsl-runtime-shader.md) provide programmable pixel effects inside Android's UI rendering system. They suit gradients, distortion, transitions and local filters. `RuntimeShader` requires Android 13 (API 33), so plan a fallback for older supported devices. AGSL does not provide a geometry pipeline or a 3D scene.
 
-**In short:** choose AGSL for shader effects integrated into Android UI when Canvas alone is not flexible enough and a complete OpenGL ES pipeline would be excessive.
+### When to use OpenGL ES
 
-### When to use OpenGL
+[OpenGL ES](opengl-es.md) is useful when the app needs its own GPU pipeline for custom geometry, textures and shaders, such as a renderer, camera effect or specialized animated visualization. It requires management of buffers, shader programs, matrices and the rendering surface lifecycle. Prefer it when these controls justify the implementation cost.
 
-OpenGL ES is worth using when direct GPU rendering is needed and Canvas capabilities are no longer enough.
+### When to use Vulkan
 
-Typical cases:
-
-- custom 2D/3D engine;
-- camera filters;
-- video effects;
-- particle systems;
-- high-frequency animated graphics;
-- rendering a large number of objects;
-- custom shaders;
-- simple 3D graphics without a heavy engine.
-
-OpenGL ES requires understanding buffers, shaders, textures, matrices, surface lifecycle and GPU state. It gives more control, but sharply increases code complexity.
-
-If the goal is a production-quality 3D scene with materials, lights, cameras and glTF assets, it is often more reasonable to use an engine like Filament instead of writing everything in raw OpenGL ES.
-
-**In short:** OpenGL ES is used when lower-level GPU control, shaders and rendering pipeline are needed, and the team is ready to manage graphics details manually.
+[Vulkan](vulkan.md) offers more explicit control over resources, command submission and synchronization. It can reduce CPU driver overhead in a complex renderer, but raises development and device-compatibility costs. Benchmark the workload and check device features; a Vulkan backend alone does not guarantee smoother frames.
 
 ### When to use Filament
 
-Filament is worth using when a high-quality 3D scene is needed, not just low-level GPU access.
+[Google Filament](google-filament.md) provides a real-time 3D scene model with cameras, renderables, PBR materials, lighting and glTF asset support. It fits model viewers, product previews, configurators and interactive 3D visualizations when building a renderer from scratch is unnecessary. It still requires surface and resource lifecycle handling, plus attention to asset size and frame time.
 
-Typical cases:
-
-- 3D product viewer;
-- object configurator;
-- glTF model rendering;
-- AR preview;
-- scenes with materials and lighting;
-- interactive 3D visualizations.
-
-Filament provides ready-made abstractions: scene, camera, materials, lights, renderables and a backend on top of OpenGL/Vulkan. This is faster and safer than writing a custom 3D renderer from scratch.
-
-But Filament is excessive for simple UI, 2D charts, small custom drawing or regular animation. Canvas, Compose or View System will be simpler there.
-
-**In short:** Filament is chosen for real-time 3D with materials, cameras, scene and lighting when raw OpenGL is too low-level.
+For ordinary screens and simple 2D animation, start with Compose, Views and their drawing APIs. Move to a lower-level API or a 3D engine when the required scene, effects or measured performance call for it.

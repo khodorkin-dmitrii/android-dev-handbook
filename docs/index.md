@@ -61,6 +61,6 @@ _Last updated: {{LAST_UPDATED}}_
 | Domains | 16 | 16 |
 | Pages | 110 | 110 |
 | Sections | 543 | 543 |
-| Topics | 430 | 430 |
-| Words | 87669 | 81319 |
+| Topics | 431 | 431 |
+| Words | 87556 | 81236 |
 <!-- END GENERATED HANDBOOK STATS -->

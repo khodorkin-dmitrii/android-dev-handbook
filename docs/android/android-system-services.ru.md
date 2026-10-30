@@ -6,7 +6,7 @@
 
 Framework или system service владеет платформенным состоянием и политиками, общими для многих приложений. Это не то же самое, что `Service` приложения - Android-компонент с callbacks вроде `onStartCommand()` и `onBind()`. App `Service` не получает отдельный процесс или background thread автоматически.
 
-Многие Java framework services инициализируются в процессе `SystemServer` или тесно с ним связаны, но это верно не для всех Android services. Важные native-компоненты платформы могут работать в отдельных процессах. Один из примеров - SurfaceFlinger, который композитит графические surfaces для вывода на дисплей.
+Многие Java-службы платформы инициализируются в процессе `system_server` кодом класса `SystemServer`, но это верно не для всех служб Android. Важные native-компоненты платформы могут работать в отдельных процессах. Один из примеров - SurfaceFlinger, который композитит графические surfaces для вывода на дисплей.
 
 Упрощенный контекст запуска выглядит так:
 
@@ -14,13 +14,13 @@ Framework или system service владеет платформенным сос
 init -> Zygote -> SystemServer -> framework services
 ```
 
-`init` запускает Zygote, а Zygote создает `SystemServer`. Затем `SystemServer` запускает framework services по этапам с учетом зависимостей. Это лишь общий ориентир, а не полное описание загрузки Android.
+`init` запускает Zygote, который порождает процесс `system_server`. Затем код `SystemServer` поэтапно запускает службы платформы с учётом зависимостей. Это лишь общий ориентир, а не полное описание загрузки Android.
 
 ## Основные службы
 
 ### Activity Manager Service - AMS
 
-Activity Manager Service (AMS) координирует процессы приложений и отслеживает их важность для пользователя. От process importance зависит, какие cached processes система может завершить при нехватке памяти. AMS также координирует выполнение application `Service` и broadcasts, участвует в обработке crashes и ANR и взаимодействует с package, task, window и другими framework services.
+Activity Manager Service (AMS) координирует процессы приложений и отслеживает их важность для пользователя. Важность процесса влияет на его приоритет; при нехватке памяти демон завершения процессов (`lmkd`) может остановить менее важные процессы. AMS также координирует выполнение application `Service` и broadcasts, участвует в обработке crashes и ANR и взаимодействует с package, task, window и другими framework services.
 
 В современном Android AMS не отвечает единолично за все, что связано с activities и tasks. Process-level и component-level работу он координирует с Activity Task Manager Service, а app process получает lifecycle transactions через framework-обвязку, после чего выполняются callbacks `Activity`. Это различие полезно при чтении логов: переход activity может включать ATMS, AMS, процесс приложения и WMS, а не один manager, напрямую вызывающий все callbacks.
 
@@ -69,7 +69,7 @@ Input Manager Service (IMS) вместе с native input components коорди
 Понимание этих границ помогает превратить системный симптом в более точный вопрос для диагностики:
 
 - Неожиданное переиспользование activity, поведение Back или размещение в multi-window часто стоит начинать проверять с task state ATMS, launch modes и intent flags.
-- Пересоздание экрана после возврата в приложение может быть следствием управляемого AMS завершения процесса, а не штатного пути через `Activity.onDestroy()`.
+- Пересоздание экрана после возврата в приложение может означать, что процесс был завершён при нехватке памяти, часто демоном `lmkd`, без штатного вызова `Activity.onDestroy()`.
 - При расследовании ANR нужно сопоставлять отзывчивость main thread с координацией timeouts в AMS/ATMS и ожиданием приложения со стороны WMS или IMS.
 - Отсутствующий intent target или disabled component указывает на PMS resolution, manifest metadata, package visibility или permissions.
 - Dialog, overlay или клавиатура, изменившие focus, могут объяснить поведение окна и input еще до выполнения gesture-кода приложения.
@@ -90,4 +90,5 @@ Input Manager Service (IMS) вместе с native input components коорди
 - [SurfaceFlinger and WindowManager - Android Open Source Project](https://source.android.com/docs/core/graphics/surfaceflinger-windowmanager)
 - [About the Zygote processes - Android Open Source Project](https://source.android.com/docs/core/runtime/zygote)
 - [Processes and app lifecycle - Android Developers](https://developer.android.com/guide/components/activities/process-lifecycle)
+- [Low memory killer daemon - Android Open Source Project](https://source.android.com/docs/core/perf/lmkd)
 
