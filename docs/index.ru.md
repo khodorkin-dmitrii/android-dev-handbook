@@ -43,11 +43,12 @@ Android Dev Handbook - это структурированный справоч�
 
 ## Автор и редактор - Dmitrii Khodorkin
 
-Личный справочник по Android-разработке с практическими инженерными заметками, материалами для подготовки к интервью и краткими объяснениями Android, Kotlin, Jetpack Compose, Coroutines, архитектуры, тестирования и связанных тем.
+Личный справочник по Android-разработке с практическими инженерными заметками, материалами для быстрого повторения и краткими объяснениями Android, Kotlin, Jetpack Compose, Coroutines, архитектуры, тестирования и связанных тем.
 
 * GitHub: [github.com/khodorkin-dmitrii](https://github.com/khodorkin-dmitrii)
 * LinkedIn: [linkedin.com/in/khodorkin-dmitrii](https://www.linkedin.com/in/dmitrii-khodorkin-33268585)
 * Handbook repository: [khodorkin-dmitrii/android-dev-handbook](https://github.com/khodorkin-dmitrii/android-dev-handbook)
+* <span class="handbook-android-icon" aria-hidden="true"><img src="assets/images/library-android-v9.svg" alt=""></span> Android audio app: [репозиторий](https://github.com/khodorkin-dmitrii/android-handbook-audio) · [релизы](https://github.com/khodorkin-dmitrii/android-handbook-audio/releases)
 
 <!-- BEGIN GENERATED HANDBOOK STATS -->
 ## Handbook stats  <a class="handbook-hidden-link" href="../en/pages-review-tracker/" aria-label="Pages Review Tracker">▤</a>  <a class="handbook-hidden-link" href="shorts/" aria-label="Короткие ответы">⚡︎</a>  <a class="handbook-hidden-link" href="engineering/system-design/system-design-shorts/" aria-label="System Design Shorts">⚡︎</a>

@@ -386,6 +386,24 @@ body[data-md-color-scheme="default"] .handbook-cursor-glow {
     );
 }
 
+.handbook-android-icon {
+    align-items: center;
+    background: linear-gradient(135deg, #3ddc84, #168f4d);
+    border-radius: 0.3rem;
+    display: inline-flex;
+    height: 1.35rem;
+    justify-content: center;
+    margin-right: 0.25rem;
+    vertical-align: -0.3rem;
+    width: 1.35rem;
+}
+
+.handbook-android-icon img {
+    height: 1rem;
+    margin: 0;
+    width: 1rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .handbook-retrowave-canvas {
         opacity: 0.5;
