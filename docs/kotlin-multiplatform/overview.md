@@ -1,8 +1,8 @@
 # Kotlin Multiplatform Overview
 
-Kotlin Multiplatform (KMP) lets a project compile shared Kotlin code for several declared targets. The same source is compiled separately for each target into the relevant form, such as JVM bytecode, JavaScript, or a native binary. It is not executed through one universal runtime.
+Kotlin Multiplatform (KMP) lets a project compile shared Kotlin code for several declared targets. The same source is compiled separately for each target into the relevant form, such as JVM bytecode, JavaScript, or a native binary. It is not executed through one universal runtime. For example, an Android app consumes the module as Kotlin/JVM code, while an iOS app can use a Kotlin/Native framework from Swift. The shared source is the same, but the resulting binaries and interop boundaries differ.
 
-`commonMain` contains code intended for every target of a multiplatform module. It can use common Kotlin APIs and multiplatform libraries, but it cannot directly call an API that is absent from any target, such as Android framework or JDK-only APIs in a module that also targets iOS. Platform integrations belong behind abstractions or in narrower [platform source sets](shared-platform-code.md).
+`commonMain` contains code intended for every target of a multiplatform module. It can use common Kotlin APIs and multiplatform libraries, but it cannot directly call an API that is absent from any target, such as Android framework or JDK-only APIs in a module that also targets iOS. Platform integrations belong behind interfaces, `expect`/`actual` declarations, or in narrower [platform source sets](shared-platform-code.md). Choose the simplest boundary that keeps platform APIs out of common code.
 
 ## What can be shared
 
@@ -37,3 +37,5 @@ Continue with [Project Structure and Source Sets](project-structure.md) for the 
 
 - [Kotlin Multiplatform documentation](https://kotlinlang.org/docs/multiplatform/)
 - [Stability of supported platforms](https://kotlinlang.org/docs/multiplatform/supported-platforms.html)
+- [Use platform-specific APIs](https://kotlinlang.org/docs/multiplatform/multiplatform-connect-to-apis.html)
+- [iOS integration methods](https://kotlinlang.org/docs/multiplatform/multiplatform-ios-integration-overview.html)

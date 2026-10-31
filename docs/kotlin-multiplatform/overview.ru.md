@@ -1,8 +1,8 @@
 # Обзор Kotlin Multiplatform
 
-Kotlin Multiplatform (KMP) позволяет компилировать общий Kotlin-код для нескольких объявленных targets. Один и тот же исходный код отдельно компилируется для каждого target в подходящий формат, например JVM-байткод, JavaScript или нативный бинарный файл. Единого универсального runtime здесь нет.
+Kotlin Multiplatform (KMP) позволяет компилировать общий Kotlin-код для нескольких объявленных targets. Один и тот же исходный код отдельно компилируется для каждого target в подходящий формат, например JVM-байткод, JavaScript или нативный бинарный файл. Единой универсальной среды выполнения здесь нет. Например, Android-приложение использует модуль как Kotlin/JVM-код, а iOS-приложение может вызывать Kotlin/Native-фреймворк из Swift. Исходный код общий, но итоговые бинарные файлы и границы взаимодействия различаются.
 
-`commonMain` содержит код для всех targets multiplatform-модуля. В нём доступны общие Kotlin API и multiplatform-библиотеки, но нельзя напрямую вызывать API, которого нет хотя бы на одном target. Например, Android framework или JDK-only API недоступны в общем коде модуля, который также собирается для iOS. Платформенные интеграции размещают за абстракциями или в более узких [platform source sets](shared-platform-code.md).
+`commonMain` содержит код для всех targets multiplatform-модуля. В нём доступны общие Kotlin API и multiplatform-библиотеки, но нельзя напрямую вызывать API, которого нет хотя бы на одном target. Например, Android framework или JDK-only API недоступны в общем коде модуля, который также собирается для iOS. Платформенные интеграции размещают за интерфейсами, объявлениями `expect`/`actual` или в более узких [платформенных source sets](shared-platform-code.md). Выбирай самую простую границу, которая не пропускает платформенные API в общий код.
 
 ## Что можно переиспользовать
 
@@ -37,3 +37,5 @@ KMP особенно полезен, когда платформы раздел�
 
 - [Документация Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform/)
 - [Стабильность поддерживаемых платформ](https://kotlinlang.org/docs/multiplatform/supported-platforms.html)
+- [Использование платформенных API](https://kotlinlang.org/docs/multiplatform/multiplatform-connect-to-apis.html)
+- [Способы интеграции с iOS](https://kotlinlang.org/docs/multiplatform/multiplatform-ios-integration-overview.html)

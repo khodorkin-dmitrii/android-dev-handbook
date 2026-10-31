@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-10-30
+1. Last tracker update: 2026-10-31
 1. Total articles tracked: 107
-1. Updated: 89
-1. TODO: 18
+1. Updated: 90
+1. TODO: 17
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 22      | 18   |
+| P2 | 40 | 23      | 17   |
 
 ## Tracker
 
@@ -115,7 +115,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-28, `android/google-filament.md`, Google Filament, Clarified scene components, Android surface lifecycle, frame rendering and glTF assets; removed repetitive summaries and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-29, `android/2d-3d-rendering.md`, 2D and 3D Rendering, Clarified CPU/GPU roles, hardware-accelerated Canvas, API selection and profiling; added Vulkan guidance, removed repetitive summaries and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-30, `android/android-system-services.md`, Android System Services, Distinguished the system_server process from SystemServer startup code and clarified lmkd's role in process termination; synchronized EN/RU.
-1. P2, **TODO**, , `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview
+1. P2, **UPDATED**, 2026-10-31, `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview, Clarified Android and iOS integration, platform API boundaries and expect/actual alternatives; synchronized EN/RU.
 1. P2, **TODO**, , `kotlin-multiplatform/kmp-kmm-compose.md`, KMP, KMM, and Compose Multiplatform
 1. P2, **TODO**, , `kotlin-multiplatform/project-structure.md`, Project Structure
 1. P2, **TODO**, , `kotlin-multiplatform/shared-platform-code.md`, Shared and Platform-specific Code
