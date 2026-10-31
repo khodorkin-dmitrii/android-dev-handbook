@@ -53,7 +53,7 @@ Big O describes how an algorithm's execution time or memory usage grows as the i
 
 ### What is the complexity of binary search?
 
-Binary search works in `O(log n)` because it removes half of the remaining search range on every step. It can only be used with sorted data.
+Binary search takes `O(log n)` on sorted data with `O(1)` access to the middle element, halving the search range at each step.
 
 ### What is the average complexity of QuickSort?
 
@@ -65,7 +65,7 @@ On average, QuickSort works in `O(n log n)`, while the worst case is `O(n²)`. I
 
 ### What must be overridden when a class is used as a HashMap key?
 
-`equals()` and `hashCode()` must be implemented correctly. If two objects are equal according to `equals()`, they must return the same hash code.
+Override `equals()` and `hashCode()` together when custom value equality is needed; inherited identity equality is valid too. If two objects are equal according to `equals()`, they must return the same hash code.
 
 ### What data structures do you know?
 
@@ -169,11 +169,11 @@ It becomes a base JVM class or interface plus separate subclasses. The Kotlin co
 
 ### Name the four main Android application components
 
-`Activity`, `Service`, `BroadcastReceiver`, and `ContentProvider`. They are declared in the manifest and can serve as application entry points.
+`Activity`, `Service`, `BroadcastReceiver`, and `ContentProvider`. They can serve as application entry points. Activities, services, and providers are declared in the manifest; receivers can also be registered at runtime.
 
 ### How is a Bound Service different from a regular Service?
 
-A `Bound Service` is a `Service` that other components connect to through `bindService()` and interact with through an `IBinder`. A purely bound service exists while at least one client is bound. A regular started service is launched with `startService()` and runs independently of the component that started it until it is stopped.
+A `Bound Service` is a `Service` that other components connect to through `bindService()` and interact with through an `IBinder`. A purely bound service exists while at least one client is bound. A started service can continue independently of the component that started it, subject to process death and Android background execution limits.
 
 ### Which is initialized first: Application or ContentProvider?
 
@@ -229,11 +229,11 @@ ViewBinding provides type-safe access to views with very little runtime complexi
 
 ### Activity Context or Application Context?
 
-Activity Context is required for UI, themes, dialogs, and operations tied to a screen lifecycle. Application Context lives as long as the process and is suitable for long-lived dependencies, but not for UI.
+Use an `Activity` Context for UI that needs the screen's theme or window, such as dialogs and themed view inflation. Use the `Application` Context for process-scoped dependencies that do not need that UI configuration.
 
 ### What is an ANR?
 
-ANR happens when the main thread does not respond to system or user events for too long. Common causes are blocking operations, heavy computations, and incorrect synchronization on the main thread.
+ANR means that an app component missed a system response deadline, often because the main thread is blocked. Common causes are blocking operations, heavy computations, and incorrect synchronization on the main thread.
 
 ### What is jank?
 
@@ -259,7 +259,7 @@ The main annotations are `@Immutable` and `@Stable`. They are contracts with the
 
 ### Are lambdas without captured variables stable in Compose?
 
-Usually, a non-capturing lambda is reused and treated as a stable value. A lambda that captures mutable data or is recreated can change identity and prevent recomposition from being skipped.
+Yes. Compose treats lambda types as stable, including capturing lambdas. With strong skipping enabled, lambdas inside composables are automatically memoized using their captures as keys. Changed keys can produce a new lambda instance, so stability does not guarantee unchanged identity or skipping.
 
 ### What are the rendering phases in Compose?
 
@@ -325,7 +325,7 @@ In `coroutineScope`, a failure in one child usually cancels the other children. 
 
 ### How does cancellation work?
 
-Cancellation is cooperative: a coroutine reacts at suspension points or when it explicitly checks `isActive`. `CancellationException` normally should not be handled as a regular error.
+Cancellation is cooperative: a coroutine reacts at cancellable suspension points or through explicit checks such as `ensureActive()`, or by checking `isActive` and stopping its work. `CancellationException` normally should not be handled as a regular error.
 
 ### What are the main Dispatchers?
 
@@ -373,7 +373,7 @@ Use it when a new input value should switch to a new inner Flow and cancel the p
 
 ### What is the difference between `combine` and `zip`?
 
-`combine` emits when any source changes and uses the latest values from the others. `zip` combines values pair by pair and waits for a new item from every source.
+After every source has emitted at least once, `combine` combines their latest values as new values arrive. `zip` combines values pair by pair and waits for a new item from every source.
 
 ### What is StateFlow?
 
@@ -403,7 +403,7 @@ Usually as `StateFlow<UiState>`, where `UiState` is an immutable data class or a
 
 ### How should state and effects be separated?
 
-State describes what the screen currently shows, while effects are one-time actions such as navigation or a snackbar. State is usually stored in `StateFlow`, while effects are delivered through `SharedFlow`, `Channel`, or another explicit model.
+State describes what the screen currently shows, while effects are one-time actions such as navigation or a snackbar. State usually uses `StateFlow`; transient effects may use `SharedFlow` or `Channel` with explicit lifecycle and delivery rules. Critical operation outcomes should be represented in state and recoverable after UI recreation; if they must survive process death, persist them or reconstruct them from a durable source. `StateFlow` alone does not provide persistence.
 
 ### What is a single source of truth?
 
@@ -455,7 +455,7 @@ Modules should be separated by functional responsibility, dependency direction, 
 
 ### Why use a multi-module architecture?
 
-It helps separate features, reduce coupling, improve ownership, and speed up incremental builds. However, splitting too early increases Gradle complexity and boilerplate.
+It helps separate features, reduce coupling, and improve ownership, and can improve incremental build times depending on the dependency graph and build configuration. However, splitting too early increases Gradle complexity and boilerplate.
 
 ### How should legacy code be handled?
 
@@ -491,7 +491,7 @@ A singleton increases an object's lifetime, can keep unnecessary state, and make
 
 ### What is HTTP?
 
-HTTP is an application-layer protocol for exchanging messages between a client and a server. A request contains a method, URL, headers, and sometimes a body, while a response contains a status code, headers, and a body.
+HTTP is an application-layer protocol for exchanging messages between a client and a server. A request contains a method, URL, headers, and sometimes a body, while a response contains a status code, headers, and an optional body.
 
 ### What is REST?
 
@@ -503,7 +503,7 @@ GET is used to retrieve a resource and normally does not change server state. PO
 
 ### What is the difference between 401 and 403?
 
-`401 Unauthorized` usually means that authentication is missing or invalid. `403 Forbidden` means the user is recognized but does not have permission to perform the action.
+`401 Unauthorized` usually means that authentication is missing or invalid. `403 Forbidden` means the server understood the request but refuses to fulfill it; the status alone does not prove successful authentication.
 
 ### How can a network request be made without freezing the UI?
 
@@ -527,7 +527,7 @@ GraphQL is a query language and runtime for APIs where the client specifies exac
 
 ### What is gRPC?
 
-gRPC is an RPC framework with a strict `.proto` contract and Protocol Buffers binary serialization. It supports unary and streaming calls and is useful for high-performance or real-time scenarios.
+gRPC is an RPC framework that typically uses `.proto` service contracts and Protocol Buffers binary serialization. It supports unary and streaming calls and is useful for high-performance or real-time scenarios.
 
 ## Libraries and Build
 
