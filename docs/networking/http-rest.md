@@ -93,7 +93,7 @@ The most common codes are:
 | `304 Not Modified` | Cached resource is still valid | Client should use cached response |
 | `400 Bad Request` | Invalid request | Malformed JSON, missing or invalid parameters |
 | `401 Unauthorized` | Authentication required or invalid | Missing or expired access token |
-| `403 Forbidden` | Authenticated but not allowed | Missing permissions |
+| `403 Forbidden` | Request understood but refused | For example, insufficient permissions |
 | `404 Not Found` | Resource does not exist | Wrong endpoint or missing resource |
 | `409 Conflict` | Resource state conflict | Version mismatch, duplicate operation |
 | `422 Unprocessable Entity` | Validation failed | Business validation error |
@@ -106,7 +106,7 @@ The most common codes are:
 Some status codes deserve special attention in mobile apps:
 
 - `401` usually means authentication is required or the access token has expired.
-- `403` means authentication succeeded, but the client does not have permission to perform the operation.
+- `403` means the server understood the request but refuses to fulfill it; the status alone does not prove successful authentication.
 - `404` may mean wrong endpoint, wrong ID, deleted resource or an API version mismatch.
 - `409` indicates a conflict with the current resource state, for example optimistic locking or duplicate operations.
 - `422` means the request format is correct, but business validation failed.

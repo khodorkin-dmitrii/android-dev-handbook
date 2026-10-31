@@ -93,7 +93,7 @@ Status codes группируются в пять категорий:
 | `304 Not Modified` | Cached resource is still valid | Client should use cached response |
 | `400 Bad Request` | Invalid request | Malformed JSON, missing or invalid parameters |
 | `401 Unauthorized` | Authentication required or invalid | Missing or expired access token |
-| `403 Forbidden` | Authenticated but not allowed | Missing permissions |
+| `403 Forbidden` | Запрос понят, но в выполнении отказано | Например, недостаточно прав |
 | `404 Not Found` | Resource does not exist | Wrong endpoint or missing resource |
 | `409 Conflict` | Resource state conflict | Version mismatch, duplicate operation |
 | `422 Unprocessable Entity` | Validation failed | Business validation error |
@@ -106,7 +106,7 @@ Status codes группируются в пять категорий:
 Некоторые status codes особенно важны в mobile apps:
 
 - `401` обычно означает, что нужна authentication или access token истёк.
-- `403` означает, что authentication прошла, но у client нет permission для operation.
+- `403` означает, что сервер понял запрос, но отказывается его выполнять; сам код не доказывает успешную аутентификацию.
 - `404` может означать wrong endpoint, wrong ID, deleted resource или API version mismatch.
 - `409` указывает на conflict с текущим resource state, например optimistic locking или duplicate operations.
 - `422` означает, что request format корректен, но business validation failed.
