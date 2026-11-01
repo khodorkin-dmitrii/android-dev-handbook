@@ -35,205 +35,225 @@ The UI observes the state and renders it.
 State describes what the screen currently shows, while effects are one-time actions such as navigation or a snackbar.
 
 10
-00:00:34,791 --> 00:00:39,691
-State is usually stored in StateFlow, while effects are delivered through SharedFlow, Channel, or another explicit model.
+00:00:34,791 --> 00:00:36,101
+State usually uses StateFlow;
 
 11
-00:00:41,225 --> 00:00:42,625
-<i>What is a single source of truth?</i>
+00:00:36,251 --> 00:00:39,761
+transient effects may use SharedFlow or Channel with explicit lifecycle and delivery rules.
 
 12
-00:00:44,142 --> 00:00:46,742
-It is a principle where data or state has one primary owner.
+00:00:40,471 --> 00:00:44,301
+Critical operation outcomes should be represented in state and recoverable after UI recreation;
 
 13
-00:00:47,452 --> 00:00:50,922
-Other parts of the system receive it from that owner instead of keeping competing copies.
+00:00:44,511 --> 00:00:48,061
+if they must survive process death, persist them or reconstruct them from a durable source.
 
 14
-00:00:52,449 --> 00:00:54,019
-<i>Is a domain layer always required?</i>
+00:00:48,771 --> 00:00:50,821
+StateFlow alone does not provide persistence.
 
 15
-00:00:55,563 --> 00:00:56,033
-No.
+00:00:52,337 --> 00:00:53,737
+<i>What is a single source of truth?</i>
 
 16
-00:00:56,733 --> 00:01:01,573
-It is useful for complex business logic, reusable use cases, and separating rules from UI and data layers,
+00:00:55,249 --> 00:00:57,849
+It is a principle where data or state has one primary owner.
 
 17
-00:01:01,783 --> 00:01:03,773
-but it can be unnecessary for simple CRUD flows.
+00:00:58,559 --> 00:01:02,029
+Other parts of the system receive it from that owner instead of keeping competing copies.
 
 18
-00:01:05,281 --> 00:01:06,771
-<i>What is a Repository used for?</i>
+00:01:03,561 --> 00:01:05,131
+<i>Is a domain layer always required?</i>
 
 19
-00:01:08,270 --> 00:01:12,410
-A Repository hides concrete data sources and exposes one contract to the UI or domain layer.
+00:01:06,675 --> 00:01:07,145
+No.
 
 20
-00:01:13,120 --> 00:01:15,880
-It can coordinate network, database, cache, and mapping.
+00:01:07,845 --> 00:01:12,685
+It is useful for complex business logic, reusable use cases, and separating rules from UI and data layers,
 
 21
-00:01:17,753 --> 00:01:21,313
-<i>How would you design loading data from an API and saving it to a local database?</i>
+00:01:12,895 --> 00:01:14,885
+but it can be unnecessary for simple CRUD flows.
 
 22
-00:01:22,594 --> 00:01:26,914
-A Repository coordinates remote and local data sources: it loads DTOs, maps them to entities,
+00:01:16,753 --> 00:01:18,243
+<i>What is a Repository used for?</i>
 
 23
-00:01:27,044 --> 00:01:28,544
-and saves them to Room in a transaction.
+00:01:19,482 --> 00:01:23,622
+A Repository hides concrete data sources and exposes one contract to the UI or domain layer.
 
 24
-00:01:29,244 --> 00:01:33,104
-The UI observes Room through Flow as the single source of truth; refresh policy, stale data,
+00:01:24,322 --> 00:01:27,082
+It can coordinate network, database, cache, and mapping.
 
 25
-00:01:33,334 --> 00:01:35,104
-and error behavior must be defined separately.
+00:01:28,601 --> 00:01:32,161
+<i>How would you design loading data from an API and saving it to a local database?</i>
 
 26
-00:01:36,614 --> 00:01:37,914
-<i>MVVM or MVI?</i>
+00:01:33,707 --> 00:01:38,027
+A Repository coordinates remote and local data sources: it loads DTOs, maps them to entities,
 
 27
-00:01:39,435 --> 00:01:42,235
-MVVM is usually simpler and works well for most screens.
+00:01:38,157 --> 00:01:39,657
+and saves them to Room in a transaction.
 
 28
-00:01:42,935 --> 00:01:48,665
-MVI is useful for complex state-driven UI where explicit actions, immutable state, and predictable transitions are important.
+00:01:40,367 --> 00:01:44,227
+The UI observes Room through Flow as the single source of truth; refresh policy, stale data,
 
 29
-00:01:50,190 --> 00:01:52,190
-<i>Is a separate framework required for MVI?</i>
+00:01:44,457 --> 00:01:46,227
+and error behavior must be defined separately.
 
 30
-00:01:53,702 --> 00:01:54,172
-No.
+00:01:47,750 --> 00:01:49,050
+<i>MVVM or MVI?</i>
 
 31
-00:01:54,872 --> 00:02:00,562
-An MVI-style approach can be implemented with a regular ViewModel, StateFlow, immutable UiState, and sealed actions or effects.
+00:01:50,571 --> 00:01:53,371
+MVVM is usually simpler and works well for most screens.
 
 32
-00:02:02,086 --> 00:02:02,956
-<i>What is a reducer?</i>
+00:01:54,071 --> 00:01:59,801
+MVI is useful for complex state-driven UI where explicit actions, immutable state, and predictable transitions are important.
 
 33
-00:02:04,470 --> 00:02:09,160
-A reducer computes a new state from the previous state and an action or result: State + Action -> New State.
+00:02:01,326 --> 00:02:03,326
+<i>Is a separate framework required for MVI?</i>
 
 34
-00:02:09,870 --> 00:02:12,120
-In a strict Redux-style design it is a pure function,
-
-35
-00:02:12,300 --> 00:02:14,450
-which makes transitions predictable and easy to test.
-
-36
-00:02:15,969 --> 00:02:18,379
-<i>Is a reducer only a Redux or MVI concept?</i>
-
-37
-00:02:19,894 --> 00:02:20,364
+00:02:04,838 --> 00:02:05,308
 No.
 
+35
+00:02:06,008 --> 00:02:11,698
+An MVI-style approach can be implemented with a regular ViewModel, StateFlow, immutable UiState, and sealed actions or effects.
+
+36
+00:02:13,222 --> 00:02:14,092
+<i>What is a reducer?</i>
+
+37
+00:02:15,606 --> 00:02:20,296
+A reducer computes a new state from the previous state and an action or result: State + Action -> New State.
+
 38
-00:02:21,064 --> 00:02:26,534
-The term is historically associated with Flux and Redux and is common in MVI, but MVVM can also use immutable UiState,
+00:02:21,006 --> 00:02:23,256
+In a strict Redux-style design it is a pure function,
 
 39
-00:02:26,704 --> 00:02:28,264
-actions and reducer-like transitions.
+00:02:23,436 --> 00:02:25,586
+which makes transitions predictable and easy to test.
 
 40
-00:02:28,974 --> 00:02:30,814
-Not every screen needs a formal reducer.
+00:02:27,105 --> 00:02:29,515
+<i>Is a reducer only a Redux or MVI concept?</i>
 
 41
-00:02:32,689 --> 00:02:35,289
-<i>What does reducer-like state management mean in modern Android?</i>
+00:02:31,030 --> 00:02:31,500
+No.
 
 42
-00:02:36,546 --> 00:02:42,576
-It means updating immutable state through explicit transitions, often directly in a ViewModel with _state.update { it.copy(...) }.
+00:02:32,200 --> 00:02:37,670
+The term is historically associated with Flux and Redux and is common in MVI, but MVVM can also use immutable UiState,
 
 43
-00:02:43,266 --> 00:02:47,596
-The code gains reducer benefits without requiring a dedicated Reducer class or Redux-style framework.
+00:02:37,840 --> 00:02:39,400
+actions and reducer-like transitions.
 
 44
-00:02:49,097 --> 00:02:50,277
-<i>What is Clean Architecture?</i>
+00:02:40,110 --> 00:02:41,950
+Not every screen needs a formal reducer.
 
 45
-00:02:51,798 --> 00:02:56,888
-It is an approach that separates UI, business logic, and data access and points dependencies toward more stable abstractions.
+00:02:43,825 --> 00:02:46,425
+<i>What does reducer-like state management mean in modern Android?</i>
 
 46
-00:02:57,588 --> 00:03:00,718
-It should be applied pragmatically rather than adding layers without real value.
+00:02:47,682 --> 00:02:53,712
+It means updating immutable state through explicit transitions, often directly in a ViewModel with _state.update { it.copy(...) }.
 
 47
-00:03:02,241 --> 00:03:05,191
-<i>What criteria should be used to split an application into modules?</i>
+00:02:54,402 --> 00:02:58,732
+The code gains reducer benefits without requiring a dedicated Reducer class or Redux-style framework.
 
 48
-00:03:07,054 --> 00:03:10,504
-Modules should be separated by functional responsibility, dependency direction,
+00:03:00,233 --> 00:03:01,413
+<i>What is Clean Architecture?</i>
 
 49
-00:03:10,624 --> 00:03:12,324
-independent development, and reuse.
+00:03:02,934 --> 00:03:08,024
+It is an approach that separates UI, business logic, and data access and points dependencies toward more stable abstractions.
 
 50
-00:03:13,034 --> 00:03:16,934
-Typical boundaries are features, design system, networking, storage, and shared contracts;
+00:03:08,724 --> 00:03:11,854
+It should be applied pragmatically rather than adding layers without real value.
 
 51
-00:03:17,074 --> 00:03:19,024
-each module should expose a clear public API.
+00:03:13,377 --> 00:03:16,327
+<i>What criteria should be used to split an application into modules?</i>
 
 52
-00:03:20,290 --> 00:03:23,020
-<i>What is the difference between api and implementation in Gradle?</i>
+00:03:18,190 --> 00:03:21,640
+Modules should be separated by functional responsibility, dependency direction,
 
 53
-00:03:24,523 --> 00:03:29,433
-implementation keeps the dependency internal to the current module and does not add it to the consumers' compile classpath.
+00:03:21,760 --> 00:03:23,460
+independent development, and reuse.
 
 54
-00:03:30,143 --> 00:03:35,133
-api exposes it transitively, so it is used when types from that dependency appear in the module's public API.
+00:03:24,170 --> 00:03:28,070
+Typical boundaries are features, design system, networking, storage, and shared contracts;
 
 55
-00:03:36,665 --> 00:03:38,365
-<i>Why use a multi-module architecture?</i>
+00:03:28,210 --> 00:03:30,160
+each module should expose a clear public API.
 
 56
-00:03:39,899 --> 00:03:44,009
-It helps separate features, reduce coupling, improve ownership, and speed up incremental builds.
+00:03:31,426 --> 00:03:34,156
+<i>What is the difference between api and implementation in Gradle?</i>
 
 57
-00:03:44,719 --> 00:03:48,029
-However, splitting too early increases Gradle complexity and boilerplate.
+00:03:35,659 --> 00:03:40,569
+implementation keeps the dependency internal to the current module and does not add it to the consumers' compile classpath.
 
 58
-00:03:49,545 --> 00:03:51,035
-<i>How should legacy code be handled?</i>
+00:03:41,279 --> 00:03:46,269
+api exposes it transitively, so it is used when types from that dependency appear in the module's public API.
 
 59
-00:03:52,558 --> 00:03:55,698
-First, capture the current behavior, then make small and safe changes.
+00:03:47,801 --> 00:03:49,501
+<i>Why use a multi-module architecture?</i>
 
 60
-00:03:56,408 --> 00:04:01,277
+00:03:51,035 --> 00:03:53,745
+It helps separate features, reduce coupling, and improve ownership,
+
+61
+00:03:53,955 --> 00:03:57,675
+and can improve incremental build times depending on the dependency graph and build configuration.
+
+62
+00:03:58,385 --> 00:04:01,695
+However, splitting too early increases Gradle complexity and boilerplate.
+
+63
+00:04:03,201 --> 00:04:04,691
+<i>How should legacy code be handled?</i>
+
+64
+00:04:06,214 --> 00:04:09,354
+First, capture the current behavior, then make small and safe changes.
+
+65
+00:04:10,064 --> 00:04:14,957
 Incremental refactoring is usually safer than a full rewrite because it preserves hidden business rules and reduces risk.

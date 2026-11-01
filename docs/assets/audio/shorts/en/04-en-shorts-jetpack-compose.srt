@@ -59,125 +59,133 @@ while @Stable promises predictable and observable property changes.
 <i>Are lambdas without captured variables stable in Compose?</i>
 
 16
-00:00:56,243 --> 00:00:59,643
-Usually, a non-capturing lambda is reused and treated as a stable value.
+00:00:56,243 --> 00:00:56,713
+Yes.
 
 17
-00:01:00,343 --> 00:01:02,633
-A lambda that captures mutable data or is recreated
+00:00:57,403 --> 00:01:00,413
+Compose treats lambda types as stable, including capturing lambdas.
 
 18
-00:01:02,653 --> 00:01:05,323
-can change identity and prevent recomposition from being skipped.
+00:01:01,123 --> 00:01:06,003
+With strong skipping enabled, lambdas inside composables are automatically memoized using their captures as keys.
 
 19
-00:01:06,854 --> 00:01:08,534
-<i>What are the rendering phases in Compose?</i>
+00:01:06,713 --> 00:01:08,593
+Changed keys can produce a new lambda instance,
 
 20
-00:01:10,059 --> 00:01:12,439
-The main phases are composition, layout, and drawing.
+00:01:08,773 --> 00:01:11,433
+so stability does not guarantee unchanged identity or skipping.
 
 21
-00:01:13,139 --> 00:01:17,889
-Composition defines the UI structure, layout measures and positions elements, and drawing renders their content.
+00:01:12,974 --> 00:01:14,654
+<i>What are the rendering phases in Compose?</i>
 
 22
-00:01:19,422 --> 00:01:22,012
-<i>Which structure stores the Compose composition tree and state?</i>
+00:01:16,179 --> 00:01:18,559
+The main phases are composition, layout, and drawing.
 
 23
-00:01:23,539 --> 00:01:25,629
-Internally, Compose uses the Slot Table.
+00:01:19,259 --> 00:01:24,009
+Composition defines the UI structure, layout measures and positions elements, and drawing renders their content.
 
 24
-00:01:26,329 --> 00:01:31,079
-The Composer stores composition groups, remember values, and data required for future recompositions there.
+00:01:25,518 --> 00:01:28,108
+<i>Which structure stores the Compose composition tree and state?</i>
 
 25
-00:01:32,945 --> 00:01:34,025
-<i>What is recomposition?</i>
+00:01:29,635 --> 00:01:31,725
+Internally, Compose uses the Slot Table.
 
 26
-00:01:35,290 --> 00:01:39,460
-Recomposition is the repeated execution of composable functions that depend on changed state.
+00:01:32,425 --> 00:01:37,175
+The Composer stores composition groups, remember values, and data required for future recompositions there.
 
 27
-00:01:40,150 --> 00:01:44,260
-It is a normal Compose mechanism; it becomes a problem only when it is too frequent or expensive.
+00:01:39,065 --> 00:01:40,145
+<i>What is recomposition?</i>
 
 28
-00:01:45,777 --> 00:01:48,087
-<i>What is the difference between remember and rememberSaveable?</i>
+00:01:41,410 --> 00:01:45,580
+Recomposition is the repeated execution of composable functions that depend on changed state.
 
 29
-00:01:49,611 --> 00:01:53,111
-remember keeps a value across recompositions but does not survive recreation.
+00:01:46,270 --> 00:01:50,380
+It is a normal Compose mechanism; it becomes a problem only when it is too frequent or expensive.
 
 30
-00:01:53,821 --> 00:01:57,131
-rememberSaveable also stores supported state through the saved state mechanism.
+00:01:51,897 --> 00:01:54,207
+<i>What is the difference between remember and rememberSaveable?</i>
 
 31
-00:01:58,657 --> 00:01:59,777
-<i>What is mutableStateOf?</i>
+00:01:55,731 --> 00:01:59,231
+remember keeps a value across recompositions but does not survive recreation.
 
 32
-00:02:01,291 --> 00:02:03,991
-mutableStateOf creates observable state tracked by Compose.
+00:01:59,941 --> 00:02:03,251
+rememberSaveable also stores supported state through the saved state mechanism.
 
 33
-00:02:04,701 --> 00:02:08,601
-When its value changes, dependent composable functions may be scheduled for recomposition.
+00:02:04,777 --> 00:02:05,897
+<i>What is mutableStateOf?</i>
 
 34
-00:02:10,121 --> 00:02:11,171
-<i>What is state hoisting?</i>
+00:02:07,411 --> 00:02:10,111
+mutableStateOf creates observable state tracked by Compose.
 
 35
-00:02:12,707 --> 00:02:15,437
-State hoisting means moving state higher in the composable tree.
+00:02:10,821 --> 00:02:14,721
+When its value changes, dependent composable functions may be scheduled for recomposition.
 
 36
-00:02:16,147 --> 00:02:20,467
-A component receives a value and callbacks, which makes it more stateless, reusable, and testable.
+00:02:16,241 --> 00:02:17,291
+<i>What is state hoisting?</i>
 
 37
-00:02:21,993 --> 00:02:23,463
-<i>When should LaunchedEffect be used?</i>
+00:02:18,827 --> 00:02:21,557
+State hoisting means moving state higher in the composable tree.
 
 38
-00:02:24,987 --> 00:02:28,957
-LaunchedEffect is used for coroutine side effects tied to the lifecycle of a composable and its key.
+00:02:22,267 --> 00:02:26,587
+A component receives a value and callbacks, which makes it more stateless, reusable, and testable.
 
 39
-00:02:29,667 --> 00:02:32,917
-When the key changes, the previous coroutine is cancelled and a new one starts.
+00:02:28,113 --> 00:02:29,583
+<i>When should LaunchedEffect be used?</i>
 
 40
-00:02:34,441 --> 00:02:36,381
-<i>When should rememberCoroutineScope be used?</i>
+00:02:31,107 --> 00:02:35,077
+LaunchedEffect is used for coroutine side effects tied to the lifecycle of a composable and its key.
 
 41
-00:02:37,886 --> 00:02:41,366
-It is used to launch a coroutine in response to a UI event, such as a button click.
+00:02:35,787 --> 00:02:39,037
+When the key changes, the previous coroutine is cancelled and a new one starts.
 
 42
-00:02:42,076 --> 00:02:45,016
-Screen-level business logic is usually better placed in a ViewModel.
+00:02:40,561 --> 00:02:42,501
+<i>When should rememberCoroutineScope be used?</i>
 
 43
-00:02:46,529 --> 00:02:48,799
-<i>How can unnecessary recompositions be reduced?</i>
+00:02:44,006 --> 00:02:47,486
+It is used to launch a coroutine in response to a UI event, such as a button click.
 
 44
-00:02:50,334 --> 00:02:54,274
-Organize state correctly, avoid passing unstable objects without a reason, use stable keys,
+00:02:48,196 --> 00:02:51,136
+Screen-level business logic is usually better placed in a ViewModel.
 
 45
-00:02:54,434 --> 00:02:55,994
-and move heavy work out of composables.
+00:02:52,649 --> 00:02:54,919
+<i>How can unnecessary recompositions be reduced?</i>
 
 46
-00:02:56,704 --> 00:02:59,594
+00:02:56,454 --> 00:03:00,394
+Organize state correctly, avoid passing unstable objects without a reason, use stable keys,
+
+47
+00:03:00,554 --> 00:03:02,114
+and move heavy work out of composables.
+
+48
+00:03:02,824 --> 00:03:05,714
 Optimization should start with measurement and finding a real bottleneck.

@@ -79,217 +79,225 @@ In supervisorScope, child tasks are isolated and can handle failures independent
 <i>How does cancellation work?</i>
 
 21
-00:01:20,818 --> 00:01:25,408
-Cancellation is cooperative: a coroutine reacts at suspension points or when it explicitly checks isActive.
+00:01:20,818 --> 00:01:24,268
+Cancellation is cooperative: a coroutine reacts at cancellable suspension points
 
 22
-00:01:26,108 --> 00:01:29,098
-CancellationException normally should not be handled as a regular error.
+00:01:24,278 --> 00:01:27,988
+or through explicit checks such as ensureActive(), or by checking isActive and stopping its work.
 
 23
-00:01:30,609 --> 00:01:31,869
-<i>What are the main Dispatchers?</i>
+00:01:28,678 --> 00:01:31,668
+CancellationException normally should not be handled as a regular error.
 
 24
-00:01:33,387 --> 00:01:37,827
-Dispatchers.Main is used for UI work, IO for blocking I/O, and Default for CPU-intensive work.
+00:01:33,177 --> 00:01:34,437
+<i>What are the main Dispatchers?</i>
 
 25
-00:01:38,527 --> 00:01:41,267
-withContext() changes the context inside a suspend function.
+00:01:35,955 --> 00:01:40,395
+Dispatchers.Main is used for UI work, IO for blocking I/O, and Default for CPU-intensive work.
 
 26
-00:01:42,798 --> 00:01:45,468
-<i>Which synchronization tools are used with Kotlin Coroutines?</i>
+00:01:41,095 --> 00:01:43,835
+withContext() changes the context inside a suspend function.
 
 27
-00:01:46,987 --> 00:01:51,117
-Common options are Mutex for protecting suspending code, atomic operations for simple shared state,
+00:01:45,366 --> 00:01:48,036
+<i>Which synchronization tools are used with Kotlin Coroutines?</i>
 
 28
-00:01:51,327 --> 00:01:53,427
-and state confinement where one coroutine owns the state.
+00:01:49,555 --> 00:01:53,685
+Common options are Mutex for protecting suspending code, atomic operations for simple shared state,
 
 29
-00:01:54,117 --> 00:01:57,647
-synchronized is also possible, but suspend functions must not be called inside it.
+00:01:53,895 --> 00:01:55,995
+and state confinement where one coroutine owns the state.
 
 30
-00:01:59,177 --> 00:01:59,877
-<i>What is Flow?</i>
+00:01:56,685 --> 00:02:00,215
+synchronized is also possible, but suspend functions must not be called inside it.
 
 31
-00:02:01,403 --> 00:02:04,393
-Flow is an asynchronous stream of values from the coroutines ecosystem.
+00:02:01,745 --> 00:02:02,445
+<i>What is Flow?</i>
 
 32
-00:02:05,103 --> 00:02:08,013
-A regular Flow is cold: every collector starts the upstream again.
+00:02:03,971 --> 00:02:06,961
+Flow is an asynchronous stream of values from the coroutines ecosystem.
 
 33
-00:02:09,542 --> 00:02:11,312
-<i>What is Channel in Kotlin Coroutines?</i>
+00:02:07,671 --> 00:02:10,581
+A regular Flow is cold: every collector starts the upstream again.
 
 34
-00:02:12,843 --> 00:02:16,083
-Channel is a hot coroutine primitive for sending values between coroutines.
+00:02:12,110 --> 00:02:13,880
+<i>What is Channel in Kotlin Coroutines?</i>
 
 35
-00:02:16,783 --> 00:02:21,703
-It behaves like a queue with suspending send and receive operations, and each element is normally consumed by one receiver.
+00:02:15,411 --> 00:02:18,651
+Channel is a hot coroutine primitive for sending values between coroutines.
 
 36
-00:02:23,569 --> 00:02:24,969
-<i>How is Channel different from Flow?</i>
+00:02:19,351 --> 00:02:24,271
+It behaves like a queue with suspending send and receive operations, and each element is normally consumed by one receiver.
 
 37
-00:02:26,586 --> 00:02:30,076
-A regular Flow is usually a cold declarative stream started by each collector.
+00:02:26,137 --> 00:02:27,537
+<i>How is Channel different from Flow?</i>
 
 38
-00:02:30,776 --> 00:02:34,766
-Channel is a hot point-to-point communication primitive: it exists independently of receivers,
+00:02:29,154 --> 00:02:32,644
+A regular Flow is usually a cold declarative stream started by each collector.
 
 39
-00:02:34,956 --> 00:02:36,976
-and each sent element is consumed by only one of them.
+00:02:33,344 --> 00:02:37,334
+Channel is a hot point-to-point communication primitive: it exists independently of receivers,
 
 40
-00:02:38,234 --> 00:02:39,834
-<i>How is Channel different from SharedFlow?</i>
+00:02:37,524 --> 00:02:39,544
+and each sent element is consumed by only one of them.
 
 41
-00:02:41,339 --> 00:02:44,179
-Channel normally delivers each element to one competing receiver.
+00:02:40,802 --> 00:02:42,402
+<i>How is Channel different from SharedFlow?</i>
 
 42
-00:02:44,879 --> 00:02:49,519
-SharedFlow broadcasts an emission to all active collectors and can replay values according to its configuration.
+00:02:43,907 --> 00:02:46,747
+Channel normally delivers each element to one competing receiver.
 
 43
-00:02:51,028 --> 00:02:53,058
-<i>When should Channel be used instead of SharedFlow?</i>
+00:02:47,447 --> 00:02:52,087
+SharedFlow broadcasts an emission to all active collectors and can replay values according to its configuration.
 
 44
-00:02:54,579 --> 00:02:58,529
-Use Channel when queue or single-consumer semantics matter, such as producer-consumer pipelines,
+00:02:53,596 --> 00:02:55,626
+<i>When should Channel be used instead of SharedFlow?</i>
 
 45
-00:02:58,719 --> 00:03:00,779
-work distribution or actor-like communication.
+00:02:57,147 --> 00:03:01,097
+Use Channel when queue or single-consumer semantics matter, such as producer-consumer pipelines,
 
 46
-00:03:01,489 --> 00:03:04,139
-Use SharedFlow when every active collector should observe the same emission;
+00:03:01,287 --> 00:03:03,347
+work distribution or actor-like communication.
 
 47
-00:03:04,309 --> 00:03:07,449
-neither primitive guarantees durable UI-event delivery across process death.
+00:03:04,057 --> 00:03:06,707
+Use SharedFlow when every active collector should observe the same emission;
 
 48
-00:03:08,982 --> 00:03:11,232
-<i>What is the difference between Flow and a suspend function?</i>
+00:03:06,877 --> 00:03:10,017
+neither primitive guarantees durable UI-event delivery across process death.
 
 49
-00:03:12,763 --> 00:03:15,023
-A suspend function usually returns one result.
+00:03:11,550 --> 00:03:13,800
+<i>What is the difference between Flow and a suspend function?</i>
 
 50
-00:03:15,723 --> 00:03:18,963
-Flow can emit many values over time and is suitable for observing changes.
+00:03:15,331 --> 00:03:17,591
+A suspend function usually returns one result.
 
 51
-00:03:20,494 --> 00:03:22,464
-<i>What is the difference between cold and hot Flow?</i>
+00:03:18,291 --> 00:03:21,531
+Flow can emit many values over time and is suitable for observing changes.
 
 52
-00:03:24,011 --> 00:03:26,201
-A cold Flow starts separately for every collector.
+00:03:23,062 --> 00:03:25,032
+<i>What is the difference between cold and hot Flow?</i>
 
 53
-00:03:26,911 --> 00:03:30,581
-A hot Flow exists independently of collectors; StateFlow and SharedFlow are hot flows.
+00:03:26,579 --> 00:03:28,769
+A cold Flow starts separately for every collector.
 
 54
-00:03:32,102 --> 00:03:34,332
-<i>What is the difference between collect and collectLatest?</i>
+00:03:29,479 --> 00:03:33,149
+A hot Flow exists independently of collectors; StateFlow and SharedFlow are hot flows.
 
 55
-00:03:35,830 --> 00:03:37,880
-collect processes every value to completion.
+00:03:34,670 --> 00:03:36,900
+<i>What is the difference between collect and collectLatest?</i>
 
 56
-00:03:38,590 --> 00:03:41,630
-collectLatest cancels the previous processing when a new value arrives.
+00:03:38,398 --> 00:03:40,448
+collect processes every value to completion.
 
 57
-00:03:43,513 --> 00:03:45,143
-<i>When should flatMapLatest be used?</i>
+00:03:41,158 --> 00:03:44,198
+collectLatest cancels the previous processing when a new value arrives.
 
 58
-00:03:46,410 --> 00:03:50,000
-Use it when a new input value should switch to a new inner Flow and cancel the previous one.
+00:03:46,081 --> 00:03:47,711
+<i>When should flatMapLatest be used?</i>
 
 59
-00:03:50,700 --> 00:03:54,450
-A common example is search by changing query or observing data for a selected ID.
+00:03:48,978 --> 00:03:52,568
+Use it when a new input value should switch to a new inner Flow and cancel the previous one.
 
 60
-00:03:55,961 --> 00:03:57,841
-<i>What is the difference between combine and zip?</i>
+00:03:53,268 --> 00:03:57,018
+A common example is search by changing query or observing data for a selected ID.
 
 61
-00:03:59,363 --> 00:04:02,723
-combine emits when any source changes and uses the latest values from the others.
+00:03:58,529 --> 00:04:00,409
+<i>What is the difference between combine and zip?</i>
 
 62
-00:04:03,433 --> 00:04:06,653
-zip combines values pair by pair and waits for a new item from every source.
+00:04:01,931 --> 00:04:03,781
+After every source has emitted at least once,
 
 63
-00:04:08,169 --> 00:04:09,059
-<i>What is StateFlow?</i>
+00:04:03,951 --> 00:04:06,491
+combine combines their latest values as new values arrive.
 
 64
-00:04:10,587 --> 00:04:12,467
-StateFlow is a hot flow for holding state.
+00:04:07,201 --> 00:04:10,421
+zip combines values pair by pair and waits for a new item from every source.
 
 65
-00:04:13,167 --> 00:04:17,067
-It always has a current value, and a new collector immediately receives the latest value.
+00:04:11,937 --> 00:04:12,827
+<i>What is StateFlow?</i>
 
 66
-00:04:18,606 --> 00:04:19,496
-<i>What is SharedFlow?</i>
+00:04:14,355 --> 00:04:16,235
+StateFlow is a hot flow for holding state.
 
 67
-00:04:21,014 --> 00:04:23,844
-SharedFlow is a configurable hot flow for broadcasting values.
+00:04:16,935 --> 00:04:20,835
+It always has a current value, and a new collector immediately receives the latest value.
 
 68
-00:04:24,554 --> 00:04:27,934
-It is often used for events and effects, with configurable replay and buffering.
+00:04:22,374 --> 00:04:23,264
+<i>What is SharedFlow?</i>
 
 69
-00:04:29,446 --> 00:04:30,766
-<i>StateFlow or SharedFlow?</i>
+00:04:24,782 --> 00:04:27,612
+SharedFlow is a configurable hot flow for broadcasting values.
 
 70
-00:04:32,291 --> 00:04:36,441
-StateFlow is suitable for state that must always have a current value and be available to new collectors.
+00:04:28,322 --> 00:04:31,702
+It is often used for events and effects, with configurable replay and buffering.
 
 71
-00:04:37,151 --> 00:04:40,241
-SharedFlow is more commonly used for events, signals, and one-off effects.
+00:04:33,214 --> 00:04:34,534
+<i>StateFlow or SharedFlow?</i>
 
 72
-00:04:41,774 --> 00:04:43,304
-<i>What is lifecycle-aware collection?</i>
+00:04:36,059 --> 00:04:40,209
+StateFlow is suitable for state that must always have a current value and be available to new collectors.
 
 73
-00:04:44,811 --> 00:04:48,201
-It means collecting a Flow only while the screen is in an appropriate lifecycle state.
+00:04:40,919 --> 00:04:44,009
+SharedFlow is more commonly used for events, signals, and one-off effects.
 
 74
-00:04:48,901 --> 00:04:54,148
+00:04:45,542 --> 00:04:47,072
+<i>What is lifecycle-aware collection?</i>
+
+75
+00:04:48,579 --> 00:04:51,969
+It means collecting a Flow only while the screen is in an appropriate lifecycle state.
+
+76
+00:04:52,669 --> 00:04:57,916
 In Compose, state is usually collected with collectAsStateWithLifecycle(), while the View system commonly uses repeatOnLifecycle().

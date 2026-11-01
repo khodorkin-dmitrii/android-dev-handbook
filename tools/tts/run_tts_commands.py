@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime
 import math
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -70,6 +71,16 @@ def emit(message: str, log_file) -> None:
     print(message, flush=True)
     log_file.write(message + "\n")
     log_file.flush()
+
+
+def is_existing_file_refusal(output_line: str) -> bool:
+    return bool(
+        re.search(
+            r"(?:FileExistsError|file already exists|already exists|(?:\[Errno\s+\d+\]\s*)?File exists)",
+            output_line,
+            flags=re.IGNORECASE,
+        )
+    )
 
 
 def format_remaining(seconds: int) -> str:
@@ -143,6 +154,7 @@ def run(args: argparse.Namespace) -> int:
             emit(f"{label} START {timestamp()}", log_file)
             emit(f"{label} COMMAND {line}", log_file)
             started = time.monotonic()
+            existing_file_refusal = False
             process = subprocess.Popen(
                 command,
                 cwd=ROOT,
@@ -156,6 +168,9 @@ def run(args: argparse.Namespace) -> int:
             try:
                 assert process.stdout is not None
                 for output_line in process.stdout:
+                    existing_file_refusal = (
+                        is_existing_file_refusal(output_line) or existing_file_refusal
+                    )
                     emit(f"{label} | {output_line.rstrip()}", log_file)
                 return_code = process.wait()
             except KeyboardInterrupt:
@@ -167,6 +182,13 @@ def run(args: argparse.Namespace) -> int:
             if return_code == 0 and output_is_complete(media, boundaries):
                 completed += 1
                 emit(f"{label} OK {timestamp()} elapsed={elapsed:.1f}s", log_file)
+            elif existing_file_refusal:
+                skipped += 1
+                emit(
+                    f"{label} SKIP output already exists; continuing without pause",
+                    log_file,
+                )
+                continue
             else:
                 failures.append((index, return_code, media.name))
                 emit(

@@ -27,41 +27,44 @@ def balanced_parts(answers: list[dict[str, object]], word_limit: int) -> list[li
         raise ValueError(
             f"{answers[position]['id']} has {counts[position]} words and must be split manually"
         )
-    part_count = math.ceil(sum(counts) / word_limit)
-    target = sum(counts) / part_count
     prefix = [0]
     for count in counts:
         prefix.append(prefix[-1] + count)
+    total = prefix[-1]
+    minimum_parts = math.ceil(total / word_limit)
+    for part_count in range(minimum_parts, len(answers) + 1):
+        target = total / part_count
 
-    @lru_cache(maxsize=None)
-    def solve(start: int, remaining_parts: int) -> tuple[float, tuple[int, ...]] | None:
-        if remaining_parts == 0:
-            return (0.0, ()) if start == len(answers) else None
-        if len(answers) - start < remaining_parts:
-            return None
-        best: tuple[float, tuple[int, ...]] | None = None
-        last_end = len(answers) - remaining_parts + 1
-        for end in range(start + 1, last_end + 1):
-            words = prefix[end] - prefix[start]
-            if words > word_limit:
-                break
-            tail = solve(end, remaining_parts - 1)
-            if tail is None:
-                continue
-            candidate = ((words - target) ** 2 + tail[0], (end,) + tail[1])
-            if best is None or candidate[0] < best[0]:
-                best = candidate
-        return best
+        @lru_cache(maxsize=None)
+        def solve(start: int, remaining_parts: int) -> tuple[float, tuple[int, ...]] | None:
+            if remaining_parts == 0:
+                return (0.0, ()) if start == len(answers) else None
+            if len(answers) - start < remaining_parts:
+                return None
+            best: tuple[float, tuple[int, ...]] | None = None
+            last_end = len(answers) - remaining_parts + 1
+            for end in range(start + 1, last_end + 1):
+                words = prefix[end] - prefix[start]
+                if words > word_limit:
+                    break
+                tail = solve(end, remaining_parts - 1)
+                if tail is None:
+                    continue
+                candidate = ((words - target) ** 2 + tail[0], (end,) + tail[1])
+                if best is None or candidate[0] < best[0]:
+                    best = candidate
+            return best
 
-    solution = solve(0, part_count)
-    if solution is None:
-        raise ValueError(f"Cannot divide answers into parts of at most {word_limit} words")
-    result = []
-    start = 0
-    for end in solution[1]:
-        result.append(answers[start:end])
-        start = end
-    return result
+        solution = solve(0, part_count)
+        if solution is None:
+            continue
+        result = []
+        start = 0
+        for end in solution[1]:
+            result.append(answers[start:end])
+            start = end
+        return result
+    raise ValueError(f"Cannot divide answers into parts of at most {word_limit} words")
 
 
 def command(chapter: int, part: int) -> str:

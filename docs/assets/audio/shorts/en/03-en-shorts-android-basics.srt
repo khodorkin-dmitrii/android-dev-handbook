@@ -11,265 +11,277 @@
 Activity, Service, BroadcastReceiver, and ContentProvider.
 
 4
-00:00:09,636 --> 00:00:12,706
-They are declared in the manifest and can serve as application entry points.
+00:00:09,636 --> 00:00:11,536
+They can serve as application entry points.
 
 5
-00:00:14,222 --> 00:00:16,492
-<i>How is a Bound Service different from a regular Service?</i>
+00:00:12,226 --> 00:00:15,146
+Activities, services, and providers are declared in the manifest;
 
 6
-00:00:18,022 --> 00:00:19,182
-A Bound Service is a Service
+00:00:15,346 --> 00:00:17,216
+receivers can also be registered at runtime.
 
 7
-00:00:19,202 --> 00:00:22,702
-that other components connect to through bindService() and interact with through an IBinder.
+00:00:18,734 --> 00:00:21,004
+<i>How is a Bound Service different from a regular Service?</i>
 
 8
-00:00:23,412 --> 00:00:26,172
-A purely bound service exists while at least one client is bound.
+00:00:22,539 --> 00:00:23,699
+A Bound Service is a Service
 
 9
-00:00:26,882 --> 00:00:31,282
-A regular started service is launched with startService() and runs independently of the component that started it
+00:00:23,719 --> 00:00:27,219
+that other components connect to through bindService() and interact with through an IBinder.
 
 10
-00:00:31,302 --> 00:00:32,062
-until it is stopped.
+00:00:27,929 --> 00:00:30,689
+A purely bound service exists while at least one client is bound.
 
 11
-00:00:33,577 --> 00:00:36,397
-<i>Which is initialized first: Application or ContentProvider?</i>
+00:00:31,399 --> 00:00:34,309
+A started service can continue independently of the component that started it
 
 12
-00:00:37,915 --> 00:00:41,715
-The Application object is created first, then ContentProvider instances are initialized,
+00:00:34,499 --> 00:00:37,249
+, subject to process death and Android background execution limits.
 
 13
-00:00:41,885 --> 00:00:44,235
-and only after that Application.onCreate() is called.
+00:00:38,761 --> 00:00:41,581
+<i>Which is initialized first: Application or ContentProvider?</i>
 
 14
-00:00:44,935 --> 00:00:48,175
-This is why libraries often use providers for early auto-initialization.
+00:00:43,089 --> 00:00:46,889
+The Application object is created first, then ContentProvider instances are initialized,
 
 15
-00:00:49,702 --> 00:00:52,342
-<i>What is the difference between an explicit and an implicit Intent?</i>
+00:00:47,059 --> 00:00:49,409
+and only after that Application.onCreate() is called.
 
 16
-00:00:53,867 --> 00:00:56,387
-An explicit Intent names the exact component to start.
+00:00:50,109 --> 00:00:53,349
+This is why libraries often use providers for early auto-initialization.
 
 17
-00:00:57,097 --> 00:01:01,997
-An implicit Intent describes an action, and Android selects a matching application or component through intent filters.
+00:00:54,886 --> 00:00:57,526
+<i>What is the difference between an explicit and an implicit Intent?</i>
 
 18
-00:01:03,537 --> 00:01:04,297
-<i>What is a Bundle?</i>
+00:00:59,051 --> 00:01:01,571
+An explicit Intent names the exact component to start.
 
 19
-00:01:05,811 --> 00:01:10,201
-A Bundle is a container for passing small sets of mixed data between Android components and for saving state.
+00:01:02,281 --> 00:01:07,181
+An implicit Intent describes an action, and Android selects a matching application or component through intent filters.
 
 20
-00:01:10,901 --> 00:01:15,011
-It supports primitive types, Parcelable, Serializable, and several other supported types.
+00:01:09,057 --> 00:01:09,817
+<i>What is a Bundle?</i>
 
 21
-00:01:16,513 --> 00:01:18,903
-<i>What is the difference between Parcelable and Serializable?</i>
+00:01:11,066 --> 00:01:15,456
+A Bundle is a container for passing small sets of mixed data between Android components and for saving state.
 
 22
-00:01:20,438 --> 00:01:26,058
-Parcelable is optimized for Android IPC and is usually faster, but it requires a special implementation or @Parcelize.
+00:01:16,146 --> 00:01:20,256
+It supports primitive types, Parcelable, Serializable, and several other supported types.
 
 23
-00:01:26,768 --> 00:01:30,208
-Serializable is simpler, but it uses reflection and has more overhead.
+00:01:21,769 --> 00:01:24,159
+<i>What is the difference between Parcelable and Serializable?</i>
 
 24
-00:01:32,081 --> 00:01:33,691
-<i>What happens when the device rotates?</i>
+00:01:25,694 --> 00:01:31,314
+Parcelable is optimized for Android IPC and is usually faster, but it requires a special implementation or @Parcelize.
 
 25
-00:01:34,954 --> 00:01:39,334
-Rotation is a configuration change, and by default the current Activity is destroyed and recreated.
+00:01:32,024 --> 00:01:35,464
+Serializable is simpler, but it uses reflection and has more overhead.
 
 26
-00:01:40,034 --> 00:01:41,634
-A ViewModel survives this recreation,
+00:01:36,977 --> 00:01:38,587
+<i>What happens when the device rotates?</i>
 
 27
-00:01:41,814 --> 00:01:45,314
-while small UI state can be preserved with SavedStateHandle or onSaveInstanceState().
+00:01:40,110 --> 00:01:44,490
+Rotation is a configuration change, and by default the current Activity is destroyed and recreated.
 
 28
-00:01:46,833 --> 00:01:48,253
-<i>Can onDestroy() be skipped?</i>
+00:01:45,200 --> 00:01:46,800
+A ViewModel survives this recreation,
 
 29
-00:01:49,755 --> 00:01:50,225
-Yes.
+00:01:46,980 --> 00:01:50,480
+while small UI state can be preserved with SavedStateHandle or onSaveInstanceState().
 
 30
-00:01:50,915 --> 00:01:53,345
-The system may terminate the process without calling onDestroy(),
+00:01:51,993 --> 00:01:53,413
+<i>Can onDestroy() be skipped?</i>
 
 31
-00:01:53,565 --> 00:01:55,985
-so critical data must not rely on this callback being called.
+00:01:54,915 --> 00:01:55,385
+Yes.
 
 32
-00:01:57,505 --> 00:01:59,435
-<i>How does ViewModel survive device rotation?</i>
+00:01:56,075 --> 00:01:58,505
+The system may terminate the process without calling onDestroy(),
 
 33
-00:02:00,974 --> 00:02:06,004
-A ViewModel is stored in a ViewModelStore associated with the logical screen owner rather than a specific Activity instance.
+00:01:58,725 --> 00:02:01,145
+so critical data must not rely on this callback being called.
 
 34
-00:02:06,704 --> 00:02:10,964
-After recreation, the new Activity receives the same ViewModel as long as the process has not been killed.
+00:02:02,665 --> 00:02:04,595
+<i>How does ViewModel survive device rotation?</i>
 
 35
-00:02:12,473 --> 00:02:14,013
-<i>How many Loopers can one thread have?</i>
+00:02:06,134 --> 00:02:11,164
+A ViewModel is stored in a ViewModelStore associated with the logical screen owner rather than a specific Activity instance.
 
 36
-00:02:15,539 --> 00:02:17,959
-A thread can have at most one Looper, and it may have none.
+00:02:11,864 --> 00:02:16,124
+After recreation, the new Activity receives the same ViewModel as long as the process has not been killed.
 
 37
-00:02:18,669 --> 00:02:20,299
-The main thread receives one automatically,
+00:02:18,017 --> 00:02:19,557
+<i>How many Loopers can one thread have?</i>
 
 38
-00:02:20,479 --> 00:02:23,429
-while a background thread can use Looper.prepare() or HandlerThread.
+00:02:20,818 --> 00:02:23,238
+A thread can have at most one Looper, and it may have none.
 
 39
-00:02:24,945 --> 00:02:27,815
-<i>Which Activity lifecycle methods are called during device rotation?</i>
+00:02:23,938 --> 00:02:25,568
+The main thread receives one automatically,
 
 40
-00:02:29,326 --> 00:02:33,476
-With a normal configuration change, the old Activity goes through onPause() → onStop() → onDestroy(),
+00:02:25,748 --> 00:02:28,698
+while a background thread can use Looper.prepare() or HandlerThread.
 
 41
-00:02:33,626 --> 00:02:35,986
-and the new one goes through onCreate() → onStart() → onResume().
+00:02:30,201 --> 00:02:33,071
+<i>Which Activity lifecycle methods are called during device rotation?</i>
 
 42
-00:02:36,696 --> 00:02:39,556
-onSaveInstanceState() is also usually called before destruction.
+00:02:34,582 --> 00:02:38,732
+With a normal configuration change, the old Activity goes through onPause() → onStop() → onDestroy(),
 
 43
-00:02:41,089 --> 00:02:43,739
-<i>What is the difference between invalidate() and requestLayout()?</i>
+00:02:38,882 --> 00:02:41,242
+and the new one goes through onCreate() → onStart() → onResume().
 
 44
-00:02:45,259 --> 00:02:48,079
-invalidate() requests a redraw and causes a new draw pass.
+00:02:41,952 --> 00:02:44,812
+onSaveInstanceState() is also usually called before destruction.
 
 45
-00:02:48,789 --> 00:02:52,449
-requestLayout() starts a new measure and layout pass when size or positioning has changed.
+00:02:46,345 --> 00:02:48,995
+<i>What is the difference between invalidate() and requestLayout()?</i>
 
 46
-00:02:53,974 --> 00:02:56,034
-<i>Which methods are overridden in a custom ViewGroup?</i>
+00:02:50,515 --> 00:02:53,335
+invalidate() requests a redraw and causes a new draw pass.
 
 47
-00:02:57,563 --> 00:03:01,783
-The main methods are onMeasure() for calculating sizes and onLayout() for positioning child views.
+00:02:54,045 --> 00:02:57,705
+requestLayout() starts a new measure and layout pass when size or positioning has changed.
 
 48
-00:03:02,493 --> 00:03:05,403
-onDraw() is needed only when the container draws its own content.
+00:02:59,230 --> 00:03:01,290
+<i>Which methods are overridden in a custom ViewGroup?</i>
 
 49
-00:03:07,281 --> 00:03:08,551
-<i>How does RecyclerView work?</i>
+00:03:02,819 --> 00:03:07,039
+The main methods are onMeasure() for calculating sizes and onLayout() for positioning child views.
 
 50
-00:03:09,818 --> 00:03:13,658
-RecyclerView coordinates a LayoutManager, Recycler, Adapter, and ViewHolder.
+00:03:07,749 --> 00:03:10,659
+onDraw() is needed only when the container draws its own content.
 
 51
-00:03:14,358 --> 00:03:18,008
-The LayoutManager decides which item positions are needed and where their views should be placed.
+00:03:12,177 --> 00:03:13,447
+<i>How does RecyclerView work?</i>
 
 52
-00:03:18,708 --> 00:03:20,228
-It requests views through the Recycler,
+00:03:14,974 --> 00:03:18,814
+RecyclerView coordinates a LayoutManager, Recycler, Adapter, and ViewHolder.
 
 53
-00:03:20,418 --> 00:03:24,188
-which reuses an existing ViewHolder when possible or asks the Adapter to create and bind one:
+00:03:19,524 --> 00:03:23,174
+The LayoutManager decides which item positions are needed and where their views should be placed.
 
 54
-00:03:24,408 --> 00:03:27,958
-RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder.
+00:03:23,874 --> 00:03:25,394
+It requests views through the Recycler,
 
 55
-00:03:29,473 --> 00:03:31,673
-<i>What is the difference between ViewBinding and DataBinding?</i>
+00:03:25,584 --> 00:03:29,354
+which reuses an existing ViewHolder when possible or asks the Adapter to create and bind one:
 
 56
-00:03:33,523 --> 00:03:37,133
-ViewBinding provides type-safe access to views with very little runtime complexity.
+00:03:29,574 --> 00:03:33,124
+RecyclerView -> LayoutManager -> Recycler -> Adapter -> ViewHolder.
 
 57
-00:03:37,843 --> 00:03:43,503
-DataBinding additionally supports expressions in XML, two-way binding, and BindingAdapters, but it makes builds more complex.
+00:03:34,993 --> 00:03:37,193
+<i>What is the difference between ViewBinding and DataBinding?</i>
 
 58
-00:03:44,762 --> 00:03:47,082
-<i>Activity Context or Application Context?</i>
+00:03:38,778 --> 00:03:42,388
+ViewBinding provides type-safe access to views with very little runtime complexity.
 
 59
-00:03:48,587 --> 00:03:53,197
-Activity Context is required for UI, themes, dialogs, and operations tied to a screen lifecycle.
+00:03:43,088 --> 00:03:48,748
+DataBinding additionally supports expressions in XML, two-way binding, and BindingAdapters, but it makes builds more complex.
 
 60
-00:03:53,897 --> 00:03:58,587
-Application Context lives as long as the process and is suitable for long-lived dependencies, but not for UI.
+00:03:49,994 --> 00:03:52,314
+<i>Activity Context or Application Context?</i>
 
 61
-00:04:00,124 --> 00:04:01,084
-<i>What is an ANR?</i>
+00:03:53,819 --> 00:03:56,679
+Use an Activity Context for UI that needs the screen's theme or window,
 
 62
-00:04:02,619 --> 00:04:06,399
-ANR happens when the main thread does not respond to system or user events for too long.
+00:03:56,909 --> 00:03:58,609
+such as dialogs and themed view inflation.
 
 63
-00:04:07,109 --> 00:04:11,689
-Common causes are blocking operations, heavy computations, and incorrect synchronization on the main thread.
+00:03:59,319 --> 00:04:03,519
+Use the Application Context for process-scoped dependencies that do not need that UI configuration.
 
 64
-00:04:13,206 --> 00:04:13,926
-<i>What is jank?</i>
+00:04:05,044 --> 00:04:06,004
+<i>What is an ANR?</i>
 
 65
-00:04:15,446 --> 00:04:18,086
-Jank is visible stutter caused by a frame missing its deadline.
+00:04:07,539 --> 00:04:12,069
+ANR means that an app component missed a system response deadline, often because the main thread is blocked.
 
 66
-00:04:18,796 --> 00:04:22,596
-At 60 FPS, the budget for one frame is about 16.6 ms.
+00:04:12,779 --> 00:04:17,359
+Common causes are blocking operations, heavy computations, and incorrect synchronization on the main thread.
 
 67
-00:04:24,113 --> 00:04:25,013
-<i>What is overdraw?</i>
+00:04:18,894 --> 00:04:19,614
+<i>What is jank?</i>
 
 68
-00:04:26,531 --> 00:04:30,011
-Overdraw happens when the same pixels are drawn multiple times on top of each other.
+00:04:21,134 --> 00:04:23,774
+Jank is visible stutter caused by a frame missing its deadline.
 
 69
-00:04:30,721 --> 00:04:34,868
+00:04:24,484 --> 00:04:28,284
+At 60 FPS, the budget for one frame is about 16.6 ms.
+
+70
+00:04:29,801 --> 00:04:30,701
+<i>What is overdraw?</i>
+
+71
+00:04:32,219 --> 00:04:35,699
+Overdraw happens when the same pixels are drawn multiple times on top of each other.
+
+72
+00:04:36,409 --> 00:04:40,556
 It is not always a problem, but unnecessary backgrounds and layers can create extra GPU work.

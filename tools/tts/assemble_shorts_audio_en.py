@@ -36,15 +36,19 @@ CUE_ENDINGS: dict[tuple[int, int], tuple[str, ...]] = {
     (2, 7): ("same type.", "restricted hierarchy"),
     (2, 8): ("singleton.",),
     (2, 16): ("instantiated.",),
+    (3, 1): ("ContentProvider.", "entry points.", "manifest;"),
     (3, 2): ("a Service", "an IBinder.", "is bound.", "started it"),
     (3, 10): ("none.", "automatically,"),
     (3, 15): ("complexity.",),
-    (4, 4): ("stable value.", "is recreated"),
+    (3, 16): ("window,", "inflation."),
+    (4, 4): ("Yes.", "capturing lambdas.", "as keys.", "instance,"),
     (5, 1): ("parallel loading.",),
+    (5, 7): ("points", "work."),
     (5, 11): ("between coroutines.",),
+    (5, 19): ("once,", "arrive."),
     (5, 23): ("lifecycle state.",),
     (6, 1): ("data orchestration.",),
-    (6, 3): ("a snackbar.",),
+    (6, 3): ("a snackbar.", "StateFlow;", "rules.", "recreation;", "source."),
     (6, 8): ("most screens.",),
     (6, 9): ("No.",),
     (6, 10): ("New State.", "pure function,"),
@@ -75,8 +79,8 @@ def read_manifest() -> tuple[dict[str, Any], list[preparation.Segment]]:
     if manifest["segments"] != [asdict(item) for item in expected]:
         raise ValueError("Prepared segments no longer match the source")
     items = [preparation.Segment(**item) for item in manifest["segments"]]
-    if len(items) != 271 or len(manifest["batches"]) != 31:
-        raise ValueError("Expected 271 segments in 31 batches")
+    if len(items) != 271 or not manifest["batches"]:
+        raise ValueError("Expected 271 segments and at least one synthesis batch")
     return manifest, items
 
 
@@ -128,17 +132,21 @@ def validate_cue_plan(items: list[preparation.Segment], chapters: set[int] | Non
         expected = len(role_audio.cue_parts(ru_items[(item.chapter, item.ordinal)].canonical_text))
         if actual != expected:
             raise ValueError(f"Cue count differs from Russian for {item.id}: {actual} != {expected}")
-    for chapter, slug in preparation.CHAPTER_CONFIG.values():
+    ru_chapters: dict[int, list[role_audio.Segment]] = {}
+    for item in role_audio.build_segments():
+        ru_chapters.setdefault(item.chapter, []).append(item)
+    for chapter, _ in preparation.CHAPTER_CONFIG.values():
         if chapter == preparation.PROTECTED_CHAPTER:
             continue
         if chapters is not None and chapter not in chapters:
             continue
-        expected = sum(len(cue_parts(item)) for item in ordered_items(items, chapter))
-        draft = ROOT / f"build/audio/shorts-ru/{chapter:02d}-ru-{slug}/{chapter:02d}-ru-shorts-{slug}.srt"
-        ru_srt = draft if draft.is_file() else ROOT / f"docs/assets/audio/shorts/ru/{chapter:02d}-ru-shorts-{slug}.srt"
-        actual = len(ru_srt.read_text(encoding="utf-8").strip().split("\n\n"))
-        if actual != expected:
-            raise ValueError(f"Chapter {chapter:02d}: {expected} English cues vs {actual} Russian cues")
+        en_count = sum(len(cue_parts(item)) for item in ordered_items(items, chapter))
+        ru_count = sum(
+            len(role_audio.cue_parts(item.canonical_text)) if item.kind == "answer" else 1
+            for item in ru_chapters[chapter]
+        )
+        if ru_count != en_count:
+            raise ValueError(f"Chapter {chapter:02d}: {en_count} English source cues vs {ru_count} Russian source cues")
 
 
 def validate_synthesis(

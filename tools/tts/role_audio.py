@@ -825,6 +825,19 @@ def align_cues(segment: Segment, split_entry: dict[str, Any], mapping: dict[str,
         else [apply_pronunciation(value, mapping) for value in canonical_cues]
     )
     boundaries = split_entry["boundaries"]
+    if segment.kind != "answer":
+        boundary_text = "".join(str(item["text"]) for item in boundaries)
+        # Older shared questions pronounced Repository as "репозитория".
+        spoken_boundary_text = " ".join(str(item["text"]) for item in boundaries)
+        spoken_boundary_text = re.sub(
+            r"\bрепозитория\b", "Repository", spoken_boundary_text, flags=re.IGNORECASE
+        )
+        if (
+            normalized_spoken(boundary_text) == normalized_spoken(segment.canonical_text)
+            or normalized_spoken(apply_pronunciation(spoken_boundary_text, mapping))
+            == normalized_spoken(segment.tts_text)
+        ):
+            expected = [boundary_text]
     positions = align_boundaries(
         [
             Segment(
