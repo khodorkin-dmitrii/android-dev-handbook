@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-11-01
+1. Last tracker update: 2026-11-02
 1. Total articles tracked: 107
-1. Updated: 91
-1. TODO: 16
+1. Updated: 92
+1. TODO: 15
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 24      | 16   |
+| P2 | 40 | 25      | 15   |
 
 ## Tracker
 
@@ -117,7 +117,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-30, `android/android-system-services.md`, Android System Services, Distinguished the system_server process from SystemServer startup code and clarified lmkd's role in process termination; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-10-31, `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview, Clarified Android and iOS integration, platform API boundaries and expect/actual alternatives; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-01, `kotlin-multiplatform/kmp-kmm-compose.md`, KMP, KMM, and Compose Multiplatform, Clarified deprecated KMM naming, KMP versus Compose UI scope, Android-only API boundaries, and platform stability; synchronized EN/RU.
-1. P2, **TODO**, , `kotlin-multiplatform/project-structure.md`, Project Structure
+1. P2, **UPDATED**, 2026-11-02, `kotlin-multiplatform/project-structure.md`, Project Structure, Clarified source-set hierarchy and Android test-set names; updated the Gradle example for the Android-KMP library plugin and synchronized EN/RU.
 1. P2, **TODO**, , `kotlin-multiplatform/shared-platform-code.md`, Shared and Platform-specific Code
 1. P2, **TODO**, , `kotlin-multiplatform/architecture-ui.md`, Architecture and UI Integration
 1. P2, **TODO**, , `kotlin-multiplatform/adoption-tradeoffs.md`, Adoption Strategy and Trade-offs

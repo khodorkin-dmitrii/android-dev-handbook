@@ -1,40 +1,47 @@
-# Структура проекта и Source Sets
+# Структура проекта и source sets
 
-KMP организует компиляцию через три связанных понятия:
+Компиляция KMP строится вокруг трёх связанных понятий:
 
-- **target** описывает платформу компиляции и формат результата;
-- **compilation** объединяет source sets для target и назначения, например production или tests;
-- **source set** определяет исходники, зависимости, compiler options и видимость других source sets.
+- **target** задаёт платформу и результат компиляции;
+- **compilation** объединяет source sets для target и назначения, например основного кода или тестов;
+- **source set** группирует исходники, зависимости, настройки компилятора и правила видимости.
 
-Поэтому source sets - не просто папки. Platform compilation объединяет platform source set с доступными ему common и intermediate source sets.
+Source set — больше, чем папка: компиляция для платформы включает её source set и доступные ему общие или промежуточные sets.
 
-## Main, test и platform source sets
+## Основные, тестовые и платформенные source sets
 
-`commonMain` компилируется для всех объявленных targets, поэтому использует только доступные каждому из них API. В `commonTest` находятся общие тесты, обычно на `kotlin.test`. К target-specific production и test sets относятся `androidMain`/`androidUnitTest`, `jvmMain`/`jvmTest` и отдельные Native sets, например `iosArm64Main` и `iosSimulatorArm64Main`.
+`commonMain` содержит код, компилируемый для всех объявленных targets. В нём доступны только API, общие для них. `commonTest` содержит общие тесты, обычно на `kotlin.test`. Примеры платформенных sets: `androidMain`, `jvmMain`, `iosArm64Main` и `iosSimulatorArm64Main`; `jvmTest` — тестовый set для JVM.
 
-Platform source sets видят declarations из common source sets, от которых зависят. `commonMain` не видит platform-only declarations. Зависимость следует помещать в самый узкий source set, targets которого она поддерживает.
+Названия тестовых Android source sets зависят от плагина. Android-KMP library plugin использует `androidHostTest` и `androidDeviceTest`, если соответствующие тесты включены. В старой интеграции с `com.android.library` используются `androidUnitTest` и `androidInstrumentedTest`.
 
-## Intermediate source sets и hierarchy
+Платформенные source sets видят объявления из общих предков; `commonMain` не видит платформенный код. Объявляйте зависимость в самом узком source set, охватывающем все нужные targets.
 
-Родственные targets могут использовать intermediate source set. Для iOS device и simulator targets default hierarchy template обычно создаёт `iosMain`, а для более широкой группы Apple targets может создать `appleMain`. Концептуальный пример:
+## Промежуточные source sets и иерархия
+
+Родственные targets могут разделять промежуточный source set. Для iOS-устройства и симулятора стандартная иерархия создаёт `iosMain`. Если объявлены и другие Apple targets, `appleMain` может объединять общий для них код. Упрощённая схема:
 
 ```text
 commonMain
 ├── androidMain
-├── jvmMain
 └── appleMain
-    ├── iosArm64Main
-    └── iosSimulatorArm64Main
+    └── iosMain
+        ├── iosArm64Main
+        └── iosSimulatorArm64Main
 ```
 
-Это не полное и не универсальное дерево. Kotlin Gradle plugin применяет default hierarchy template по объявленным targets. Custom intermediate source sets и явные `dependsOn` нужны, только когда стандартная hierarchy не отражает реальную группу переиспользования. Ручные связи могут влиять на применение default template.
+Точная иерархия зависит от объявленных targets. Обычно достаточно стандартного шаблона Kotlin Gradle plugin. Явные связи `dependsOn` могут отключить его применение; изменяйте шаблон, только если стандартная группировка не подходит.
 
 ## Компактная модель Gradle
 
+Для KMP-библиотеки с Android-KMP plugin основная конфигурация может выглядеть так (алиасы `libs` задаются в version catalog проекта):
+
 ```kotlin
 kotlin {
-    androidTarget()
-    jvm()
+    android {
+        namespace = "com.example.shared"
+        compileSdk = 36
+        minSdk = 24
+    }
     iosArm64()
     iosSimulatorArm64()
 
@@ -43,21 +50,22 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
         iosMain.dependencies {
-            implementation(libs.apple.supported.library)
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
 ```
 
-Конкретный Android target DSL зависит от Android/KMP plugin setup. Важно, что targets создают compilations и участвуют в hierarchy source sets.
+Для блока `android` нужен плагин `com.android.kotlin.multiplatform.library`. В проектах с `com.android.library` отличаются DSL target и названия тестовых sets; не смешивайте конфигурации разных плагинов.
 
-## Modules и source sets
+## Модули и source sets
 
-Gradle modules задают крупные границы сборки, зависимостей, API и владения. Source sets определяют, для каких targets компилируется код внутри одного multiplatform-модуля. Возможен один shared module или feature-oriented multiplatform modules - универсальной структуры нет.
+Gradle-модули задают границы сборки, зависимостей, API и владения кодом. Source sets определяют, для каких targets компилируется код *внутри* одного multiplatform-модуля. Начните с одного общего модуля, если этого достаточно; делите по фичам или зонам ответственности, когда граница полезна.
 
 См. [Общий и платформенный код](shared-platform-code.md), [Multi-module Architecture](../architecture/multi-module.md) и [Внедрение KMP и компромиссы](adoption-tradeoffs.md).
 
 ## Источники
 
 - [Структура KMP-проекта](https://kotlinlang.org/docs/multiplatform/multiplatform-discover-project.html)
-- [Hierarchical project structure](https://kotlinlang.org/docs/multiplatform/multiplatform-hierarchy.html)
+- [Иерархия source sets](https://kotlinlang.org/docs/multiplatform/multiplatform-hierarchy.html)
+- [Android-KMP library plugin](https://developer.android.com/kotlin/multiplatform/plugin)
