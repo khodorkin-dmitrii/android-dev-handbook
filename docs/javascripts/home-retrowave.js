@@ -61,17 +61,25 @@
         targetFrameTime: 1000 / 90
     };
 
+    // Local calendar dates; January and February include leap day automatically.
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    const season = month === 10 || (month === 11 && day <= 2)
+        ? "pumpkin"
+        : month <= 2 || month === 12 || (month === 11 && day >= 3)
+            ? "snowflake" : null;
     const pumpkinImage = new Image();
-    pumpkinImage.src = new URL("../assets/pumpkin-48x48.png", document.currentScript.src).href;
+    if (season) pumpkinImage.src = new URL("../assets/" + season + "-48x48.png", document.currentScript.src).href;
     let pumpkins = [];
     let pumpkinDelay = 0.5;
     const pumpkinGlow = document.createElement("canvas");
     pumpkinGlow.width = pumpkinGlow.height = 128;
     const glowContext = pumpkinGlow.getContext("2d");
     const gold = glowContext.createRadialGradient(64, 64, 5, 64, 64, 64);
-    gold.addColorStop(0, "rgba(255, 218, 95, .85)");
-    gold.addColorStop(0.35, "rgba(255, 184, 35, .45)");
-    gold.addColorStop(1, "rgba(255, 168, 20, 0)");
+    gold.addColorStop(0, season === "snowflake" ? "rgba(205, 240, 255, .85)" : "rgba(255, 218, 95, .85)");
+    gold.addColorStop(0.35, season === "snowflake" ? "rgba(75, 180, 255, .45)" : "rgba(255, 184, 35, .45)");
+    gold.addColorStop(1, season === "snowflake" ? "rgba(35, 140, 255, 0)" : "rgba(255, 168, 20, 0)");
     glowContext.fillStyle = gold;
     glowContext.fillRect(0, 0, 128, 128);
 
