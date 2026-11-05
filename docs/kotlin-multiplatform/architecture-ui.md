@@ -1,34 +1,27 @@
 # Architecture and UI Strategies
 
-KMP does not require a specific architecture. It can support MVVM, unidirectional data flow (UDF), MVI-like immutable state, feature-based modules, or selectively applied Clean Architecture. The architecture should reflect product complexity rather than the technology used to compile shared code.
+KMP does not require a specific architecture. It can support MVVM, unidirectional data flow (UDF), MVI-like immutable state, feature-based modules, or selectively applied Clean Architecture. Choose boundaries based on product complexity and platform needs.
 
 ```text
-Platform or shared UI
-        ↓ UserAction
-Shared state holder / ViewModel
-        ↓
-Use cases or repositories
-        ↓
-Local and remote data sources
-        ↓
-StateFlow<UiState>
+UI ── UserAction ──> State holder / ViewModel ──> Repositories ──> Data sources
+UI <── StateFlow<UiState> ── State holder <── results ──────── Repositories
 ```
 
-UDF with immutable `UiState`, actions, and `StateFlow` can live inside MVVM. Those choices do not automatically make an architecture MVI.
+This is a conceptual flow: the state holder owns and exposes `StateFlow<UiState>`; the UI collects it. UDF with immutable `UiState` and actions can live inside MVVM. These choices do not automatically make an architecture MVI.
 
 ## Presentation choices
 
-1. **Platform ViewModels and UI.** Data and domain are shared; Android and iOS follow their native state, lifecycle, and navigation conventions.
-2. **Shared plain Kotlin state holder with native UI.** Behavior and state are common, while each platform explicitly owns creation, cancellation, and state collection.
-3. **Shared AndroidX ViewModel with platform integration.** AndroidX ViewModel supports KMP and can be used from `commonMain`, but lifecycle integration differs. Android components provide standard owners; SwiftUI has no automatic equivalent and needs a `ViewModelStoreOwner`-style bridge and explicit cleanup.
-4. **Shared ViewModel and Compose Multiplatform UI.** Presentation and rendering can move together when supported targets and product UX align.
+1. **Platform ViewModels and UI.** Data and domain are shared; Android and iOS follow native state, lifecycle, and navigation conventions.
+2. **Shared plain Kotlin state holder with native UI.** Behavior and state are common; each platform owns creation, cancellation, and state observation. Define who cancels work when the screen disappears.
+3. **Shared AndroidX ViewModel with platform integration.** AndroidX ViewModel can be used in `commonMain`. Android provides standard owners; SwiftUI needs an explicit `ViewModelStoreOwner` integration and cleanup. Observing Kotlin `Flow` in SwiftUI also needs an interop strategy.
+4. **Shared ViewModel and Compose Multiplatform UI.** Presentation and rendering can move together when target support and product UX align.
 5. **Hybrid per feature.** Each feature shares only what produces value.
 
-A plain state holder can be simpler than exporting AndroidX ViewModel when Android lifecycle semantics are not needed. Hilt is unavailable in `commonMain`, so `@HiltViewModel` cannot wire a shared ViewModel. Use constructor injection and platform composition roots or a compatible multiplatform DI solution.
+A plain state holder can be simpler when AndroidX ViewModel ownership is unnecessary. Hilt cannot annotate a shared `commonMain` ViewModel with `@HiltViewModel`; use constructor injection with platform composition roots or a compatible multiplatform DI solution.
 
 ## Navigation as a boundary
 
-With native UI, each platform can own its navigation stack while shared logic emits navigation results, destinations, or effects. Shared Compose UI can also share more navigation implementation. Neither choice is mandatory: lifecycle, deep links, system back behavior, and platform presentation conventions still need deliberate integration.
+With native UI, each platform can own its navigation stack while shared logic communicates navigation intents or results through an explicit contract. Decide which layer consumes one-time actions and how it handles repeated collection. Shared Compose UI can share more navigation implementation, but deep links, system back behavior, lifecycle, and platform presentation still need integration.
 
 ## Native, shared, and hybrid UI
 
@@ -36,9 +29,9 @@ With native UI, each platform can own its navigation stack while shared logic em
 | --- | --- | --- |
 | Native UI | Platform UX, accessibility conventions, direct integrations | Duplicate rendering and some presentation work |
 | Shared Compose UI | Product parity, one UI implementation, coordinated releases | Cross-platform skills, integration and target-support constraints |
-| Hybrid UI | Reuse where valuable, native exceptions where needed | More explicit boundaries and two integration patterns |
+| Hybrid UI | Reuse where valuable, native exceptions where needed | Explicit boundaries and two integration patterns |
 
-Choose using product parity, platform-specific UX, team ownership, release cadence, available skills, maintenance cost, accessibility, and system integrations. Maximum UI reuse is not a universal goal.
+Choose using product parity, platform-specific UX, team ownership, release cadence, skills, maintenance cost, accessibility, and system integrations. Maximum UI reuse is not a universal goal.
 
 See [Shared vs Platform-Specific Code](shared-platform-code.md), [MV Patterns](../architecture/mv-patterns.md), [UI State](../architecture/ui-state.md), [StateFlow & SharedFlow](../coroutines-flow/stateflow-sharedflow.md), and [Dependency Injection](../di/index.md).
 

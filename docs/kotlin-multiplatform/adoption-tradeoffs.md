@@ -1,6 +1,6 @@
 # KMP Adoption and Trade-offs
 
-KMP is an architectural investment, not a default requirement. Its value comes from sharing meaningful behavior while retaining necessary platform integration.
+KMP is an architectural investment. Its value comes from sharing meaningful behavior while retaining necessary platform integration.
 
 ## Good-fit signals
 
@@ -13,44 +13,45 @@ KMP is worth evaluating when:
 - shared ownership, code review, tests, and CI can be established;
 - a stable responsibility can be extracted incrementally.
 
-The appropriate [sharing boundary](shared-platform-code.md) may be a small core, data and domain, presentation, UI, or a hybrid.
+The [sharing boundary](shared-platform-code.md) may be a small core, data and domain, presentation, UI, or a hybrid.
 
 ## Costs and risks
 
-Adoption adds build configuration and CI complexity, a larger target test matrix, and library compatibility checks. Kotlin/Swift interoperability can make exported APIs, coroutines, errors, generics, and debugging across language boundaries less direct. Platform APIs, lifecycle, and native toolchains remain necessary; Apple builds and final Apple-platform validation require macOS and Xcode.
+Adoption adds build configuration and CI complexity, a larger target test matrix, and library compatibility checks. Kotlin/Swift interoperability can make exported APIs, coroutines, errors, generics, and debugging across language boundaries less direct. Platform APIs, lifecycle, and native toolchains remain necessary; building and validating an iOS app requires macOS and Xcode.
 
-The organizational cost is equally important. Teams need clear ownership of shared modules, platform adapters, reviews, releases, and upgrade coordination. A shared module without shared responsibility can become a delivery bottleneck.
+Teams also need clear ownership of shared modules, platform adapters, reviews, releases, and upgrades. A shared module without shared responsibility can become a delivery bottleneck.
 
-[Source-set design](project-structure.md) controls dependency availability but does not remove these integration costs. Likewise, a shared [ViewModel or UI](architecture-ui.md) does not remove platform lifecycle, navigation, accessibility, or system behavior.
+[Source-set design](project-structure.md) controls dependency availability but does not remove these integration costs. A shared [ViewModel or UI](architecture-ui.md) still needs platform lifecycle, navigation, accessibility, and system behavior.
 
 ## Incremental adoption
 
-1. Identify a stable, testable responsibility.
-2. Extract a small shared module.
-3. Establish explicit platform adapters.
-4. Add shared tests and target-aware CI.
-5. Measure maintenance cost and integration friction.
-6. Expand only when demonstrated value exceeds the new complexity.
+1. Choose one stable, testable responsibility and record the current duplication, defects, and delivery effort.
+2. Extract a small shared module with explicit platform adapters.
+3. Add common tests and build and integration checks for every required target in CI.
+4. Pilot the module in both platform apps; check Swift-facing APIs and debugging effort in practice.
+5. Compare the outcome with the baseline, including build time, integration work, and team ownership.
+6. Expand, retain the limited scope, or roll back according to the result.
 
-A rewrite is rarely the safest default. Networking models, validation, formatting, or an isolated repository are often better experiments than migrating an entire application.
+An isolated repository, validation rules, or synchronization policy can be a useful pilot. Share behavior with enough complexity to test the proposition; sharing only simple models may show too little value.
 
 ## When KMP may not pay off
 
-KMP may be unjustified when little behavior can be shared, the platforms intentionally implement different products, or the application is too small or short-lived to recover setup cost. It is also risky when the team cannot own Kotlin and native integration, a critical dependency lacks required targets, or organizational boundaries make shared ownership impractical.
+KMP may be unjustified when little behavior can be shared, the platforms intentionally implement different products, or the application is too small or short-lived to recover setup cost. It is also risky when the team cannot own Kotlin and native integration, a critical dependency lacks required targets, or organizational boundaries prevent shared ownership.
 
 ## Decision checklist
 
-- What stable behavior will be shared?
+- What stable behavior will be shared, and how much duplication does it remove?
 - Which targets and libraries must be supported?
-- Where will the platform boundary sit?
+- Where will the platform boundary sit, including Swift-facing APIs?
 - Who owns shared code and each adapter?
 - How will every target be built, tested, and released?
-- What metric will show lower duplication, fewer inconsistencies, or faster delivery?
-- Is there an incremental exit path if the experiment does not pay off?
+- What baseline and pilot outcome will show fewer inconsistencies or lower delivery effort after integration cost?
+- Can the pilot be kept small or rolled back if it does not pay off?
 
-Choose KMP when the expected product and maintenance value exceeds its technical and organizational cost, not to maximize shared-code percentage.
+Choose KMP when measured product and maintenance value justifies technical and organizational cost. Shared-code percentage alone is a poor success metric.
 
 ## References
 
 - [Kotlin Multiplatform documentation](https://kotlinlang.org/docs/multiplatform/)
+- [Kotlin Multiplatform quickstart](https://kotlinlang.org/docs/multiplatform/quickstart.html)
 - [Android KMP guidance](https://developer.android.com/kotlin/multiplatform)

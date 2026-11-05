@@ -1,44 +1,37 @@
 # Архитектура и стратегии UI
 
-KMP не требует конкретной архитектуры. Он сочетается с MVVM, unidirectional data flow (UDF), MVI-like immutable state, feature-based modules и выборочным применением Clean Architecture. Архитектура должна отражать сложность продукта, а не технологию компиляции общего кода.
+KMP не требует конкретной архитектуры. Он сочетается с MVVM, однонаправленным потоком данных (UDF), MVI-подобным неизменяемым состоянием, модулями по функциям и выборочным применением Clean Architecture. Границы определяют сложность продукта и потребности платформ.
 
 ```text
-Platform or shared UI
-        ↓ UserAction
-Shared state holder / ViewModel
-        ↓
-Use cases or repositories
-        ↓
-Local and remote data sources
-        ↓
-StateFlow<UiState>
+UI ── UserAction ──> State holder / ViewModel ──> Repositories ──> Data sources
+UI <── StateFlow<UiState> ── State holder <── результаты ───── Repositories
 ```
 
-UDF с immutable `UiState`, actions и `StateFlow` может использоваться внутри MVVM. Эти решения сами по себе не превращают архитектуру в MVI.
+Это схема потока данных: владелец состояния предоставляет `StateFlow<UiState>`, а UI собирает его. UDF с неизменяемым `UiState` и действиями может быть частью MVVM. Само по себе это ещё не делает архитектуру MVI.
 
-## Варианты presentation
+## Варианты presentation-слоя
 
-1. **Platform ViewModels и UI.** Data и domain общие, а Android и iOS используют нативные соглашения для state, lifecycle и navigation.
-2. **Общий plain Kotlin state holder с нативным UI.** Поведение и state общие, но каждая платформа явно управляет созданием, отменой работы и collection.
-3. **Общий AndroidX ViewModel с платформенной интеграцией.** AndroidX ViewModel поддерживает KMP и доступен в `commonMain`, но lifecycle integration различается. Android components предоставляют стандартных owners, а SwiftUI требует bridge наподобие `ViewModelStoreOwner` и явной очистки.
-4. **Общие ViewModel и Compose Multiplatform UI.** Presentation и rendering можно переиспользовать вместе, если поддерживаемые targets и UX продукта совпадают.
-5. **Гибрид по features.** Каждая feature разделяет только то, что приносит пользу.
+1. **Платформенные ViewModel и UI.** Data и domain общие, Android и iOS используют нативные подходы к состоянию, жизненному циклу и навигации.
+2. **Общий Kotlin state holder с нативным UI.** Поведение и состояние общие; каждая платформа отвечает за создание, отмену работы и наблюдение за состоянием. Нужно определить, кто прекращает работу после ухода с экрана.
+3. **Общий AndroidX ViewModel с интеграцией на каждой платформе.** AndroidX ViewModel доступен в `commonMain`. На Android есть стандартные owners; SwiftUI нужен явный `ViewModelStoreOwner` и очистка. Для наблюдения за Kotlin `Flow` из SwiftUI также требуется способ интеграции.
+4. **Общие ViewModel и Compose Multiplatform UI.** Presentation-слой и UI можно переиспользовать вместе, если поддержка целевых платформ и требования к UX совпадают.
+5. **Гибрид по функциям.** Общими становятся только те части, где это приносит пользу.
 
-Plain state holder может быть проще экспортируемого AndroidX ViewModel, если семантика Android lifecycle не нужна. Hilt недоступен в `commonMain`, поэтому `@HiltViewModel` не может собирать shared ViewModel. Подходят constructor injection, platform composition roots или совместимое multiplatform DI-решение.
+Обычный state holder может быть проще, если семантика AndroidX ViewModel не нужна. Hilt не позволяет пометить общую ViewModel в `commonMain` аннотацией `@HiltViewModel`; используйте внедрение через конструктор с платформенными composition roots или совместимое с KMP DI-решение.
 
-## Navigation как граница
+## Навигация как граница
 
-При нативном UI каждая платформа может владеть navigation stack, а shared logic - выдавать navigation results, destinations или effects. Shared Compose UI позволяет переиспользовать больше navigation implementation. Ни один вариант не обязателен: lifecycle, deep links, system back behavior и платформенные presentation conventions требуют осознанной интеграции.
+При нативном UI каждая платформа может владеть своим стеком навигации, а общая логика — передавать намерения или результаты через явный контракт. Определите, кто обрабатывает однократные действия и что произойдёт при повторной подписке. Общий Compose UI позволяет разделять больше навигационной реализации, но deep links, системная кнопка «Назад», жизненный цикл и платформенные сценарии всё равно требуют интеграции.
 
 ## Нативный, общий и гибридный UI
 
 | Подход | Сильные стороны | Основные издержки |
 | --- | --- | --- |
-| Native UI | Платформенный UX, accessibility conventions, прямые интеграции | Дублирование rendering и части presentation |
-| Shared Compose UI | Product parity, одна UI-реализация, согласованные releases | Cross-platform skills, интеграция и ограничения targets |
-| Hybrid UI | Переиспользование там, где оно полезно, и native exceptions | Более явные границы и два способа интеграции |
+| Нативный UI | Платформенный UX, доступность, прямые интеграции | Дублирование UI и части presentation-логики |
+| Общий Compose UI | Единое поведение, одна UI-реализация, согласованные релизы | Навыки для обеих платформ, интеграция и ограничения поддержки targets |
+| Гибрид | Переиспользование там, где оно полезно, и нативные исключения | Явные границы и два способа интеграции |
 
-При выборе учитывайте product parity, платформенный UX, ownership, release cadence, навыки команды, стоимость сопровождения, accessibility и system integrations. Максимальное переиспользование UI не является универсальной целью.
+Учитывайте согласованность продукта, платформенный UX, владельцев кода, цикл релизов, навыки команды, сопровождение, доступность и системные интеграции. Максимальный процент общего UI не является целью сам по себе.
 
 См. [Общий и платформенный код](shared-platform-code.md), [MV Patterns](../architecture/mv-patterns.md), [UI State](../architecture/ui-state.md), [StateFlow и SharedFlow](../coroutines-flow/stateflow-sharedflow.md) и [Dependency Injection](../di/index.md).
 

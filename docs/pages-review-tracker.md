@@ -118,9 +118,9 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-10-31, `kotlin-multiplatform/overview.md`, Kotlin Multiplatform Overview, Clarified Android and iOS integration, platform API boundaries and expect/actual alternatives; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-01, `kotlin-multiplatform/kmp-kmm-compose.md`, KMP, KMM, and Compose Multiplatform, Clarified deprecated KMM naming, KMP versus Compose UI scope, Android-only API boundaries, and platform stability; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-02, `kotlin-multiplatform/project-structure.md`, Project Structure, Clarified source-set hierarchy and Android test-set names; updated the Gradle example for the Android-KMP library plugin and synchronized EN/RU.
-1. P2, **TODO**, , `kotlin-multiplatform/shared-platform-code.md`, Shared and Platform-specific Code
-1. P2, **TODO**, , `kotlin-multiplatform/architecture-ui.md`, Architecture and UI Integration
-1. P2, **TODO**, , `kotlin-multiplatform/adoption-tradeoffs.md`, Adoption Strategy and Trade-offs
+1. P2, **UPDATED**, 2026-11-03, `kotlin-multiplatform/shared-platform-code.md`, Shared and Platform-specific Code, Clarified sharing boundaries and per-app data ownership; completed the Android/iOS expect/actual example and synchronized EN/RU.
+1. P2, **UPDATED**, 2026-11-05, `kotlin-multiplatform/architecture-ui.md`, Architecture and UI Integration, Clarified state ownership, platform lifecycle and Flow integration; corrected the data-flow diagram and synchronized EN/RU.
+1. P2, **UPDATED**, 2026-11-05, `kotlin-multiplatform/adoption-tradeoffs.md`, Adoption Strategy and Trade-offs, Added measurable pilot criteria, cross-platform validation and a decision point; synchronized EN/RU.
 1. P2, **TODO**, , `security/https-tls-certificates.md`, HTTPS, TLS, and Certificates
 1. P2, **TODO**, , `security/certificate-pinning.md`, Certificate Pinning
 1. P2, **TODO**, , `security/keystore-secure-storage.md`, Android Keystore and Secure Storage

@@ -221,6 +221,7 @@ __marimo__/
 .idea/
 # Local Codex/project instructions
 AGENTS.md
+.codex-remote-attachments/
 references/
 # Experimental TTS previews and debug text
 build/audio/
