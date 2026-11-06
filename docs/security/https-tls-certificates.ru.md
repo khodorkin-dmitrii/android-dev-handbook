@@ -101,11 +101,11 @@ OkHttp делегирует проверку certificate chain и hostname ин�
 </network-security-config>
 ```
 
-`android:usesCleartextTraffic="false"` задает общую политику приложения, а `cleartextTrafficPermitted` позволяет определить base или domain-specific rules для сетевых stacks, поддерживающих конфигурацию. Если legacy host действительно требует HTTP, ограничьте исключение этим доменом и запланируйте удаление. Локальный proxy CA нельзя добавлять в production trust anchors.
+На Android 7.0 (API 24) и новее при наличии Network Security Configuration атрибут `android:usesCleartextTraffic` игнорируется. Оставьте его для более старых поддерживаемых устройств; для API 24+ задавайте общую или доменную политику через `cleartextTrafficPermitted`. Эти ограничения работают только в сетевых стеках, которые их поддерживают, и не блокируют произвольный трафик через raw sockets. Если legacy host действительно требует HTTP, ограничьте исключение этим доменом и запланируйте удаление. Локальный proxy CA нельзя добавлять в production trust anchors.
 
 ## Debug-сертификаты и локальные proxy-инструменты
 
-Charles, Proxyman, mitmproxy и похожие инструменты завершают TLS-соединение устройства и предъявляют сертификат, подписанный proxy CA. Инспекция работает, только если debug application доверяет этому CA. В `@raw/debug_cas` следует включать только контролируемый development CA и не добавлять его в production resources или trust anchors. Release builds должны сохранять обычное production trust и тестироваться отдельно.
+Charles, Proxyman, mitmproxy и похожие инструменты завершают TLS-соединение устройства и предъявляют сертификат, подписанный proxy CA. Инспекция работает, только если debug-сборка доверяет этому CA. В `@raw/debug_cas` следует включать только контролируемый development CA. Правило доверия `debug-overrides` игнорируется при `android:debuggable=false`, даже если ресурс попал в release-сборку. Если CA не должен присутствовать и в самом release-пакете, используйте отдельные конфигурацию и ресурсы для вариантов сборки. Полученную release-сборку тестируйте отдельно.
 
 Поведение pinning зависит от места его настройки. Android Network Security Configuration не применяет declarative pins, когда цепочка проходит через debug-only trust anchor из `debug-overrides`. Отдельно настроенный OkHttp `CertificatePinner` остается проверкой на уровне приложения и может отклонить proxy certificate. Если проекту нужна инспекция таких endpoints, используйте явное разделение build variants под контролем команды. Не добавляйте переключатель, позволяющий отключить проверку во время работы приложения, или глобальный bypass, способный попасть в production.
 
@@ -117,7 +117,7 @@ Charles, Proxyman, mitmproxy и похожие инструменты завер
 val unsafeHostnameVerifier = HostnameVerifier { _, _ -> true }
 ```
 
-Такой код принимает доверенный сертификат для неверного hostname. Столь же опасен custom trust manager, который успешно завершает проверку любой цепочки. Оба изменения убирают server authentication из TLS и позволяют man-in-the-middle с произвольным или чужим сертификатом выдать себя за сервис.
+Такой код принимает доверенный сертификат для неверного hostname. Столь же опасен custom trust manager, который успешно завершает проверку любой цепочки. Оба изменения ослабляют аутентификацию сервера: первое позволяет использовать сертификат, доверенный для другого имени, а второе принимает недоверенные цепочки.
 
 Игнорирование ошибок TLS не является допустимым временным решением. Нужно исправить server chain, hostname, часы устройства, trust configuration или контролируемый development CA. Не публикуйте полноценный accept-all trust manager даже как пример или тестовую утилиту, которая затем может попасть в release sources.
 
@@ -130,11 +130,10 @@ val unsafeHostnameVerifier = HostnameVerifier { _, _ -> true }
 - Тестируйте поддерживаемые Android versions, hostnames, redirects и server-chain deployment.
 - Отслеживайте renewal сертификатов и изменения intermediate chain до production rollout.
 
-**Главная мысль:** TLS - стандартная граница защиты трафика. Custom validation расширяет или удаляет эту границу, поэтому требует конкретного обоснования, тщательного тестирования и явного владельца.
-
 ## Связанные темы
 
 - [Основы безопасности Android](index.md)
 - [Certificate Pinning](certificate-pinning.md)
 - [Retrofit / OkHttp](../networking/retrofit-okhttp.md)
 - [Network Inspection](../tools/network-inspection.md)
+- [Android Network Security Configuration](https://developer.android.com/privacy-and-security/security-config)

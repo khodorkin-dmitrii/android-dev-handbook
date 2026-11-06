@@ -101,11 +101,11 @@ The following production baseline disables cleartext. The debug override adds on
 </network-security-config>
 ```
 
-`android:usesCleartextTraffic="false"` expresses the application-wide policy, while `cleartextTrafficPermitted` can define declarative base or domain-specific rules for networking stacks that honor the configuration. If a legacy host truly requires HTTP, scope the exception to that domain and plan its removal. Never put a local proxy CA into production trust anchors.
+On Android 7.0 (API 24) and later, Network Security Configuration takes precedence and `android:usesCleartextTraffic` is ignored when the configuration is present. Keep the manifest attribute for older supported devices; use `cleartextTrafficPermitted` for the base or domain-specific policy on API 24+. These policies depend on the networking stack honoring them and cannot block arbitrary raw socket traffic. If a legacy host truly requires HTTP, scope the exception to that domain and plan its removal. Never put a local proxy CA into production trust anchors.
 
 ## Debug certificates and local proxy tools
 
-Charles, Proxyman, mitmproxy, and similar tools terminate the device's TLS connection and present a certificate issued by a proxy CA. Inspection works only when the debug application trusts that CA. Bundle only the controlled development CA in `@raw/debug_cas`; do not place it in production resources or trust anchors. Release builds should keep normal production trust and should be tested separately.
+Charles, Proxyman, mitmproxy, and similar tools terminate the device's TLS connection and present a certificate issued by a proxy CA. Inspection works only when the debug application trusts that CA. Use only a controlled development CA in `@raw/debug_cas`. The `debug-overrides` trust rule is ignored when `android:debuggable` is false, even if the resource is packaged in a release build. If the CA must also be absent from the release package, provide variant-specific network configuration and resources. Test the resulting release build separately.
 
 Pinning behavior depends on where it is configured. Android Network Security Configuration does not enforce its declarative pins when a connection chains to a debug-only trust anchor declared through `debug-overrides`. A separate OkHttp `CertificatePinner`, however, remains an application-level check and may still reject the proxy certificate. If a project needs inspection of such endpoints, use explicit build-variant separation controlled by the team. Do not add a runtime switch or global bypass that can reach production.
 
@@ -117,7 +117,7 @@ Pinning behavior depends on where it is configured. Android Network Security Con
 val unsafeHostnameVerifier = HostnameVerifier { _, _ -> true }
 ```
 
-This accepts a trusted certificate for the wrong hostname. A custom trust manager whose checks return successfully for every chain is equally dangerous. Either change removes the server-authentication property of TLS and permits a man-in-the-middle with an arbitrary or unrelated certificate to impersonate the service.
+This accepts a trusted certificate for the wrong hostname. A custom trust manager whose checks return successfully for every chain is equally dangerous. Either change weakens server authentication: the first allows an attacker with a certificate trusted for another name to impersonate the endpoint; the second accepts untrusted chains.
 
 Suppressing TLS errors is not a temporary fix. Correct the server chain, hostname, device clock, trust configuration, or controlled development CA instead. Do not publish a reusable accept-all trust manager, even in sample or test utility code that may be copied into release sources.
 
@@ -130,11 +130,10 @@ Suppressing TLS errors is not a temporary fix. Correct the server chain, hostnam
 - Test supported Android versions, hostnames, redirect paths, and server-chain deployment.
 - Monitor certificate renewal and intermediate-chain changes before production rollout.
 
-**Key idea:** TLS is the normal secure transport boundary. Custom validation expands or removes that boundary and therefore needs a concrete requirement, careful testing, and explicit ownership.
-
 ## Related topics
 
 - [Android Security Basics](index.md)
 - [Certificate Pinning](certificate-pinning.md)
 - [Retrofit / OkHttp](../networking/retrofit-okhttp.md)
 - [Network Inspection](../tools/network-inspection.md)
+- [Android Network Security Configuration](https://developer.android.com/privacy-and-security/security-config)
