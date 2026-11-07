@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-11-06
+1. Last tracker update: 2026-11-07
 1. Total articles tracked: 107
-1. Updated: 96
-1. TODO: 11
+1. Updated: 97
+1. TODO: 10
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 29      | 11   |
+| P2 | 40 | 30      | 10   |
 
 ## Tracker
 
@@ -122,7 +122,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-11-05, `kotlin-multiplatform/architecture-ui.md`, Architecture and UI Integration, Clarified state ownership, platform lifecycle and Flow integration; corrected the data-flow diagram and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-05, `kotlin-multiplatform/adoption-tradeoffs.md`, Adoption Strategy and Trade-offs, Added measurable pilot criteria, cross-platform validation and a decision point; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-06, `security/https-tls-certificates.md`, HTTPS, TLS, and Certificates, Clarified cleartext policy precedence, debug CA packaging and hostname-verification risks; synchronized EN/RU.
-1. P2, **TODO**, , `security/certificate-pinning.md`, Certificate Pinning
+1. P2, **UPDATED**, 2026-11-07, `security/certificate-pinning.md`, Certificate Pinning, Clarified key rotation for supported old clients, release validation and debug-overrides behavior; removed a repetitive conclusion and synchronized EN/RU.
 1. P2, **TODO**, , `security/keystore-secure-storage.md`, Android Keystore and Secure Storage
 1. P2, **TODO**, , `security/oauth-pkce-token-management.md`, OAuth, PKCE, and Token Management
 1. P2, **TODO**, , `tools/overview.md`, Tools Overview

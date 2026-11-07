@@ -1,6 +1,6 @@
 # Certificate Pinning
 
-Certificate pinning narrows which server identities an application accepts beyond standard platform trust. It can reduce specific certificate-authority risks, but it also creates deployment, recovery, testing, and rotation obligations. Pinning is an additional restriction after normal TLS validation, not a mandatory default for every Android application.
+Certificate pinning narrows which public keys an application accepts for a server beyond standard platform trust. It can reduce specific certificate-authority risks, but it also creates deployment, recovery, testing, and rotation obligations. Pinning is an additional restriction after normal TLS validation, not a mandatory default for every Android application.
 
 ## What problem pinning tries to solve
 
@@ -53,9 +53,11 @@ A safe rotation is an overlapping deployment:
 
 Server configuration can change in minutes, but mobile releases take review time and users may never update. The oldest supported application version is therefore part of certificate operations.
 
+Before switching the server to a new key, confirm that every still-supported client accepts its pin. Otherwise keep a compatible server path for those clients or end their support explicitly; waiting for a percentage of users to update does not protect the remaining clients.
+
 ## Expiration and recovery strategy
 
-Plan before enabling pinning for expired certificates, compromised keys, an accidental pin, emergency migration, and permanently old clients. A bad pin can cause a complete outage in which the application cannot reach the service that might otherwise deliver new configuration.
+Plan before enabling pinning for expired certificates, compromised keys, an accidental pin, emergency migration, and permanently old clients. A matching pin does not make an expired certificate valid. A bad pin can cause a complete outage in which the application cannot reach the service that might otherwise deliver new configuration.
 
 Useful controls include independently usable backup pins, overlapping validity, staged mobile and server rollout, monitoring, and a defined minimum supported version. An alternative endpoint is a recovery path only if its identity and behavior were designed and protected in advance. Downloading an arbitrary replacement pin over a connection that is already untrusted defeats the purpose of pinning.
 
@@ -75,9 +77,9 @@ Avoid pinning third-party endpoints unless the provider explicitly supports it a
 
 An interception proxy presents its own certificate chain, so a pinned production host normally rejects it even when the debug app trusts the proxy CA. Disabling pinning globally or through a user-accessible switch makes production behavior ambiguous.
 
-If traffic inspection is required, use an explicitly controlled debug variant with separate client construction or trust configuration. Release variants must preserve production pinning. Automated checks should prove that debug exceptions, proxy CAs, and bypass configuration are absent from release artifacts.
+If traffic inspection is required, use an explicitly controlled debug variant with separate client construction or trust configuration. Release variants must preserve production pinning. Verify that the release client retains its pins, is not debuggable, and does not trust the proxy CA. If policy also forbids packaging the proxy CA resource, check the release artifact and use variant-specific resources.
 
-When declarative Network Security Configuration pins are used, Android can bypass those pins for chains trusted through `debug-overrides`. This does not automatically bypass a separately configured OkHttp `CertificatePinner`.
+When declarative Network Security Configuration pins are used, Android skips those pins for chains trusted through `debug-overrides`. This does not bypass a separately configured OkHttp `CertificatePinner`.
 
 ## Testing pinning
 
@@ -105,11 +107,10 @@ The decision should name the attacker, protected asset, acceptable availability 
 
 Standard platform TLS is often preferable for ordinary application risk, third-party or CDN-managed infrastructure, teams that cannot coordinate certificate rotation, and products where the outage risk exceeds the additional trust reduction. Correct chain validation, hostname verification, cleartext blocking, dependency maintenance, and backend authorization remain a strong baseline.
 
-> Pinning is not only a client-side code decision. It is a long-term operational commitment shared by mobile, backend, infrastructure, security, and QA teams.
-
 ## Related topics
 
 - [HTTPS, TLS and Certificates](https-tls-certificates.md)
 - [Android Security Basics](index.md)
 - [Retrofit / OkHttp](../networking/retrofit-okhttp.md)
 - [Network Inspection](../tools/network-inspection.md)
+- [Android Network Security Configuration](https://developer.android.com/privacy-and-security/security-config)
