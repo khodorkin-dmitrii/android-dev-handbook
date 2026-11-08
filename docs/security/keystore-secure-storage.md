@@ -12,25 +12,23 @@ Before persisting sensitive data, answer:
 - Can the data be fetched again after sign-in?
 - What should happen after key invalidation, backup restore, or corruption?
 
-> The safest sensitive data is data the application does not retain.
-
 Prefer short retention and re-fetching for disposable server data. Encryption is appropriate when persistence has real product value, not as a reason to keep every response indefinitely.
 
 ## Android Keystore
 
 Android Keystore stores cryptographic keys or non-exportable handles to them. Application code requests cryptographic operations through standard Java Cryptography Architecture APIs, while key material remains outside the application process and may be bound to secure hardware. Keystore is not a general encrypted database: application data is normally stored separately as ciphertext.
 
-The following API 23+ helper creates or retrieves an AES key restricted to AES-GCM encryption and decryption:
+The following API 23+ example retrieves an existing AES key separately and creates one only for encryption. The key is restricted to AES-GCM encryption and decryption:
 
 ```kotlin
 private const val KEY_ALIAS = "local-data-v1"
 
-private fun getOrCreateKey(): SecretKey {
-    val keyStore = KeyStore.getInstance("AndroidKeyStore").apply {
-        load(null)
-    }
+private fun getExistingKey(): SecretKey? =
+    KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        .getKey(KEY_ALIAS, null) as? SecretKey
 
-    (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
+private fun getOrCreateKey(): SecretKey {
+    getExistingKey()?.let { return it }
 
     return KeyGenerator.getInstance(
         KeyProperties.KEY_ALGORITHM_AES,
@@ -86,7 +84,7 @@ fun decrypt(value: EncryptedValue): String {
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     cipher.init(
         Cipher.DECRYPT_MODE,
-        getOrCreateKey(),
+        checkNotNull(getExistingKey()) { "Encryption key unavailable" },
         GCMParameterSpec(128, value.iv),
     )
 
@@ -94,7 +92,7 @@ fun decrypt(value: EncryptedValue): String {
 }
 ```
 
-Production code still needs synchronization of concurrent first-time key creation, versioned serialization, optional authenticated associated data, atomic writes, size limits, background execution, migration and rotation, corruption and authentication-error mapping, key invalidation recovery, and tests. Never reuse a fixed IV or continue after authentication-tag verification fails.
+On decryption, a missing key is a distinct recovery state: do not create a replacement and misclassify the resulting GCM failure as ciphertext corruption. Production code still needs synchronization of concurrent first-time key creation, versioned serialization, optional authenticated associated data, atomic writes, size limits, background execution, migration and rotation, corruption and authentication-error mapping, key invalidation recovery, and tests. Never reuse a fixed IV or continue after authentication-tag verification fails.
 
 ## Hardware-backed keys
 
@@ -160,7 +158,7 @@ Backup or device transfer can restore ciphertext without the original key. Such 
 
 ## Backup and device migration considerations
 
-Android backup and device-to-device transfer have version-dependent rules. For Android 12 and later, `dataExtractionRules` controls cloud and device-transfer scopes separately. Earlier versions require a separate `fullBackupContent` rules file.
+Android backup and device-to-device transfer have version-dependent rules. For apps targeting API 31+ on Android 12+ devices, `dataExtractionRules` controls cloud backup and device-to-device transfer separately. Android 11 and lower devices need a separate `fullBackupContent` rules file; reference both files from the manifest `<application>` element.
 
 For example, an Android 12+ project can exclude a file containing encrypted credentials from both paths:
 

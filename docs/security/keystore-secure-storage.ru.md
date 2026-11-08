@@ -12,25 +12,23 @@
 - Можно ли снова получить данные после sign-in?
 - Что должно произойти после key invalidation, backup restore или corruption?
 
-> Самые безопасные чувствительные данные - те, которые приложение не хранит.
-
 Для одноразовых серверных данных предпочтительны короткий срок хранения и повторная загрузка. Шифрование имеет смысл, когда persistence действительно нужна продукту, а не как оправдание бессрочного хранения каждого ответа.
 
 ## Android Keystore
 
 Android Keystore хранит криптографические keys или non-exportable handles к ним. Код приложения запрашивает операции через стандартные Java Cryptography Architecture APIs, а key material остается вне процесса приложения и может быть привязан к secure hardware. Keystore не является общей encrypted database: данные приложения обычно хранятся отдельно как ciphertext.
 
-Следующий helper для API 23+ создает или получает AES key, ограниченный операциями AES-GCM encryption и decryption:
+Следующий пример для API 23+ отдельно получает существующий AES key и создает его только при необходимости шифрования. Ключ ограничен операциями AES-GCM encryption и decryption:
 
 ```kotlin
 private const val KEY_ALIAS = "local-data-v1"
 
-private fun getOrCreateKey(): SecretKey {
-    val keyStore = KeyStore.getInstance("AndroidKeyStore").apply {
-        load(null)
-    }
+private fun getExistingKey(): SecretKey? =
+    KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        .getKey(KEY_ALIAS, null) as? SecretKey
 
-    (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
+private fun getOrCreateKey(): SecretKey {
+    getExistingKey()?.let { return it }
 
     return KeyGenerator.getInstance(
         KeyProperties.KEY_ALGORITHM_AES,
@@ -86,7 +84,7 @@ fun decrypt(value: EncryptedValue): String {
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     cipher.init(
         Cipher.DECRYPT_MODE,
-        getOrCreateKey(),
+        checkNotNull(getExistingKey()) { "Encryption key unavailable" },
         GCMParameterSpec(128, value.iv),
     )
 
@@ -94,7 +92,7 @@ fun decrypt(value: EncryptedValue): String {
 }
 ```
 
-В production также нужны синхронизация конкурентного первого создания ключа, versioned serialization, при необходимости authenticated associated data, атомарная запись, ограничения размера, выполнение в background, migration и rotation, преобразование ошибок повреждения данных и аутентификации в понятные состояния приложения, recovery после key invalidation и тесты. Нельзя повторно использовать фиксированный IV или продолжать работу после ошибки проверки authentication tag.
+При расшифровке отсутствие ключа означает отдельное состояние восстановления: нельзя создавать новый ключ и трактовать последующую ошибку GCM как повреждение ciphertext. В production также нужны синхронизация конкурентного первого создания ключа, versioned serialization, при необходимости authenticated associated data, атомарная запись, ограничения размера, выполнение в background, migration и rotation, преобразование ошибок повреждения данных и аутентификации в понятные состояния приложения, recovery после key invalidation и тесты. Нельзя повторно использовать фиксированный IV или продолжать работу после ошибки проверки authentication tag.
 
 ## Hardware-backed keys
 
@@ -160,7 +158,7 @@ Backup или device transfer могут восстановить ciphertext б�
 
 ## Backups и перенос на другое устройство
 
-У Android backup и device-to-device transfer есть правила, зависящие от версии. Начиная с Android 12, `dataExtractionRules` отдельно управляет cloud и device-transfer scopes. Для более старых версий нужен отдельный файл правил `fullBackupContent`.
+У Android backup и device-to-device transfer есть правила, зависящие от версии. Для приложений с target API 31+ на устройствах Android 12+ `dataExtractionRules` отдельно управляет cloud backup и device-to-device transfer. Для устройств с Android 11 и ниже нужен отдельный файл правил `fullBackupContent`; подключите оба файла атрибутами `<application>` в манифесте.
 
 Например, проект для Android 12+ может исключить файл с encrypted credentials из обоих путей:
 
