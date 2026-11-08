@@ -14,15 +14,15 @@ The initial priority order is based on `pages_review_priority.txt`.
 
 ## Current snapshot
 1. Last tracker update: 2026-11-08
-1. Total articles tracked: 107
+1. Total articles tracked: 108
 1. Updated: 98
-1. TODO: 9
+1. TODO: 10
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 40 | 31      | 9    |
+| P2 | 41 | 31      | 10   |
 
 ## Tracker
 
@@ -133,3 +133,4 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **TODO**, , `tools/crash-monitoring.md`, Crash Monitoring
 1. P2, **TODO**, , `tools/qa-debug-builds.md`, QA and Debug Builds
 1. P2, **TODO**, , `tools/in-app-debug-menus.md`, In-app Debug Menus
+1. P2, **TODO**, , `tools/scrcpy.md`, scrcpy: Android Screen Mirroring

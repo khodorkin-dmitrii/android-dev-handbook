@@ -45,6 +45,7 @@ Android tooling полезен, когда выбор начинается с и
 
 ## Структура раздела
 
+* [scrcpy: трансляция экрана Android](scrcpy.md) - отображение экрана физического устройства и управление через USB или TCP/IP, запись демонстраций UI и воспроизведения багов.
 * [In-App Debug Menus](in-app-debug-menus.md)
 * [Logging and Diagnostic Data](logging-diagnostics.md)
 * [Network Inspection](network-inspection.md)
