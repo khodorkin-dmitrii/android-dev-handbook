@@ -85,6 +85,8 @@ scrcpy --help
 
 Replace `SERIAL` with the device serial. A relative recording path such as `demo.mp4` is resolved against the terminal's current directory.
 
+To turn the recording into a short GIF, follow [FFmpeg for App Demos](ffmpeg.md).
+
 ### Troubleshooting
 
 * **Command not found:** open a new terminal, check `PATH`, or run `.\scrcpy.exe` from the extracted directory.

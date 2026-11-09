@@ -46,6 +46,7 @@ A small application may need Logcat, Profiler, and crash reporting. A larger pro
 ## Section structure
 
 * [scrcpy: Android Screen Mirroring](scrcpy.md) - mirror and control a physical device over USB or TCP/IP; record UI demonstrations and bug reproduction steps.
+* [FFmpeg for App Demos](ffmpeg.md) - turn an MP4 screen recording into a short GIF for documentation.
 * [In-App Debug Menus](in-app-debug-menus.md)
 * [Logging and Diagnostic Data](logging-diagnostics.md)
 * [Network Inspection](network-inspection.md)

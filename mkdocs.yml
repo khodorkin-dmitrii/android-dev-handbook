@@ -114,6 +114,7 @@ plugins:
             OAuth 2.0, PKCE and Token Management: OAuth 2.0, PKCE и управление токенами
             Tools Overview: Обзор инструментов
             'scrcpy: Android Screen Mirroring': 'scrcpy: трансляция экрана Android'
+            FFmpeg for App Demos: FFmpeg для демо приложений
             In-App Debug Menus: In-App Debug Menus
             Logging and Diagnostic Data: Logging and Diagnostic Data
             Network Inspection: Network Inspection
@@ -266,6 +267,7 @@ nav:
   - Tools:
       - Tools Overview: tools/overview.md
       - 'scrcpy: Android Screen Mirroring': tools/scrcpy.md
+      - FFmpeg for App Demos: tools/ffmpeg.md
       - In-App Debug Menus: tools/in-app-debug-menus.md
       - Logging and Diagnostic Data: tools/logging-diagnostics.md
       - Network Inspection: tools/network-inspection.md
