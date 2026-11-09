@@ -34,9 +34,9 @@ Proof Key for Code Exchange binds an authorization request to the client instanc
 6. The app exchanges the code and original verifier for tokens.
 7. The authorization server verifies that the verifier produces the stored challenge.
 
-An intercepted code is not useful without the verifier. Use `S256`, a cryptographically random verifier for every attempt, and retain it only for the active authorization transaction. `state` correlates request and response and helps prevent cross-request or CSRF-style substitution. In OIDC, a fresh `nonce` binds the authentication request to the ID token and must be validated.
+An intercepted code is not useful without the verifier. Use `S256`, a cryptographically random verifier for every attempt, and retain it only for the active authorization transaction. `state` correlates request and response and helps prevent cross-request or CSRF-style substitution. In OIDC, if the request includes a `nonce`, the client must compare it with the value in the validated ID token.
 
-PKCE does not validate redirect ownership or replace `state`, `nonce`, TLS, or backend authorization. Prefer a mature standards-compliant OAuth/OIDC library such as AppAuth when it fits the provider instead of manually assembling protocol requests and token validation.
+PKCE does not validate redirect ownership, issuer, TLS, or backend authorization. Keep `state` to correlate request and response; clients using multiple authorization servers also need a defense against mix-up attacks. Prefer a mature standards-compliant OAuth/OIDC library such as AppAuth when it fits the provider instead of manually assembling protocol requests and token validation.
 
 ## Browser-based authentication
 
@@ -58,7 +58,7 @@ Keep scopes narrow and lifetimes short enough for the product risk. Do not send 
 
 ## Refresh tokens
 
-Refresh tokens usually live longer and have greater impact than access tokens. A provider may rotate them on every use, detect reuse of an old token, revoke a token family, bind them to a client or device signal, or decline to issue them at all.
+Refresh tokens usually live longer and have greater impact than access tokens. A provider may rotate them on every use, detect reuse of an old token, revoke a token family, bind them to a client or device signal, or decline to issue them at all. For public clients, the authorization server must protect issued refresh tokens against replay through rotation with reuse detection or sender-constraining.
 
 The client must atomically adopt every new token set, including a replacement refresh token. Refresh denial is a normal terminal session state, not an exceptional condition to retry forever. Provider policy defines expiration, inactivity windows, revocation, and whether an old refresh token remains valid.
 
@@ -194,7 +194,7 @@ class TokenRefreshCoordinator(
 }
 ```
 
-`AuthApi` must use a client without this authenticator to avoid recursion. The explicit outcome preserves the distinction between a rejected session, a temporary failure that must not clear persisted credentials, and a session that has no refresh token. The monitor-based example intentionally blocks waiting callers while one refresh is in progress. A production implementation may represent the in-flight refresh as a shared result or future so callers wait for the same operation without coupling unrelated session work to the same monitor. It should also support cancellation and timeouts and make persistence atomic.
+`AuthApi` must use a client without this authenticator to avoid recursion. The explicit outcome preserves the distinction between a rejected session, a temporary failure that must not clear persisted credentials, and a session that has no refresh token. The monitor-based example intentionally blocks waiting callers while one refresh is in progress. A production implementation may represent the in-flight refresh as a shared result or future so callers wait for the same operation without coupling unrelated session work to the same monitor. It should also support cancellation and timeouts and make persistence atomic. On logout or account switch, check the session generation and conditionally apply `replace` or `clear` to the session that initiated refresh. Otherwise a late response can resurrect logged-out credentials or clear a newer session.
 
 ## OkHttp interceptor vs authenticator
 
@@ -302,24 +302,10 @@ JWT does not automatically solve revocation or logout. For ID tokens, use a stan
 - Retaining tokens, caches, or in-flight work after logout or account switch.
 - Trusting decoded JWT claims without standards-compliant validation.
 
-## Practical architecture summary
-
-```text
-Browser / Custom Tab
-    -> Authorization service
-    -> Validated redirect to Android app
-    -> Authorization code + PKCE exchange
-    -> Atomic token store
-    -> OkHttp request authorization
-    -> Single-flight refresh
-    -> Atomic session update or logout
-```
-
-The core principles are stable: treat the app as a public client, embed no confidential client secret, use Authorization Code Flow with PKCE in an external browser, keep access tokens short-lived, protect refresh-token persistence, coordinate one bounded refresh, and leave authoritative authorization to the backend.
-
 ## Related topics
 
 - [Android Keystore and Secure Storage](keystore-secure-storage.md)
 - [Android Security Basics](index.md)
 - [HTTPS, TLS and Certificates](https-tls-certificates.md)
 - [Retrofit / OkHttp](../networking/retrofit-okhttp.md)
+- [OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700.html)

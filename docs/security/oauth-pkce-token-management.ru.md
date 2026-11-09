@@ -34,9 +34,9 @@ Proof Key for Code Exchange связывает authorization request с экзе
 6. Приложение обменивает code и исходный verifier на tokens.
 7. Authorization server проверяет, что verifier дает сохраненный challenge.
 
-Перехваченный code бесполезен без verifier. Используйте `S256`, cryptographically random verifier для каждой попытки и храните его только во время активной authorization transaction. `state` связывает request и response и защищает от подмены ответа и CSRF-подобных атак. В OIDC новый `nonce` связывает authentication request с ID token и должен проверяться.
+Перехваченный code бесполезен без verifier. Используйте `S256`, cryptographically random verifier для каждой попытки и храните его только во время активной authorization transaction. `state` связывает request и response и защищает от подмены ответа и CSRF-подобных атак. В OIDC, если запрос включает `nonce`, клиент обязан сверить его со значением в проверенном ID token.
 
-PKCE не проверяет ownership redirect и не заменяет `state`, `nonce`, TLS или backend authorization. Предпочитайте зрелую standards-compliant OAuth/OIDC библиотеку, например AppAuth, если она соответствует provider, вместо ручного формирования protocol requests и самостоятельной token validation.
+PKCE не проверяет ownership redirect, issuer, TLS или backend authorization. Сохраняйте `state` для сопоставления запроса и ответа; при работе с несколькими authorization servers дополнительно защищайтесь от mix-up атак. Предпочитайте зрелую standards-compliant OAuth/OIDC библиотеку, например AppAuth, если она соответствует provider, вместо ручного формирования protocol requests и самостоятельной token validation.
 
 ## Аутентификация через браузер
 
@@ -58,7 +58,7 @@ Standards-compliant client library надежнее самописного ре�
 
 ## Refresh tokens
 
-Refresh tokens обычно живут дольше и несут больший риск, чем access tokens. Provider может ротировать их при каждом использовании, обнаруживать reuse старого token, отзывать token family, привязывать их к client или device signal либо вообще не выдавать.
+Refresh tokens обычно живут дольше и несут больший риск, чем access tokens. Provider может ротировать их при каждом использовании, обнаруживать reuse старого token, отзывать token family, привязывать их к client или device signal либо вообще не выдавать. Для публичного клиента authorization server должен защищать выданный refresh token от повторного использования: применять rotation с обнаружением reuse либо sender-constraining.
 
 Клиент обязан атомарно принимать каждый новый token set, включая replacement refresh token. Отказ при refresh - нормальное конечное состояние сессии, а не исключение для бесконечных retries. Provider policy определяет expiration, inactivity windows, revocation и срок действия старого refresh token.
 
@@ -194,7 +194,7 @@ class TokenRefreshCoordinator(
 }
 ```
 
-`AuthApi` должен использовать client без этого authenticator, иначе возникнет recursion. Явный outcome сохраняет различие между отклоненной сессией, временным сбоем, при котором нельзя очищать сохраненные credentials, и сессией без refresh token. В этом примере monitor намеренно блокирует остальные ожидающие вызовы, пока выполняется один refresh. В production in-flight refresh можно представить как общий result или future, чтобы все ожидающие вызовы использовали результат одной операции, а тот же monitor не блокировал другие операции сессии. Реализация также должна поддерживать cancellation и timeouts и обеспечивать atomic persistence.
+`AuthApi` должен использовать client без этого authenticator, иначе возникнет recursion. Явный outcome сохраняет различие между отклоненной сессией, временным сбоем, при котором нельзя очищать сохраненные credentials, и сессией без refresh token. В этом примере monitor намеренно блокирует остальные ожидающие вызовы, пока выполняется один refresh. В production in-flight refresh можно представить как общий result или future, чтобы все ожидающие вызовы использовали результат одной операции, а тот же monitor не блокировал другие операции сессии. Реализация также должна поддерживать cancellation и timeouts и обеспечивать atomic persistence. При logout или смене account проверяйте generation сессии и атомарно допускайте `replace`/`clear` только для той сессии, которая начала refresh. Иначе запоздалый ответ может восстановить уже удалённые токены или очистить новую сессию.
 
 ## OkHttp interceptor и authenticator
 
@@ -302,24 +302,10 @@ JWT не решает автоматически revocation или logout. Дл�
 - Сохранение tokens, caches или in-flight work после logout или account switch.
 - Доверие decoded JWT claims без standards-compliant validation.
 
-## Практическая схема архитектуры
-
-```text
-Browser / Custom Tab
-    -> Authorization service
-    -> Validated redirect to Android app
-    -> Authorization code + PKCE exchange
-    -> Atomic token store
-    -> OkHttp request authorization
-    -> Single-flight refresh
-    -> Atomic session update or logout
-```
-
-Основные принципы стабильны: приложение является public client и не содержит confidential client secret, использует Authorization Code Flow with PKCE во внешнем браузере, короткоживущий access token и защищенное persistence refresh token, координирует refresh и ограничивает число повторов, а окончательное решение об авторизации оставляет backend.
-
 ## Связанные темы
 
 - [Android Keystore и безопасное хранение](keystore-secure-storage.md)
 - [Основы безопасности Android](index.md)
 - [HTTPS, TLS и сертификаты](https-tls-certificates.md)
 - [Retrofit / OkHttp](../networking/retrofit-okhttp.md)
+- [OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700.html)

@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-11-08
+1. Last tracker update: 2026-11-09
 1. Total articles tracked: 108
-1. Updated: 98
-1. TODO: 10
+1. Updated: 99
+1. TODO: 9
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 41 | 31      | 10   |
+| P2 | 41 | 32      | 9    |
 
 ## Tracker
 
@@ -124,7 +124,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-11-06, `security/https-tls-certificates.md`, HTTPS, TLS, and Certificates, Clarified cleartext policy precedence, debug CA packaging and hostname-verification risks; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-07, `security/certificate-pinning.md`, Certificate Pinning, Clarified key rotation for supported old clients, release validation and debug-overrides behavior; removed a repetitive conclusion and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-08, `security/keystore-secure-storage.md`, Android Keystore and Secure Storage, Separated key lookup from creation during decryption, clarified missing-key recovery and Android backup rules; synchronized EN/RU.
-1. P2, **TODO**, , `security/oauth-pkce-token-management.md`, OAuth, PKCE, and Token Management
+1. P2, **UPDATED**, 2026-11-09, `security/oauth-pkce-token-management.md`, OAuth, PKCE, and Token Management, Clarified OIDC nonce validation, refresh-token replay protection and session-safe refresh; removed a repetitive summary and synchronized EN/RU.
 1. P2, **TODO**, , `tools/overview.md`, Tools Overview
 1. P2, **TODO**, , `tools/logging-diagnostics.md`, Logging and Diagnostics
 1. P2, **TODO**, , `tools/network-inspection.md`, Network Inspection
