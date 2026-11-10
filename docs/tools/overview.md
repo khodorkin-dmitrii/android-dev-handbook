@@ -8,6 +8,8 @@ Stable categories include application development, local debugging, automated te
 
 | Problem | Tool or approach | Where it runs | Status | Main limitation |
 |---|---|---|---|---|
+| Device mirroring and demo capture | scrcpy | Desktop and physical device | Practical developer tool | Requires an authorized device connection |
+| Demo video and GIF preparation | FFmpeg | Desktop or CI | Practical media tool | GIFs can be large and lose color detail |
 | Retained objects | LeakCanary | Debug app/device | Recommended diagnostic option | Detects retention, not recomposition cost |
 | Heap and allocations | Android Studio Memory Profiler | IDE and device | Standard platform tool | Manual, scenario-dependent analysis |
 | On-device HTTP inspection | Chucker | Debug/internal app | Useful for developers and QA | Can expose sensitive payloads |
@@ -40,8 +42,6 @@ Evaluate a tool by:
 * product scale and incident-response workflow.
 
 A small application may need Logcat, Profiler, and crash reporting. A larger product may also need an internal diagnostic surface, structured logs, request correlation, repeatable benchmarks, and controlled exports.
-
-**Key idea:** choose the smallest set that makes important failures observable and reproducible. Do not ship debug inspection or sensitive data collection merely because a library supports it.
 
 ## Section structure
 
