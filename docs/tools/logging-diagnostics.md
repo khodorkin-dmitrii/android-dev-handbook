@@ -48,9 +48,11 @@ class DiagnosticLogger(
 
 `LogcatSink`, a bounded file sink, and a crash-monitoring sink can have different filters. Business code depends only on `AppLogger`.
 
+Treat `Throwable` messages and causes as untrusted diagnostic data: they may contain URLs, headers, or user input. Redact or map them before export, and do not assume that filtering `fields` alone is enough. File and remote sinks should use bounded, non-blocking delivery so logging on the main thread cannot stall the UI; define what happens when the queue is full.
+
 ## Sensitive data
 
-Never log tokens, passwords, payment data, unrestricted request/response bodies, precise location, or personal data by default. Prefer allowlisted fields, irreversible account references where justified, bounded retention, and redaction before data reaches any sink.
+Never log tokens, passwords, payment data, unrestricted request/response bodies, precise location, or personal data by default. Prefer allowlisted fields, carefully designed pseudonymous account references where justified, bounded retention, and redaction before data reaches any sink.
 
 Debug builds are not automatically safe. QA devices can contain production-like accounts, exported reports can leave the device, and a debug log call can accidentally remain active in release configuration.
 
@@ -61,4 +63,5 @@ Debug builds are not automatically safe. QA devices can contain production-like 
 * [Crash Reporting and Production Monitoring](crash-monitoring.md)
 * [QA-Friendly Debug Builds](qa-debug-builds.md)
 * [Network Inspection](network-inspection.md)
+* [Android: Log Info Disclosure](https://developer.android.com/privacy-and-security/risks/log-info-disclosure)
 

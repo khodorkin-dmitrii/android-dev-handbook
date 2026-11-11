@@ -48,9 +48,11 @@ class DiagnosticLogger(
 
 `LogcatSink`, bounded file sink и crash-monitoring sink могут иметь разные filters. Business code зависит только от `AppLogger`.
 
+Сообщения и причины `Throwable` считайте недоверенными диагностическими данными: в них могут оказаться URL, headers или пользовательский ввод. Перед экспортом удаляйте чувствительные значения либо преобразуйте ошибку в безопасный код; фильтрации только `fields` недостаточно. Запись в файл и сеть должна использовать ограниченную неблокирующую очередь, чтобы вызов logger на main thread не задерживал UI. Определите поведение при заполнении очереди.
+
 ## Чувствительные данные
 
-По умолчанию нельзя логировать tokens, passwords, payment data, полные request/response bodies, precise location или personal data. Предпочтительны allowlisted fields, необратимые ссылки на account, когда они оправданы, ограниченный retention и redaction до попадания данных в любой sink.
+По умолчанию нельзя логировать tokens, passwords, payment data, полные request/response bodies, precise location или personal data. Предпочтительны allowlisted fields, продуманные псевдонимные идентификаторы account, когда они оправданы, ограниченный retention и redaction до попадания данных в любой sink.
 
 Debug build не становится безопасным автоматически. На QA devices могут использоваться production-like accounts, exported reports могут покинуть устройство, а debug logging случайно остаться активным в release configuration.
 
@@ -61,4 +63,5 @@ Debug build не становится безопасным автоматиче�
 * [Crash Reporting and Production Monitoring](crash-monitoring.md)
 * [QA-Friendly Debug Builds](qa-debug-builds.md)
 * [Network Inspection](network-inspection.md)
+* [Android: утечка данных через логи](https://developer.android.com/privacy-and-security/risks/log-info-disclosure)
 
