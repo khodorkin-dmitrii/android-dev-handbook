@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-11-11
+1. Last tracker update: 2026-11-12
 1. Total articles tracked: 109
-1. Updated: 101
-1. TODO: 8
+1. Updated: 102
+1. TODO: 7
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 42 | 34      | 8    |
+| P2 | 42 | 35      | 7    |
 
 ## Tracker
 
@@ -127,7 +127,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-11-09, `security/oauth-pkce-token-management.md`, OAuth, PKCE, and Token Management, Clarified OIDC nonce validation, refresh-token replay protection and session-safe refresh; removed a repetitive summary and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-10, `tools/overview.md`, Tools Overview, Added scrcpy and FFmpeg to the tooling matrix, removed a repetitive conclusion and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-11, `tools/logging-diagnostics.md`, Logging and Diagnostics, Clarified exception-data redaction, bounded non-blocking sinks and pseudonymous account references; synchronized EN/RU.
-1. P2, **TODO**, , `tools/network-inspection.md`, Network Inspection
+1. P2, **UPDATED**, 2026-11-12, `tools/network-inspection.md`, Network Inspection, Clarified inspection coverage, timing diagnostics and safe logging defaults; aligned EN/RU.
 1. P2, **TODO**, , `tools/memory-leaks.md`, Memory Leak Detection
 1. P2, **TODO**, , `tools/performance-profiling.md`, Performance Profiling and Benchmarking
 1. P2, **TODO**, , `tools/crash-monitoring.md`, Crash Monitoring

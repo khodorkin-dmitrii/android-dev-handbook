@@ -1,42 +1,42 @@
 # Network Inspection
 
-Network diagnostics should answer what happened, how long it took, and how the mobile request maps to backend evidence. Dumping raw bodies is neither sufficient nor always safe.
+Network diagnostics should show what failed, how long the request took, and how to find the matching backend trace. Choose the tool based on where the request runs and how much detail you need.
 
 ## Choosing an inspection method
 
-| Approach | Best use | Main trade-off |
+| Approach | Best use | Limitation |
 |---|---|---|
-| OkHttp Logging Interceptor | Quick developer logs and headers/timing | Logcat noise and payload exposure |
-| Chucker | On-device request history for developers and QA | Code/runtime surface in the app |
-| Android Studio Network Inspector | Live local inspection without custom UI | Requires IDE attachment and supported clients |
-| Charles, Proxyman, or another proxy | Cross-app traffic, rewriting, throttling | Certificate setup and pinning restrictions |
-| Request/backend correlation | Distributed incident diagnosis | Requires mobile and backend cooperation |
+| OkHttp Logging Interceptor | Quick request/response logs in a controlled build | Can expose URLs, headers, and bodies in Logcat |
+| Chucker | On-device request history for developers and QA | Adds an inspector to the app build |
+| Android Studio Network Inspector | Live inspection while attached to a debuggable app | Supports `OkHttp` and `HttpsURLConnection` traffic |
+| Charles, Proxyman, or another proxy | Traffic routed through a proxy; rewriting or throttling | Needs proxy/TLS setup; certificate pinning may block interception |
+| Request/backend correlation | Diagnosing failures across app and server | Needs a shared request or trace ID |
 
-Android Studio Network Inspector supports OkHttp and `HttpsURLConnection`; traffic from other stacks may not be decoded. A proxy sees traffic routed through it, but TLS certificate pinning can intentionally prevent interception.
+Network Inspector may miss traffic from other clients. A proxy sees only traffic configured to pass through it; it cannot decrypt a pinned TLS connection simply by installing a local certificate.
 
 ## Chucker in internal builds
 
-Chucker records OkHttp requests and responses and provides an on-device UI, notifications, search, and sharing. This makes it useful when QA cannot attach an IDE. Use its debug artifact only in controlled variants; a no-op release artifact can preserve the shared API when necessary.
+Chucker captures OkHttp requests and responses and provides an on-device history. It helps QA inspect a failure without attaching Android Studio. Include the inspector only in controlled variants; the no-op artifact can keep the same integration in release builds.
 
-Configure retention, maximum body size, and redaction. Exported traffic may contain credentials, personal data, or business-sensitive payloads, so sharing must be deliberate and access-controlled.
+Set retention and maximum body size, and redact sensitive headers and content before capture or export. Treat exported traffic as sensitive: it can contain tokens, personal data, and business payloads.
 
 ## Record diagnostic metadata
 
-Useful fields include:
+For routine diagnostics, record a bounded summary:
 
-* request ID and backend correlation ID;
-* method/endpoint template, not a sensitive full URL;
-* status code and normalized error category;
-* duration, retry count, and connectivity state;
-* app version, environment, and selected API host.
+* request or trace ID shared with the backend;
+* HTTP method and endpoint template, without sensitive path or query values;
+* status code or normalized failure category;
+* elapsed time and retry count;
+* app version, environment, and relevant connectivity state.
 
-An application interceptor can attach a generated request ID and record a bounded summary. Keep authentication headers and bodies out of generic logs.
+An OkHttp application interceptor can add a request ID and record the outcome once per logical call. If you need DNS, connection, TLS, or per-attempt timings, use an OkHttp `EventListener` or a dedicated trace; a request/response log does not provide that breakdown.
 
-## Limitations
+## Limitations and safe defaults
 
-Inspection depends on protocol and client architecture. WebSockets, streaming, encrypted custom protocols, gRPC/protobuf payloads, and traffic outside the inspected OkHttp client need specialized tooling. A human-readable body viewer does not explain HTTP/2 framing, retry policy, DNS/TLS latency, or backend processing time.
+WebSockets, streaming, gRPC/protobuf payloads, and traffic outside the inspected client may need specialized tools. A body viewer also cannot identify server processing time on its own.
 
-Use `BASIC` or metadata-oriented logging by default. Enable full bodies only for a specific controlled investigation and redact before display or export.
+Keep routine logs to approved metadata. `HttpLoggingInterceptor.Level.BASIC` omits headers and bodies, but still logs the URL, which may contain sensitive path or query values. Use it only when URLs are safe; enable `BODY` briefly in a controlled build with redaction, and never ship unrestricted body logging.
 
 ## See also
 
@@ -44,4 +44,3 @@ Use `BASIC` or metadata-oriented logging by default. Enable full bodies only for
 * [HTTP / REST](../networking/http-rest.md)
 * [gRPC / Protobuf](../networking/grpc-protobuf.md)
 * [Logging and Diagnostic Data](logging-diagnostics.md)
-

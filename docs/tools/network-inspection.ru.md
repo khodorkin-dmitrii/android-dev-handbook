@@ -1,47 +1,46 @@
-# Network Inspection
+# Диагностика сетевых запросов
 
-Network diagnostics должны отвечать, что произошло, сколько это заняло и как mobile request связан с backend evidence. Вывод raw bodies недостаточен и не всегда безопасен.
+Сетевая диагностика должна показывать, что не удалось, сколько занял запрос и как найти соответствующую трассировку на сервере. Инструмент выбирают по месту выполнения запроса и нужной детализации.
 
 ## Выбор способа диагностики
 
-| Подход | Когда полезен | Главный компромисс |
+| Подход | Когда полезен | Ограничение |
 |---|---|---|
-| OkHttp Logging Interceptor | Быстрые developer logs, headers и timing | Шум в Logcat и риск раскрытия payload |
-| Chucker | История запросов на устройстве для developers и QA | Дополнительный code/runtime surface в приложении |
-| Android Studio Network Inspector | Live local inspection без custom UI | Нужны IDE attachment и поддерживаемый client |
-| Charles, Proxyman или другой proxy | Cross-app traffic, rewriting и throttling | Настройка certificates и ограничения pinning |
-| Request/backend correlation | Диагностика distributed incidents | Требует совместной поддержки mobile и backend |
+| OkHttp Logging Interceptor | Быстрые логи запросов и ответов в контролируемой сборке | URL, заголовки и тела могут попасть в Logcat |
+| Chucker | История запросов на устройстве для разработчиков и QA | Добавляет инспектор в сборку приложения |
+| Android Studio Network Inspector | Просмотр запросов при подключении к отлаживаемому приложению | Поддерживает трафик `OkHttp` и `HttpsURLConnection` |
+| Charles, Proxyman или другой прокси | Трафик, направленный через прокси; подмена ответов и ограничение скорости | Нужна настройка прокси и TLS; certificate pinning может мешать перехвату |
+| Сопоставление с сервером | Поиск причины сбоя между приложением и сервером | Нужен общий идентификатор запроса или трассировки |
 
-Android Studio Network Inspector поддерживает OkHttp и `HttpsURLConnection`; traffic других stacks может не декодироваться. Proxy видит направленный через него traffic, но TLS certificate pinning может намеренно запрещать interception.
+Network Inspector может пропустить трафик других клиентов. Прокси видит только направленный через него трафик; установка локального сертификата сама по себе не позволяет расшифровать соединение с закреплённым сертификатом.
 
-## Chucker во внутренних builds
+## Chucker во внутренних сборках
 
-Chucker записывает OkHttp requests/responses и предоставляет on-device UI, notifications, search и sharing. Это полезно, когда QA не может подключить IDE. Debug artifact должен использоваться только в контролируемых variants; no-op release artifact может сохранить общий API, если это необходимо.
+Chucker сохраняет запросы и ответы OkHttp и показывает их историю на устройстве. Это помогает QA исследовать сбой без подключения Android Studio. Добавляй инспектор только в контролируемые варианты сборки; no-op артефакт позволяет сохранить ту же интеграцию в релизе.
 
-Настрой retention, максимальный body size и redaction. Exported traffic может содержать credentials, personal data или business-sensitive payloads, поэтому sharing должен быть осознанным и контролируемым.
+Ограничивай срок хранения и размер тела, скрывай чувствительные заголовки и данные до сохранения или экспорта. Экспортированный трафик считай конфиденциальным: он может содержать токены, персональные данные и рабочие payload.
 
-## Диагностические metadata
+## Диагностические метаданные
 
-Полезные поля:
+Для обычной диагностики записывай краткую запись ограниченного размера:
 
-* request ID и backend correlation ID;
-* method и endpoint template вместо чувствительного полного URL;
-* status code и нормализованная error category;
-* duration, retry count и connectivity state;
-* app version, environment и выбранный API host.
+* ID запроса или трассировки, общий с сервером;
+* HTTP-метод и шаблон endpoint без чувствительных значений пути и query;
+* статус ответа или нормализованную категорию ошибки;
+* длительность и число повторных попыток;
+* версию приложения, окружение и важное состояние сети.
 
-Application interceptor может добавлять request ID и записывать ограниченный summary. Authentication headers и bodies не должны попадать в общие logs.
+Application interceptor OkHttp может добавить ID запроса и один раз записать итог логического вызова. Для времени DNS, соединения, TLS или отдельных попыток используй `EventListener` OkHttp либо отдельную трассировку: лог запросов и ответов такой разбивки не даёт.
 
-## Ограничения
+## Ограничения и безопасные настройки
 
-Возможности inspection зависят от protocol и client architecture. Для WebSockets, streaming, encrypted custom protocols, gRPC/protobuf payloads и traffic вне проверяемого OkHttp client нужны специализированные инструменты. Human-readable body viewer не объясняет HTTP/2 framing, retry policy, DNS/TLS latency или backend processing time.
+Для WebSocket, потоковых ответов, gRPC/protobuf и трафика вне наблюдаемого клиента могут понадобиться специальные инструменты. Просмотр тела ответа сам по себе также не показывает время обработки на сервере.
 
-По умолчанию используй `BASIC` или metadata-oriented logging. Полные bodies стоит включать только для конкретного контролируемого расследования с redaction перед отображением или экспортом.
+В обычных логах оставляй только разрешённые метаданные. `HttpLoggingInterceptor.Level.BASIC` не выводит заголовки и тела, но выводит URL с потенциально чувствительными значениями пути или query. Используй его только для безопасных URL; уровень `BODY` включай ненадолго в контролируемой сборке с редактированием данных и не выпускай сборку с неограниченным логированием тел.
 
 ## См. также
 
 * [Retrofit / OkHttp](../networking/retrofit-okhttp.md)
 * [HTTP / REST](../networking/http-rest.md)
 * [gRPC / Protobuf](../networking/grpc-protobuf.md)
-* [Logging and Diagnostic Data](logging-diagnostics.md)
-
+* [Логирование и диагностические данные](logging-diagnostics.md)
