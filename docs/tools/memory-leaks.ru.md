@@ -1,40 +1,38 @@
-# Memory Leak Detection
+# Поиск утечек памяти
 
-Memory leak - это ошибка ownership: объект, который должен стать недостижимым, остается связан с GC root. Инструменты дают evidence, но исправление обычно находится в lifecycle или владении references.
+В Android утечка памяти возникает, когда объект остаётся достижимым от корня сборщика мусора (GC root) после завершения своего жизненного цикла. Главный вопрос: какая ссылка удерживает объект и кто должен её освободить.
 
 ## LeakCanary и Memory Profiler
 
-LeakCanary наблюдает за Android/JVM objects, которые должны стать доступными для GC, запускает heap analysis и показывает reference chain до retained object. Он остается полезен в Compose-приложениях, потому что Compose все равно работает поверх Android и JVM. Это не profiler recomposition или layout.
+LeakCanary отслеживает объекты, например уничтоженные `Activity` и `Fragment`, анализирует дамп кучи, если они продолжают удерживаться, и показывает цепочку ссылок. Он полезен и в Compose-приложениях: composable-функция может передать `Activity`, `View` или захватывающий их callback более долгоживущему объекту. LeakCanary не измеряет стоимость рекомпозиции или layout.
 
-Android Studio Memory Profiler дополняет его recording allocations, heap dumps, просмотром class instances и ручным сравнением memory behavior. Он полезен, когда рост не связан с конкретным lifecycle object или allocation pressure важнее одной retained instance.
+Android Studio Memory Profiler позволяет записывать выделения памяти и изучать дампы кучи и экземпляры классов. Используй его для поиска постоянного роста памяти или частых аллокаций, когда проблема не сводится к одному объекту экрана.
 
-Heap dump является snapshot. Retained object не всегда означает опасную утечку: caches, framework behavior, debugger references и незавершенная работа требуют контекста. Решающее значение имеют reference chain и ожидаемый lifecycle.
+Дамп кучи — снимок состояния. Удерживаемый объект требует проверки, но сам по себе ещё не доказывает утечку: его могут временно удерживать выполняющаяся операция, ограниченный кэш или отладчик. Перед исправлением проверь ожидаемый срок жизни и цепочку сильных ссылок.
 
 ## Типичные источники
 
-* `Activity` или `Fragment`, удерживаемые singleton;
-* не удаленные listeners, callbacks, observers или SDK registrations;
-* coroutine scopes, живущие дольше владельца;
-* Fragment View binding после `onDestroyView()`;
-* долгоживущие ссылки на `Activity` `Context`;
-* custom Views, adapters или drawables, удерживающие экран;
-* неограниченные caches и queues.
+* Singleton или долгоживущая `ViewModel` хранит `Activity`, `View` либо захватывающий их callback.
+* Слушатель, наблюдатель или регистрация в SDK не удалены при завершении жизни владельца.
+* Корутина или callback удерживает экран после завершения его жизненного цикла.
+* Ссылка на binding представления Fragment остаётся после `onDestroyView()`.
+* Неограниченный кэш или очередь удерживает экраны либо большие данные.
+
+Ссылку на binding Fragment очищай в `onDestroyView()`: сам Fragment может жить дольше своего представления. В Compose не передавай контекст `Activity` в долгоживущий объект. Обычное состояние композиции освобождается после её удаления, если его не удерживает другая ссылка.
 
 ## Процесс исследования
 
-1. Повторить одинаковый сценарий открытия/закрытия или rotation.
-2. Убедиться, что объект остается retained после ожидаемого cleanup.
-3. Изучить кратчайший полезный путь от GC root.
-4. Определить компонент, который должен владеть reference.
-5. Исправить ownership, scope, unregistering или cleanup.
-6. Повторить сценарий и снова проверить memory behavior.
+1. Повтори конкретный сценарий: открытие и закрытие экрана или поворот устройства.
+2. Определи объект, который должен освободиться, и проверь, что после очистки он всё ещё удерживается.
+3. Проследи цепочку ссылок от GC root до объекта.
+4. Найди владельца со слишком долгим сроком жизни; исправь область действия, ссылку или пропущенное снятие регистрации.
+5. Повтори сценарий и сравни удерживаемые объекты и поведение памяти.
 
-Не используй `WeakReference` как исправление по умолчанию. Он может скрыть неясный ownership и добавить исчезающие данные. Лучше исправить lifecycle boundary.
+Не используй `WeakReference` как стандартное исправление: она может скрыть ошибку владения и приводить к неожиданному исчезновению значения. Исправляй границу жизненного цикла.
 
 ## См. также
 
-* [Performance & Memory](../android/performance-memory.md)
-* [Activity, Fragment & Lifecycle](../android/activity-fragment-lifecycle.md)
-* [Coroutine Scopes & Cancellation](../coroutines-flow/scopes-cancellation.md)
-* [Performance Profiling and Benchmarking](performance-profiling.md)
-
+* [Производительность и память](../android/performance-memory.md)
+* [Activity, Fragment и жизненный цикл](../android/activity-fragment-lifecycle.md)
+* [Области действия и отмена корутин](../coroutines-flow/scopes-cancellation.md)
+* [Профилирование и бенчмаркинг](performance-profiling.md)
