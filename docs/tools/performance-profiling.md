@@ -1,43 +1,35 @@
 # Performance Profiling and Benchmarking
 
-Profiling and benchmarking answer different questions:
-
-* **profiling:** where is the application spending time or memory;
-* **benchmarking:** did a defined scenario become measurably faster or slower?
-
-Use a profile to form and verify a hypothesis. Use a benchmark to detect change under controlled conditions.
+Profiling finds where time or memory goes. Benchmarking measures whether a defined workload changed. Start with a reproducible symptom, profile it to form a hypothesis, then benchmark a user-visible result.
 
 ## Profiling
 
-Android Studio CPU and Memory Profilers support method/call-stack analysis, allocations, and heap inspection. System Trace and Perfetto show scheduling, CPU state, frames, binder/system activity, and interactions across processes. Layout Inspector helps inspect View or Compose hierarchy; Compose tooling can expose recomposition and layout behavior.
+Android Studio CPU and Memory Profilers help inspect call stacks, allocations, and heap contents. A System Trace or Perfetto recording shows scheduling, frame timing, CPU activity, and work across threads and processes. Layout Inspector helps inspect View or Compose hierarchy and recomposition behavior.
 
-Useful investigations include:
+Choose a tool for the question:
 
-* cold/warm startup and initialization on the main thread;
-* jank, missed frame deadlines, composition/layout/draw cost;
-* allocations, GC pressure, and retained memory;
-* database and disk I/O;
-* network latency separated from UI processing;
-* locks, binder calls, and background work competing for resources.
+* Slow startup: inspect main-thread initialization and a startup trace.
+* Jank: find the missed frame deadline and check composition, layout, draw, or competing work.
+* Memory growth: compare allocations and retained objects; use [Memory Leak Detection](memory-leaks.md) for ownership failures.
+* Stalls: look for disk I/O, locks, binder calls, or work blocking the main thread.
 
-Record the smallest reproducible scenario. Profiling a long uncontrolled session creates a large trace without a clear question.
+Capture the shortest scenario that reproduces the issue. A long trace without a specific question is harder to interpret. Profiling itself adds overhead, so use traces to locate causes rather than as the sole measure of a speedup.
 
 ## Benchmarking
 
-Macrobenchmark measures app-level journeys such as startup, scrolling, navigation, and animation. Run it against a profileable, release-like target on stable physical devices or controlled CI. Define setup, compilation mode, iterations, device state, and success thresholds.
+Use Macrobenchmark for app-level journeys such as startup, scrolling, and navigation. Use Microbenchmark for a small, repeatable code path; it cannot establish that an entire screen feels faster.
 
-Do not compare one noisy run. Track distributions and traces, and investigate changes large enough to matter to users.
+Benchmark a release-like, profileable app on stable devices. Keep the scenario, compilation mode, iterations, device state, and build variant consistent. Control warmup, background activity, and thermal effects. Compare a distribution of runs against a baseline, and inspect traces when a meaningful regression appears; one run is too noisy to decide.
 
 ## Baseline Profiles
 
-Baseline Profiles describe important code paths so ART can precompile them for installed builds. They can improve startup and critical interactions from first launch, but they do not locate a bottleneck and do not prove a regression was fixed.
+Baseline Profiles identify critical code paths for ahead-of-time compilation by ART. They can improve startup and important interactions, including early runs after install, but they do not identify a bottleneck or replace a benchmark.
 
-Generate profiles from representative critical user journeys, then benchmark the result. Keep profiling, benchmarks, and profiles as complementary tools.
+Generate a profile from representative user journeys, package it with the app, and compare benchmarks with and without it under the same compilation and device conditions. Keep the generated profile current as those journeys change.
 
 ## See also
 
-* [Performance & Memory](../android/performance-memory.md) - ANR, jank, leaks, and Profiler basics
+* [Performance & Memory](../android/performance-memory.md)
 * [Compose Performance](../compose/performance.md)
 * [Android UI Testing](../testing/android-ui-testing.md)
 * [Memory Leak Detection](memory-leaks.md)
-
