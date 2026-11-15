@@ -1,50 +1,46 @@
 # Crash Reporting and Production Monitoring
 
-Production monitoring should turn a failure into an actionable, privacy-safe incident record. It is different from local logging and product analytics.
+Production monitoring should turn a failure into an actionable, privacy-safe incident record. It serves a different purpose from local logging and product analytics.
 
 ## Different responsibilities
 
-* **Crash reporting** groups fatal crashes, ANRs, and selected non-fatal errors with stack traces.
+* **Crash reporting** groups fatal crashes, supported ANRs, and selected non-fatal errors with stack traces.
 * **Logging** records diagnostic events locally or in controlled sinks.
 * **Analytics** measures product behavior and funnels.
 * **Performance monitoring** measures latency, startup, rendering, or network spans.
 
-One platform may offer several capabilities, but their data models, sampling, retention, and access policies should remain explicit.
+One platform may cover several of these areas, but collection, sampling, retention, and access policies still need separate decisions.
 
 ## Crashlytics, Sentry, and alternatives
 
-Firebase Crashlytics is a common Android option for crashes, non-fatals, ANRs on supported Android versions, custom keys, logs, and release grouping. Sentry and equivalent platforms can combine errors with breadcrumbs, releases, environments, tracing, and wider cross-platform observability.
+Firebase Crashlytics supports Android crashes, recorded non-fatals, custom keys, logs, and ANRs from Android 11 onward. Sentry and similar platforms can combine errors with breadcrumbs, releases, environments, and tracing. Compare the signals and alerting you need, mapping and native-symbol upload, regional storage, privacy controls, cost, and integration with backend monitoring.
 
-Choose based on required signals, alerting, symbol/mapping upload, release workflow, regional storage, consent, cost, self-hosting needs, and existing backend observability. Avoid selecting a platform only because another Firebase or monitoring product is already present.
+Verify a release build end to end: trigger a test crash and a recorded non-fatal, then check that events reach the correct release with readable stacks. Keep the R8 mapping file and native symbols matched to that exact build; unreadable stacks make production triage much harder. ANR coverage varies by platform and reporting mechanism, so compare trends with Android vitals rather than assuming identical counts.
 
 ## Useful incident context
 
-Attach bounded, low-cardinality metadata:
+Attach a small, bounded set of metadata:
 
 * release version, build number, and commit SHA;
-* environment and relevant feature-flag values;
-* device/OS and app process state;
-* screen or flow name;
-* normalized error category;
-* mobile request ID and backend correlation ID;
-* privacy-safe user/session reference when truly necessary.
+* environment and relevant feature-flag state;
+* device/OS, screen or flow, and normalized error category;
+* backend correlation ID when it can be safely shared;
+* a pseudonymous user/session reference only when necessary and permitted.
 
-Breadcrumbs should describe meaningful transitions, not every tap. Non-fatal reporting should be reserved for actionable unexpected failures; reporting every handled error destroys signal quality.
+Prefer stable categories for filtering; unique IDs are for tracing a specific incident, not grouping. Breadcrumbs should capture meaningful transitions, not every tap. Report unexpected, actionable non-fatals; routine handled errors can overwhelm the signal.
 
-Never send tokens, passwords, payment data, raw request bodies, or unrestricted personal data. Apply consent and deletion requirements, redaction before SDK calls, and role-based console access.
+Never send tokens, passwords, payment data, raw request bodies, or unrestricted personal data. Review exception messages and breadcrumbs too, redact before calling the SDK, and configure collection, retention, deletion, and console access for the product's privacy requirements.
 
 ## Questions monitoring should answer
 
-* What failed, and what is the likely root area?
-* Which release and environment are affected?
-* How many users or sessions are affected?
-* What application state preceded the failure?
-* Can the scenario be reproduced or correlated with backend evidence?
-* Did the issue begin or regress after a particular release?
+* What failed, and which releases and users are affected?
+* What state preceded the failure, and can it be reproduced or correlated with backend evidence?
+* Did the rate change after a release or feature rollout?
+
+Use a defined denominator and comparable release windows when interpreting crash-free users or sessions; event counts alone do not show impact.
 
 ## See also
 
 * [Performance & Memory](../android/performance-memory.md) - ANR fundamentals
 * [Logging and Diagnostic Data](logging-diagnostics.md)
 * [QA-Friendly Debug Builds](qa-debug-builds.md)
-
