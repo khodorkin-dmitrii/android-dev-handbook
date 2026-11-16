@@ -1,22 +1,22 @@
 # QA-Friendly Debug Builds
 
-A mobile application should not be a black box for QA. A useful internal build exposes enough state to reproduce and classify a defect without requiring source access or Android Studio.
+A mobile app should give QA enough evidence to reproduce and classify a defect without source access or Android Studio. Keep diagnostics focused on questions that arise in real investigations.
 
 ## What an internal build should expose
 
-High-value diagnostics include:
+Useful diagnostics include:
 
-* active environment, API host, app version, build number, and commit SHA;
-* account/session state without credentials;
+* environment, API host, app version, build number, and commit SHA;
+* account and session status without credentials or tokens;
 * feature flags and experiment assignments;
 * local database and cache summaries;
-* recent request history, application logs, and last normalized errors;
-* push token registration status, not unrestricted token display;
-* background-work and sync status;
+* recent request metadata, application logs, and normalized errors;
+* push registration status without displaying the token;
+* background work and sync status;
 * permissions and relevant device metadata;
-* a diagnostic ID that links mobile, backend, and test evidence.
+* a diagnostic ID linking app, backend, and test evidence.
 
-Prefer summaries and safe actions over unrestricted database/file browsers. The purpose is investigation, not bypassing application boundaries.
+Prefer summaries and controlled actions to unrestricted database or file browsers.
 
 ## Diagnostic bundle
 
@@ -28,42 +28,42 @@ diagnostic-report/
 ├── recent-logs.txt
 ├── network-summary.json
 ├── local-state-summary.json
-└── screenshot-or-screen-recording
+└── optional-screenshot-or-screen-recording
 ```
 
-Generate the bundle from immutable snapshots where possible. Include timestamps, schema version, app version, and a report ID. Bound log count and file size. Apply redaction before writing any file, then review the final archive against an allowlist.
+Capture a consistent snapshot where possible. Include timestamps, schema version, app version, and report ID. Bound log count, age, and archive size. Generate each file from an allowlist of fields; redact sensitive values before writing and inspect the final archive, including optional media.
 
-Never include passwords, auth tokens, payment data, unrestricted production records, or full payloads by default. Exports need explicit user action, short retention, secure sharing, and clear ownership after they leave the device.
+Exclude passwords, auth tokens, payment data, unrestricted production records, and full request or response bodies by default. Require an explicit export action, define retention and access for the shared bundle, and make clear who can receive it. A screenshot may reveal more than the text report.
 
 ## Useful debug actions
 
 * reset onboarding or clear local cache;
-* expire the current session safely;
+* expire the current session through the normal sign-out path;
 * force offline mode;
-* simulate server error, empty state, or degraded response;
+* simulate a server error, empty state, or degraded response;
 * trigger sync or approved background work;
 * copy a diagnostic ID;
-* open a specific internal screen;
+* open an internal screen;
 * refresh feature flags;
 * reproduce a predefined application state.
 
-Actions should use the same application services as real flows where possible. Directly editing storage can create impossible states and misleading defect reports. Label simulated state visibly and make reset behavior predictable.
+Use the same application services as real flows where possible. Direct storage edits can create impossible states. Label simulated conditions visibly, provide a reliable reset, and record which controls were active when a defect was captured.
 
 ## Architecture and security
 
-Put diagnostic contracts in application-owned interfaces and implementations in debug/internal source sets:
+Keep diagnostic contracts in app-owned interfaces and their implementations in internal build-variant source sets:
 
 ```text
 QA / Debug UI
       ↓
 Diagnostic queries and controlled commands
       ↓
-Repositories, work manager, feature flags, logger, network summaries
+Repositories, WorkManager, feature flags, logger, network summaries
 ```
 
-Powerful internal builds still need access control, environment restrictions, signed distribution, remote revocation where required, and auditing for dangerous operations. Production-like data deserves production-like handling even when the APK is not public.
+Keep privileged controls out of the release artifact: verify the packaged variant, not just a runtime flag or hidden menu. Internal builds still need controlled distribution, environment restrictions, and access checks for sensitive operations. Audit dangerous actions and provide revocation where the distribution model requires it. Treat production data with the same care in an internal APK as in a public release.
 
-Review diagnostic capabilities with QA, mobile, backend, security, and privacy stakeholders. The best internal build exposes evidence that shortens a real investigation, not every value the app can technically read.
+Review the available evidence and actions with QA, mobile, backend, security, and privacy teams. Expose what shortens a real investigation.
 
 ## See also
 
@@ -72,4 +72,3 @@ Review diagnostic capabilities with QA, mobile, backend, security, and privacy s
 * [Logging and Diagnostic Data](logging-diagnostics.md)
 * [Background Work & System Behavior](../android/background-work-system-behavior.md)
 * [Testing Strategy](../testing/strategy.md)
-

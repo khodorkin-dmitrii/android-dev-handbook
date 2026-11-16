@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-11-15
+1. Last tracker update: 2026-11-16
 1. Total articles tracked: 109
-1. Updated: 105
-1. TODO: 4
+1. Updated: 106
+1. TODO: 3
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 42 | 38      | 4    |
+| P2 | 42 | 39      | 3    |
 
 ## Tracker
 
@@ -131,7 +131,7 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-11-13, `tools/memory-leaks.md`, Memory Leak Detection, Clarified retained-object evidence, Fragment and Compose ownership, and the investigation workflow; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-14, `tools/performance-profiling.md`, Performance Profiling and Benchmarking, Distinguished profiling, Macrobenchmark and Microbenchmark; clarified measurement conditions and Baseline Profile validation; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-15, `tools/crash-monitoring.md`, Crash Reporting and Production Monitoring, Clarified ANR coverage, release-build symbolication, incident metadata and impact metrics; improved Russian wording and synchronized EN/RU.
-1. P2, **TODO**, , `tools/qa-debug-builds.md`, QA and Debug Builds
+1. P2, **UPDATED**, 2026-11-16, `tools/qa-debug-builds.md`, QA-Friendly Debug Builds, Clarified diagnostic export safeguards, simulated-state reset and release-artifact checks; improved Russian wording and synchronized EN/RU.
 1. P2, **TODO**, , `tools/in-app-debug-menus.md`, In-app Debug Menus
 1. P2, **TODO**, , `tools/scrcpy.md`, scrcpy: Android Screen Mirroring
 1. P2, **TODO**, , `tools/ffmpeg.md`, FFmpeg for App Demos
