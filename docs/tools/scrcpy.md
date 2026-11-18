@@ -4,7 +4,7 @@
 
 ### What it is and when to use it
 
-`scrcpy` is a free, open-source tool that mirrors an Android screen on a computer and lets you control it with a mouse and keyboard over USB or TCP/IP. It works on Windows, macOS, and Linux without root or manually installing an app on the phone.
+`scrcpy` is a free, open-source tool that mirrors an Android screen on a computer and lets you control the device with a mouse and keyboard over USB or TCP/IP. It works on Windows, macOS, and Linux without root or manually installing an app on the phone.
 
 Use it to check UI on a physical device, give demonstrations, record bug reproduction steps, or operate a phone from your computer. This guide focuses on USB and Windows.
 
@@ -16,7 +16,7 @@ Run in PowerShell or CMD:
 winget install --exact Genymobile.scrcpy
 ```
 
-WinGet installs ADB and the required dependencies alongside scrcpy. Open a new terminal after installation and check:
+The WinGet package installs ADB and the required dependencies alongside scrcpy. Open a new terminal after installation and check:
 
 ```powershell
 scrcpy --version
@@ -38,7 +38,7 @@ For other platforms, follow the official [macOS](https://github.com/Genymobile/s
 adb devices
 ```
 
-The expected device status is `device`. Selecting MTP/File transfer is not a requirement.
+The expected device status is `device`. Selecting MTP/File transfer is not required for ADB debugging.
 
 ### Start mirroring
 
@@ -58,12 +58,12 @@ scrcpy --video-codec=h264 --max-fps=120 --max-size=1920 --video-bit-rate=16M --n
 |---|---|
 | `--video-codec=h264` | Select H.264, which is also the default codec. |
 | `--max-fps=120` | Set an upper limit, not a guarantee of 120 FPS. |
-| `--max-size=1920` | Limit video dimensions while preserving the aspect ratio; the result is not necessarily 1920×1080. |
+| `--max-size=1920` | Limit both video dimensions to at most 1920 pixels while preserving the aspect ratio (subject to encoder alignment); this does not request 1920×1080. |
 | `--video-bit-rate=16M` | Set a target video bit rate of 16 Mbit/s. |
 | `--no-audio` | Disable audio forwarding. |
-| `--print-fps` | Print the capture frame rate in the terminal. |
+| `--print-fps` | Print the mirrored stream's capture frame rate in the terminal. |
 
-The frame rate is variable and may be low on a static screen because new frames are produced when screen content changes. This number does not replace profiling the application's frames.
+The capture frame rate varies with screen changes, so it may be low on a static screen. It measures the mirrored stream, not app rendering performance; use Android profiling tools for frame timing.
 
 The screen appears in a separate window. Control it with your mouse and keyboard or continue using the phone directly. Close the window or press `Ctrl+C` in the terminal to stop.
 
@@ -83,7 +83,7 @@ scrcpy --serial=SERIAL --no-audio
 scrcpy --help
 ```
 
-Replace `SERIAL` with the device serial. A relative recording path such as `demo.mp4` is resolved against the terminal's current directory.
+Replace `SERIAL` with the device serial. A relative recording path such as `demo.mp4` is resolved against the terminal's current directory. Review the recording before sharing: notifications, account details, and other on-screen data may be captured.
 
 To turn the recording into a short GIF, follow [FFmpeg for App Demos](ffmpeg.md).
 

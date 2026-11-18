@@ -13,16 +13,16 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. `UPDATED` - the article was reviewed and meaningfully updated; the paired Russian version is expected to be synchronized as part of the normal workflow.
 
 ## Current snapshot
-1. Last tracker update: 2026-11-17
+1. Last tracker update: 2026-11-18
 1. Total articles tracked: 109
-1. Updated: 107
-1. TODO: 2
+1. Updated: 108
+1. TODO: 1
 
 | Priority | Total | Updated | TODO |
 |---|---|---------|------|
 | P0 | 27 | 27      | 0    |
 | P1 | 40 | 40      | 0    |
-| P2 | 42 | 40      | 2    |
+| P2 | 42 | 41      | 1    |
 
 ## Tracker
 
@@ -133,5 +133,5 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-11-15, `tools/crash-monitoring.md`, Crash Reporting and Production Monitoring, Clarified ANR coverage, release-build symbolication, incident metadata and impact metrics; improved Russian wording and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-16, `tools/qa-debug-builds.md`, QA-Friendly Debug Builds, Clarified diagnostic export safeguards, simulated-state reset and release-artifact checks; improved Russian wording and synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-17, `tools/in-app-debug-menus.md`, In-App Debug Menus, Clarified safe diagnostic controls and release boundaries, updated Beagle integration guidance and Hyperion archive status; synchronized EN/RU.
-1. P2, **TODO**, , `tools/scrcpy.md`, scrcpy: Android Screen Mirroring
+1. P2, **UPDATED**, 2026-11-18, `tools/scrcpy.md`, scrcpy: Android Screen Mirroring, Clarified video-size and FPS semantics, ADB setup and recording privacy; synchronized EN/RU.
 1. P2, **TODO**, , `tools/ffmpeg.md`, FFmpeg for App Demos
