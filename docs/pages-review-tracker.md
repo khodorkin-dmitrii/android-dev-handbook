@@ -135,3 +135,30 @@ The initial priority order is based on `pages_review_priority.txt`.
 1. P2, **UPDATED**, 2026-11-17, `tools/in-app-debug-menus.md`, In-App Debug Menus, Clarified safe diagnostic controls and release boundaries, updated Beagle integration guidance and Hyperion archive status; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-18, `tools/scrcpy.md`, scrcpy: Android Screen Mirroring, Clarified video-size and FPS semantics, ADB setup and recording privacy; synchronized EN/RU.
 1. P2, **UPDATED**, 2026-11-19, `tools/ffmpeg.md`, FFmpeg for App Demos, Clarified palette color limits and regeneration, verified GIF commands, and added a pre-publication privacy check; synchronized EN/RU.
+
+## Gradle Tracker
+
+Statuses: `TODO` — not reviewed yet; `COVERED` — already answered well in the Handbook; `PREPARED` — revised files or a new article have been prepared for manual integration. Fill in the date and outcome after a successful review.
+
+1. **TODO**, —, What is the difference between Gradle and the Android Gradle Plugin (AGP)?, —
+1. **TODO**, —, What are the roles of `settings.gradle.kts`, the root `build.gradle.kts`, and a module's `build.gradle.kts`?, —
+1. **TODO**, —, What are the phases of a Gradle build? When is the task graph created, and when does task code run?, —
+1. **TODO**, —, What is the purpose of the Gradle Wrapper?, —
+1. **TODO**, —, What is a Gradle task? How can you find out why a particular task ran?, —
+1. **TODO**, —, How do build types and product flavors differ? What is a build variant?, —
+1. **TODO**, —, How would you build separate `demo` and `production` versions with `debug` and `release` build types?, —
+1. **TODO**, —, Which resource is used for `demoDebug` if it exists in the `main`, `demo`, `debug`, and `demoDebug` source sets?, —
+1. **TODO**, —, How can you include different implementations or dependencies in a specific build variant?, —
+1. **TODO**, —, What can you do when an app flavor does not match the flavors available in a library module?, —
+1. **TODO**, —, How do `api` and `implementation` differ in a library module, and how does that choice affect consuming modules?, —
+1. **TODO**, —, What are `compileOnly`, `runtimeOnly`, `testImplementation`, and `androidTestImplementation` used for?, —
+1. **TODO**, —, Where did a transitive dependency come from, and why was a particular version selected?, —
+1. **TODO**, —, How would you investigate a dependency version conflict using `dependencies` and `dependencyInsight`?, —
+1. **TODO**, —, What problem does `libs.versions.toml` solve, and what does a version catalog not solve on its own?, —
+1. **TODO**, —, Why is the first build slow while a subsequent build is fast? How do up-to-date checks, the build cache, and the configuration cache differ?, —
+1. **TODO**, —, Why can a change in one module cause other modules to rebuild, and how would you investigate it?, —
+1. **TODO**, —, How would you identify a build bottleneck before changing Gradle settings?, —
+1. **TODO**, —, Why does expensive work during the configuration phase slow down builds?, —
+2. **TODO**, —, How would you define a custom task's inputs and outputs so Gradle can skip or cache its work?, —
+1. **TODO**, —, When should shared module configuration be moved into a convention plugin?, —
+1. **TODO**, —, How would you connect a custom task to Android build artifacts using the AGP Variant API?, —
