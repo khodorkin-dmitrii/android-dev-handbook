@@ -12,6 +12,8 @@ A Gradle invocation has three main phases:
 2. **Configuration** - evaluates build logic, applies plugins, and creates/configures the task graph.
 3. **Execution** - runs the selected tasks and their dependencies.
 
+Code that configures a task runs when Gradle configures that task; a task action such as `doLast {}` or `@TaskAction` runs during execution if the task actually runs. With lazy task registration, an unrelated task may never be configured. A configuration-cache hit can also reuse the task graph without rerunning the configuration phase.
+
 This distinction matters for performance. Reading files, resolving values eagerly, or running external processes during configuration makes every invocation slower and can break configuration-cache compatibility. Custom work should normally be modeled as tasks with declared inputs and outputs.
 
 ## Project structure and repositories
