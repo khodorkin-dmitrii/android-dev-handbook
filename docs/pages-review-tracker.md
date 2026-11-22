@@ -142,24 +142,24 @@ Statuses: `TODO` — not reviewed yet; `COVERED` — already answered well in th
 
 ### Current snapshot
 
-1. Last Gradle tracker update: 2026-11-21
+1. Last Gradle tracker update: 2026-11-22
 1. Total questions tracked: 22
-1. Reviewed: 3
-1. TODO: 19
+1. Reviewed: 5
+1. TODO: 17
 
 | Status | Total |
 |---|---:|
-| `COVERED` | 2 |
-| `PREPARED` | 1 |
-| `TODO` | 19 |
+| `COVERED` | 3 |
+| `PREPARED` | 2 |
+| `TODO` | 17 |
 
 After `PREPARED` changes are integrated into the Handbook, rerun the Handbook metrics scripts. Refresh this snapshot whenever a Gradle Tracker status changes.
 
 1. **COVERED**, 2026-11-21, What is the difference between Gradle and the Android Gradle Plugin (AGP)?, Answered in both versions of `android/gradle-build-system.md`; no article changes needed.
 1. **COVERED**, 2026-11-21, What are the roles of `settings.gradle.kts`, the root `build.gradle.kts`, and a module's `build.gradle.kts`?, Answered in both versions of `android/gradle-build-system.md`; no article changes needed.
 1. **PREPARED**, 2026-11-21, What are the phases of a Gradle build? When is the task graph created, and when does task code run?, Clarified task configuration versus task actions and configuration-cache reuse in both versions of `android/gradle-build-system.md`.
-1. **TODO**, —, What is the purpose of the Gradle Wrapper?, —
-1. **TODO**, —, What is a Gradle task? How can you find out why a particular task ran?, —
+1. **COVERED**, 2026-11-22, What is the purpose of the Gradle Wrapper?, Answered in both versions of `android/gradle-build-system.md`; no article changes needed.
+1. **PREPARED**, 2026-11-22, What is a Gradle task? How can you find out why a particular task ran?, Added task definition and execution diagnostics to both versions of `android/gradle-build-system.md`; changes prepared for integration.
 1. **TODO**, —, How do build types and product flavors differ? What is a build variant?, —
 1. **TODO**, —, How would you build separate `demo` and `production` versions with `debug` and `release` build types?, —
 1. **TODO**, —, Which resource is used for `demoDebug` if it exists in the `main`, `demo`, `debug`, and `demoDebug` source sets?, —

@@ -16,6 +16,17 @@ Code that configures a task runs when Gradle configures that task; a task action
 
 This distinction matters for performance. Reading files, resolving values eagerly, or running external processes during configuration makes every invocation slower and can break configuration-cache compatibility. Custom work should normally be modeled as tasks with declared inputs and outputs.
 
+## Tasks and execution diagnostics
+
+A **task** is a unit of build work, such as compiling Kotlin, running tests, or packaging an APK. Gradle selects the requested task and its prerequisites (for example, dependencies declared with `dependsOn` or inferred from task outputs consumed by another task). A task can be part of the execution graph without running its actions: Gradle may mark it `UP-TO-DATE`, `FROM-CACHE`, `SKIPPED`, or `NO-SOURCE`.
+
+To investigate a task, answer two separate questions:
+
+1. **Why was it selected?** Run the original command with `--dry-run`, for example `./gradlew :app:assembleDebug --dry-run`, to see the task graph without running task actions. Then inspect the requested task's dependency chain and relevant plugin or build-script configuration. The graph shows *what* was selected; it does not explain every dependency edge automatically.
+2. **Why did its actions run again?** Run the original command with `--info` and find the task's up-to-date or execution reason. Check changed inputs or outputs, missing outputs, a changed task implementation, absent previous execution history, disabled up-to-date checks, or `--rerun-tasks`. A Build Scan (`--scan`) can help compare task outcomes and timings; check what it captures before publishing one.
+
+Use the same command and build variant that triggered the unexpected task. `--dry-run` cannot tell you whether its actions would have been up to date in a real build.
+
 ## Project structure and repositories
 
 A typical Kotlin DSL project contains:
