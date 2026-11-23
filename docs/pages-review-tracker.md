@@ -142,16 +142,16 @@ Statuses: `TODO` — not reviewed yet; `COVERED` — already answered well in th
 
 ### Current snapshot
 
-1. Last Gradle tracker update: 2026-11-22
+1. Last Gradle tracker update: 2026-11-23
 1. Total questions tracked: 22
-1. Reviewed: 5
-1. TODO: 17
+1. Reviewed: 6
+1. TODO: 16
 
 | Status | Total |
 |---|---:|
-| `COVERED` | 3 |
+| `COVERED` | 4 |
 | `PREPARED` | 2 |
-| `TODO` | 17 |
+| `TODO` | 16 |
 
 After `PREPARED` changes are integrated into the Handbook, rerun the Handbook metrics scripts. Refresh this snapshot whenever a Gradle Tracker status changes.
 
@@ -160,7 +160,7 @@ After `PREPARED` changes are integrated into the Handbook, rerun the Handbook me
 1. **PREPARED**, 2026-11-21, What are the phases of a Gradle build? When is the task graph created, and when does task code run?, Clarified task configuration versus task actions and configuration-cache reuse in both versions of `android/gradle-build-system.md`.
 1. **COVERED**, 2026-11-22, What is the purpose of the Gradle Wrapper?, Answered in both versions of `android/gradle-build-system.md`; no article changes needed.
 1. **PREPARED**, 2026-11-22, What is a Gradle task? How can you find out why a particular task ran?, Added task definition and execution diagnostics to both versions of `android/gradle-build-system.md`; changes prepared for integration.
-1. **TODO**, —, How do build types and product flavors differ? What is a build variant?, —
+1. **COVERED**, 2026-11-23, How do build types and product flavors differ? What is a build variant?, Answered in both versions of `android/gradle-build-system.md`; no article changes needed.
 1. **TODO**, —, How would you build separate `demo` and `production` versions with `debug` and `release` build types?, —
 1. **TODO**, —, Which resource is used for `demoDebug` if it exists in the `main`, `demo`, `debug`, and `demoDebug` source sets?, —
 1. **TODO**, —, How can you include different implementations or dependencies in a specific build variant?, —
