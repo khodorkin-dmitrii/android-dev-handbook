@@ -147,17 +147,24 @@ Catalogs make names consistent, but they do not enforce dependency boundaries or
 Build types usually describe development stages such as `debug` and `release`. Product flavors describe product editions such as brand, environment, or distribution channel. AGP creates a variant from their combination.
 
 ```kotlin
+// app/build.gradle.kts (com.android.application)
 android {
-    flavorDimensions += "environment"
+    flavorDimensions += "edition"
     productFlavors {
-        create("staging") { dimension = "environment" }
-        create("production") { dimension = "environment" }
+        create("demo") {
+            dimension = "edition"
+            applicationIdSuffix = ".demo"
+        }
+        create("production") { dimension = "edition" }
     }
     buildTypes {
-        release { isMinifyEnabled = true }
+        getByName("debug") { applicationIdSuffix = ".debug" }
+        getByName("release") { isMinifyEnabled = true }
     }
 }
 ```
+
+This creates `demoDebug`, `demoRelease`, `productionDebug`, and `productionRelease`. Build one APK with, for example, `./gradlew :app:assembleDemoDebug` or `./gradlew :app:assembleProductionRelease`. The suffixes give the editions and debug builds distinct application IDs so they can coexist on a device; release signing still needs to be configured for distribution.
 
 Source sets provide code and resources for a scope: `src/main`, `src/debug`, `src/release`, `src/test`, `src/androidTest`, or a flavor/variant-specific directory. More flavors multiply variants, tasks, CI work, and places where behavior can hide. Prefer runtime configuration when separate build artifacts are not actually required, and never place secrets in `BuildConfig` or resources: packaged values can be extracted.
 

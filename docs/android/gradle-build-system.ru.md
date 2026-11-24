@@ -147,17 +147,24 @@ dependencies {
 Build types обычно описывают этапы разработки, например `debug` и `release`. Product flavors описывают версии продукта: бренд, окружение или канал распространения. AGP создаёт вариант сборки из их комбинации.
 
 ```kotlin
+// app/build.gradle.kts (com.android.application)
 android {
-    flavorDimensions += "environment"
+    flavorDimensions += "edition"
     productFlavors {
-        create("staging") { dimension = "environment" }
-        create("production") { dimension = "environment" }
+        create("demo") {
+            dimension = "edition"
+            applicationIdSuffix = ".demo"
+        }
+        create("production") { dimension = "edition" }
     }
     buildTypes {
-        release { isMinifyEnabled = true }
+        getByName("debug") { applicationIdSuffix = ".debug" }
+        getByName("release") { isMinifyEnabled = true }
     }
 }
 ```
+
+Получатся варианты `demoDebug`, `demoRelease`, `productionDebug` и `productionRelease`. Чтобы собрать APK одного из них, запусти, например, `./gradlew :app:assembleDemoDebug` или `./gradlew :app:assembleProductionRelease`. Суффиксы дают редакциям и debug-сборкам разные `applicationId`, поэтому их можно установить на одно устройство; для распространения release-сборки ещё нужно настроить подпись.
 
 Source sets предоставляют код и ресурсы для определённой области: `src/main`, `src/debug`, `src/release`, `src/test`, `src/androidTest` или каталога конкретного flavor/варианта. Дополнительные flavors умножают количество вариантов, задач, CI-работы и мест, где может скрываться разное поведение. Предпочитай runtime-конфигурацию, если отдельные артефакты действительно не нужны, и никогда не клади секреты в `BuildConfig` или ресурсы: значения из пакета можно извлечь.
 
