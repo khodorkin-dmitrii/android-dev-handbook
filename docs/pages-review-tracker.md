@@ -142,16 +142,16 @@ Statuses: `TODO` — not reviewed yet; `COVERED` — already answered well in th
 
 ### Current snapshot
 
-1. Last Gradle tracker update: 2026-11-24
+1. Last Gradle tracker update: 2026-11-25
 1. Total questions tracked: 22
-1. Reviewed: 7
-1. TODO: 15
+1. Reviewed: 8
+1. TODO: 14
 
 | Status | Total |
 |---|---:|
 | `COVERED` | 4 |
-| `PREPARED` | 3 |
-| `TODO` | 15 |
+| `PREPARED` | 4 |
+| `TODO` | 14 |
 
 After `PREPARED` changes are integrated into the Handbook, rerun the Handbook metrics scripts. Refresh this snapshot whenever a Gradle Tracker status changes.
 
@@ -162,7 +162,7 @@ After `PREPARED` changes are integrated into the Handbook, rerun the Handbook me
 1. **PREPARED**, 2026-11-22, What is a Gradle task? How can you find out why a particular task ran?, Added task definition and execution diagnostics to both versions of `android/gradle-build-system.md`; changes prepared for integration.
 1. **COVERED**, 2026-11-23, How do build types and product flavors differ? What is a build variant?, Answered in both versions of `android/gradle-build-system.md`; no article changes needed.
 1. **PREPARED**, 2026-11-24, How would you build separate `demo` and `production` versions with `debug` and `release` build types?, Added a concrete four-variant Kotlin DSL example and build commands to both versions of `android/gradle-build-system.md`; changes prepared for integration.
-1. **TODO**, —, Which resource is used for `demoDebug` if it exists in the `main`, `demo`, `debug`, and `demoDebug` source sets?, —
+1. **PREPARED**, 2026-11-25, Which resource is used for `demoDebug` if it exists in the `main`, `demo`, `debug`, and `demoDebug` source sets?, Added source-set resource priority and the duplicate-class distinction to both versions of `android/gradle-build-system.md`; changes prepared for integration.
 1. **TODO**, —, How can you include different implementations or dependencies in a specific build variant?, —
 1. **TODO**, —, What can you do when an app flavor does not match the flavors available in a library module?, —
 1. **TODO**, —, How do `api` and `implementation` differ in a library module, and how does that choice affect consuming modules?, —
