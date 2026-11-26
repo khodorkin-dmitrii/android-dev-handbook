@@ -168,6 +168,22 @@ This creates `demoDebug`, `demoRelease`, `productionDebug`, and `productionRelea
 
 Source sets provide code and resources for a scope: `src/main`, `src/debug`, `src/release`, `src/test`, `src/androidTest`, or a flavor/variant-specific directory. For the same resource in `demoDebug`, the merge priority is `src/demoDebug` > `src/debug` > `src/demo` > `src/main`, so the `demoDebug` resource wins when all four define it. This overlay rule applies to resources; duplicate Kotlin or Java classes in active source sets cause a build error instead of overriding one another. More flavors multiply variants, tasks, CI work, and places where behavior can hide. Prefer runtime configuration when separate build artifacts are not actually required, and never place secrets in `BuildConfig` or resources: packaged values can be extracted.
 
+### Variant-specific code and dependencies
+
+Keep a shared interface in `src/main/kotlin`. Put an implementation needed only by `demoDebug` in `src/demoDebug/kotlin`; use `src/debug/kotlin` when it should serve every debug flavor. Each built variant must contain the implementation it uses. Do not also define the same class in `main`: active source sets are compiled together, so duplicate classes fail the build.
+
+For a dependency used only by `demoDebug`, declare its variant configuration in the app module's `build.gradle.kts`:
+
+```kotlin
+val demoDebugImplementation by configurations.creating
+
+dependencies {
+    demoDebugImplementation(project(":demo-support"))
+}
+```
+
+Use `demoImplementation` for every demo build or `debugImplementation` for every debug build. A dependency's own Android variant is matched separately when it is resolved.
+
 ## APK, AAB, and shrinking
 
 An APK is an installable package containing DEX code, resources, the manifest, and optional native libraries. It is convenient for local installation, testing, and distribution outside stores.
