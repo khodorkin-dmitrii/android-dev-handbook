@@ -142,16 +142,16 @@ Statuses: `TODO` — not reviewed yet; `COVERED` — already answered well in th
 
 ### Current snapshot
 
-1. Last Gradle tracker update: 2026-11-26
+1. Last Gradle tracker update: 2026-11-27
 1. Total questions tracked: 22
-1. Reviewed: 9
-1. TODO: 13
+1. Reviewed: 10
+1. TODO: 12
 
 | Status | Total |
 |---|---:|
 | `COVERED` | 4 |
-| `PREPARED` | 5 |
-| `TODO` | 13 |
+| `PREPARED` | 6 |
+| `TODO` | 12 |
 
 After `PREPARED` changes are integrated into the Handbook, rerun the Handbook metrics scripts. Refresh this snapshot whenever a Gradle Tracker status changes.
 
@@ -164,7 +164,7 @@ After `PREPARED` changes are integrated into the Handbook, rerun the Handbook me
 1. **PREPARED**, 2026-11-24, How would you build separate `demo` and `production` versions with `debug` and `release` build types?, Added a concrete four-variant Kotlin DSL example and build commands to both versions of `android/gradle-build-system.md`; changes prepared for integration.
 1. **PREPARED**, 2026-11-25, Which resource is used for `demoDebug` if it exists in the `main`, `demo`, `debug`, and `demoDebug` source sets?, Added source-set resource priority and the duplicate-class distinction to both versions of `android/gradle-build-system.md`; changes prepared for integration.
 1. **PREPARED**, 2026-11-26, How can you include different implementations or dependencies in a specific build variant?, Added variant-specific source-set and dependency guidance to both versions of `android/gradle-build-system.md`; changes prepared for integration.
-1. **TODO**, —, What can you do when an app flavor does not match the flavors available in a library module?, —
+1. **PREPARED**, 2026-11-27, What can you do when an app flavor does not match the flavors available in a library module?, Added `matchingFallbacks` guidance and distinguished `missingDimensionStrategy` in both versions of `android/gradle-build-system.md`; changes prepared for integration.
 1. **TODO**, —, How do `api` and `implementation` differ in a library module, and how does that choice affect consuming modules?, —
 1. **TODO**, —, What are `compileOnly`, `runtimeOnly`, `testImplementation`, and `androidTestImplementation` used for?, —
 1. **TODO**, —, Where did a transitive dependency come from, and why was a particular version selected?, —

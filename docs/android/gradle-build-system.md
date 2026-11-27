@@ -184,6 +184,23 @@ dependencies {
 
 Use `demoImplementation` for every demo build or `debugImplementation` for every debug build. A dependency's own Android variant is matched separately when it is resolved.
 
+### Matching app and library flavors
+
+AGP matches an app variant to a compatible variant of each Android library dependency. If both modules have an `edition` dimension but the library has `trial` instead of the app's `demo` flavor, declare an ordered fallback on the consuming app flavor:
+
+```kotlin
+// app/build.gradle.kts; the library has an "edition" flavor named "trial"
+android {
+    productFlavors {
+        getByName("demo") {
+            matchingFallbacks += listOf("trial")
+        }
+    }
+}
+```
+
+AGP uses the first available fallback in that dimension. Choose only a library flavor whose behavior is compatible with the app. If the library has an *extra flavor dimension* absent from the app, use `missingDimensionStrategy("dimension", "preferredFlavor")` in the app's `defaultConfig` (or a specific flavor) instead. A dimension present only in the app does not need this strategy.
+
 ## APK, AAB, and shrinking
 
 An APK is an installable package containing DEX code, resources, the manifest, and optional native libraries. It is convenient for local installation, testing, and distribution outside stores.
